@@ -51,16 +51,34 @@ async function probeKlaviyoReportStage(client,owner,input,previous) {
     const send=(ordinal,ctx=context,write=writes[ordinal])=>client.query(stage,[
       JSON.stringify(owner),JSON.stringify(write),JSON.stringify(ctx),deadline,ordinal,2,
     ]);
+    const verify=(digests)=>client.query(
+      "select analytics.verify_klaviyo_daily_report_stage($1::jsonb,$2::jsonb,$3::timestamptz,$4::uuid,$5::jsonb,$6::jsonb) result",
+      [JSON.stringify(owner),JSON.stringify(context),deadline,operationId,JSON.stringify(writes[0].policy),JSON.stringify(digests)]);
+    const digests=writes.map(write=>sourcePayloadHash({write,context}));
     assert.match((await rejected(client,()=>send(1))).message,/KLAVIYO_REPORT_STAGE_REQUIRED/);
     const prior=async()=>inspectDatasetReconciliation({database:client,owner,operationId:previous.operationId});
     const staged=(await send(0)).rows[0].result;
     assert.deepEqual(staged,{status:"staged",operationId,ordinal:0,packageCount:2,rowCount:1,
       digest:sourcePayloadHash({write:writes[0],context})});
     assert.deepEqual(await prior(),previous);
+    assert.match((await rejected(client,()=>verify(digests))).message,/KLAVIYO_REPORT_PACKAGE_VERIFICATION_FAILED/);
     assert.match((await rejected(client,()=>send(0))).message,/KLAVIYO_REPORT_PACKAGE_SEQUENCE/);
     assert.match((await rejected(client,()=>send(1,{...context,expectedRevision:0}))).message,/KLAVIYO_REPORT_PACKAGE_SEQUENCE/);
     assert.match((await rejected(client,()=>send(1,context,{...writes[1],rows:Array(201).fill(writes[1].rows[0])}))).message,/KLAVIYO_REPORT_PACKAGE_LIMIT/);
+    await client.query("savepoint report_stage_duplicate_row");
+    try {
+      const duplicate=(await send(1,context,writes[0])).rows[0].result;
+      assert.match((await rejected(client,()=>verify([staged.digest,duplicate.digest]))).message,/KLAVIYO_REPORT_PACKAGE_ROW_IDENTITY_INVALID/);
+    } finally {
+      await client.query("rollback to savepoint report_stage_duplicate_row");
+      await client.query("release savepoint report_stage_duplicate_row");
+    }
     assert.equal((await send(1)).rows[0].result.ordinal,1);
+    assert.match((await rejected(client,()=>verify([...digests].reverse()))).message,/KLAVIYO_REPORT_PACKAGE_VERIFICATION_FAILED/);
+    const summary={status:"stage_verified",operationId,rowCount:2,packageCount:2,
+      packages:digests.map((digest,ordinal)=>({ordinal,rowCount:1,digest})),
+      consumerReceipt:false,checkpointAdvanced:false};
+    assert.deepEqual((await verify(digests)).rows[0].result,{...summary,digest:sourcePayloadHash(summary)});
     assert.deepEqual(await prior(),previous);
     assert.equal((await client.query("select count(*)::int n from pg_temp.adstable_klaviyo_daily_report_stage")).rows[0].n,2);
   } finally {
@@ -68,7 +86,7 @@ async function probeKlaviyoReportStage(client,owner,input,previous) {
     await client.query("release savepoint report_stage_case");
   }
   assert.equal((await client.query("select to_regclass('pg_temp.adstable_klaviyo_daily_report_stage') staging")).rows[0].staging,null);
-  console.log("EO05_KLAVIYO_REPORT_STAGE_PROBE two_packages=true previous_receipt_preserved=true rollback_cleanup=true");
+  console.log("EO05_KLAVIYO_REPORT_STAGE_PROBE two_packages=true compact_summary=true previous_receipt_preserved=true rollback_cleanup=true");
 }
 
 /** Existing F01 rollback transaction. Owners, native pages, clocks and keys below

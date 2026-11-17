@@ -79,5 +79,63 @@ end $fn$;
 
 revoke all on function analytics.stage_klaviyo_daily_report_package(jsonb,jsonb,jsonb,timestamptz,integer,integer)
   from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+
+-- Verify the acknowledged staged writes before a future publication call.
+-- This summary is transaction-local evidence, never a report receipt.
+create function analytics.verify_klaviyo_daily_report_stage(
+  o jsonb, c jsonb, d timestamptz, operation uuid, policy jsonb, digests jsonb
+) returns jsonb
+language plpgsql security definer set search_path='' as $fn$
+declare
+  package_count integer;
+  row_count integer;
+  binding text;
+  packages jsonb;
+  summary jsonb;
+begin
+  perform evidence.assert_source_owner(o);
+  if o->>'provider' is distinct from 'klaviyo' or d is null or d<=clock_timestamp()
+    or operation is null or jsonb_typeof(digests) is distinct from 'array' then
+    raise exception 'KLAVIYO_REPORT_PACKAGE_INVALID';
+  end if;
+  package_count:=jsonb_array_length(digests);
+  if package_count not between 2 and 20
+    or exists(select 1 from jsonb_array_elements(digests) value
+      where jsonb_typeof(value) is distinct from 'string' or (value#>>'{}') !~ '^[0-9a-f]{64}$') then
+    raise exception 'KLAVIYO_REPORT_PACKAGE_INVALID';
+  end if;
+  if not exists (select 1 from pg_catalog.pg_class
+    where oid=pg_catalog.to_regclass('pg_temp.adstable_klaviyo_daily_report_stage')
+      and relnamespace=pg_catalog.pg_my_temp_schema() and relowner=current_user::regrole
+      and relpersistence='t' and relkind='r') then
+    raise exception 'KLAVIYO_REPORT_STAGE_REQUIRED';
+  end if;
+  binding:=analytics.dataset_digest(jsonb_build_object(
+    'owner',o,'context',c,'deadline',d,'operationId',operation,'policy',policy,'packageCount',package_count));
+  if (select count(*) from pg_temp.adstable_klaviyo_daily_report_stage)<>package_count
+    or exists(select 1 from pg_temp.adstable_klaviyo_daily_report_stage s
+      where s.package_ordinal not between 0 and package_count-1 or s.day_binding<>binding
+        or s.digest is distinct from digests->>s.package_ordinal
+        or s.digest is distinct from analytics.dataset_digest(jsonb_build_object('write',s.body,'context',c))) then
+    raise exception 'KLAVIYO_REPORT_PACKAGE_VERIFICATION_FAILED';
+  end if;
+  if exists(
+    select 1 from pg_temp.adstable_klaviyo_daily_report_stage s
+    cross join lateral jsonb_array_elements(s.body->'rows') item
+    group by item->>'table',item->'row'->>'native_key_hash'
+    having count(*)>1 or coalesce(item->'row'->>'native_key_hash','') !~ '^[0-9a-f]{64}$'
+  ) then raise exception 'KLAVIYO_REPORT_PACKAGE_ROW_IDENTITY_INVALID'; end if;
+  select sum(jsonb_array_length(body->'rows'))::integer,
+    jsonb_agg(jsonb_build_object('ordinal',package_ordinal,'rowCount',jsonb_array_length(body->'rows'),'digest',digest)
+      order by package_ordinal)
+    into row_count,packages
+    from pg_temp.adstable_klaviyo_daily_report_stage;
+  summary:=jsonb_build_object('status','stage_verified','operationId',operation,'rowCount',row_count,
+    'packageCount',package_count,'packages',packages,'consumerReceipt',false,'checkpointAdvanced',false);
+  return summary||jsonb_build_object('digest',analytics.dataset_digest(summary));
+end $fn$;
+
+revoke all on function analytics.verify_klaviyo_daily_report_stage(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)
+  from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
 reset role;
 commit;

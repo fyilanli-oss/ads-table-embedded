@@ -1082,7 +1082,7 @@
       "name": "eo05_klaviyo_report_package_staging",
       "file": "supabase/migrations/20261117183725_eo05_klaviyo_report_package_staging.sql",
       "created_with": "supabase@2.121.0 migration new eo05_klaviyo_report_package_staging",
-      "repository_sql_sha256": "4af5cc84977cf4012e6b2a2225d8c95daf1bbb6932462791c7fb3c8e7f532914",
+      "repository_sql_sha256": "3c9c6c571f268a7a463d07aedfabc856928d339d3e0f480cb3232c0d7e560f31",
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false

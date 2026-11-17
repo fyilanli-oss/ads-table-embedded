@@ -374,10 +374,10 @@ declare
 begin
   perform analytics.plan_klaviyo_staged_report_replacement(o,c,d,operation,policy,digests);
   foreach table_name in array array['pd_facts','cpd_product_performance_facts','cpd_product_sales_facts'] loop
-    select coalesce(jsonb_object_agg(item->'row'->>'native_key_hash',true),'{}'::jsonb)
+    select coalesce(jsonb_object_agg(entry.value->'row'->>'native_key_hash',true),'{}'::jsonb)
       into staged_keys from pg_temp.adstable_klaviyo_daily_report_stage staged
       cross join lateral jsonb_array_elements(staged.body->'rows') entry
-      where entry->>'table'=table_name;
+      where entry.value->>'table'=table_name;
     execute format('delete from analytics.%I x where workspace_id=$1 and installation_id=$2 and installation_generation=$3 and platform=''klaviyo'' and platform_account_id=$4 and business_date=$5
       and not ($6 ? x.native_key_hash)',table_name)
       using w,i,g,a,day,staged_keys;

@@ -33,15 +33,21 @@ async function probeKlaviyoReportStage(client,owner,input,previous) {
   try {
     const scope=[owner.workspaceId,owner.generation,owner.provider,owner.accountId,job];
     const fence=(await client.query("select (coalesce(max(fence),0)+1)::text n from operations.refresh_runs")).rows[0].n;
+    await client.query("update integrations.provider_connections set connected_at=$2::date-interval '1 day' where id=$1",
+      [owner.connectionId,day]);
+    const bound=(await client.query(`update operations.refresh_work_bindings set fence=$6,deadline_at_ms=$7,
+      source=operations.refresh_preflight_source($1,$2,$3,$4)
+      where workspace_id=$1 and install_generation=$2 and provider=$3 and account_id=$4 and job_id=$5 returning source`,
+      [...scope,fence,input.limits.deadlineAt])).rows[0];
+    assert.ok(bound?.source,"expected an admitted Klaviyo test job");
     const context={businessDate:day,expectedRevision:previous.revision,
-      sourceContext:{...bundle.datasets[0].sourceContext,fence}};
-    await client.query(`update operations.refresh_work_bindings set fence=$6,deadline_at_ms=$7
-      where workspace_id=$1 and install_generation=$2 and provider=$3 and account_id=$4 and job_id=$5`,
-      [...scope,fence,input.limits.deadlineAt]);
+      sourceContext:{...bundle.datasets[0].sourceContext,fence,snapshot:bound.source}};
     await client.query(`insert into operations.refresh_runs(workspace_id,install_generation,provider,account_id,job_id,fence,cost,status)
       values ($1,$2,$3,$4,$5,$6,'{"requests":2,"rows":1000,"bytes":1000000,"connections":1,"dbWrites":5}','running')`,[...scope,fence]);
     await client.query(`insert into operations.refresh_work_progress(workspace_id,install_generation,provider,account_id,job_id,fence,stage,from_date,to_date)
       values ($1,$2,$3,$4,$5,$6,'ready_for_dataset',$7,$7)`,[...scope,fence,day]);
+    assert.equal((await client.query("select operations.refresh_claim_is_current($1,$2,$3,$4,$5,$6) current",
+      [...scope,fence])).rows[0].current,true);
     const send=(ordinal,ctx=context,write=writes[ordinal])=>client.query(stage,[
       JSON.stringify(owner),JSON.stringify(write),JSON.stringify(ctx),deadline,ordinal,2,
     ]);

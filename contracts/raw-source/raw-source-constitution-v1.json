@@ -864,7 +864,7 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "6575f6f48b6c3cfd71eb3cd20325aeffd73ba2c09090d1d87a67dd7dee3ab478",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "aa555339106370e64e068a6d4bb58523255b6b5da73f50208b113c273ce39e57",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "52361f6f99101ed7eebf1db0bede09d75ca6b73241b37fa782603a87d637c9fa",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -1089,7 +1089,7 @@
       "tests/eo05b-demo-fixture.test.js": "d63b2bbb733d25c1f4585314f4094b010e4b6de2ca23032fc2b2d36f1aabde41",
       "tests/f01-live-readiness.test.js": "5225024e104f9087337452827f674961944f4dd1d53b808a0a0ac66bdef0a6eb",
       "tests/fixtures/customer-worker-fixture.js": "11b10dbd255ff34d6af9b11496866c3ad22145f21e60343ca0d50587eba21352",
-      "tests/fixtures/dataset-source-binding-fixture.js": "74a3cdc3cd2896e9263baeaed6543358f4475ee95781d38c2a9bffff858fbb44",
+      "tests/fixtures/dataset-source-binding-fixture.js": "51303df1426e0fbc8a21cc3bc3717b6ea6a9da2577a641b98b316a22be801e9a",
       "tests/fixtures/dataset-storage-fixture.js": "33592e181bc429d3032548b6b27fff70f802323699ca1d9dfcd2d3606e33761e",
       "tests/fixtures/google-acceptance-fixture.js": "e7bf9aa5faf8094f87366f197bfdbbf0ca65f13e9c7909be0473d96c6460cf2c",
       "tests/fixtures/google-raw-datasets-fixture.js": "01a12e2ef0926ee6860060f4420da164f6bd57a03700306e3702644a04d33c86",
@@ -1275,11 +1275,11 @@
       "tools/eo05-source-rule-probe.mjs": "bdba143e69a0ac680687dfbfce815bf8c97c7fa2228179e22cc5d5d4626477ab",
       "tools/eo05-verified-mapping-probe.mjs": "875aadd0c47e64d66f5fef187b2a803cd9716ff04b0ac0871f17cc97f84f88eb",
       "tools/eo05b-dataset-server-probe.mjs": "d6177954ab377f697209d5753651f7403e82b1c1349e0425405187ce33c3b02c",
-      "tools/eo05b-dataset-storage-probe.mjs": "1cf22bd4e53190939b7dd25d191a26e55c32382531e861e9dbeb843311d929b2",
+      "tools/eo05b-dataset-storage-probe.mjs": "675ebdd3cc0fda810c1588590732a17967515d169468bbad32786170b4d51e09",
       "tools/eo05b-demo-fixture.mjs": "c91cf0e2b82ae6bb4db46d4dfa4ffbc0e1415877075995a5bf5cbc1f30afdd73",
       "tools/eo05b-fx-reporting-currency-probe.mjs": "c5decd13fad2a1aebccacbdf6229bcfec590c429db8ab3380008c318c479a9d5",
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
-      "tools/eo05b-source-dataset-binding-probe.mjs": "d9aa68f202922f0978a05b411781fcbc4685b86337b56cfcab32964316713d79",
+      "tools/eo05b-source-dataset-binding-probe.mjs": "cde0432ed064cc6d27f4aa4b16de5b939dfdaac448f07b32cb175a6a5fd9c2b9",
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
       "tools/eo05d-reconciliation-probe.mjs": "dc3b91451a057b2621d09378948dcd4e80ca7ce52221061dc774b1be9c400608",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
@@ -2390,6 +2390,45 @@
       ],
       "visual_acceptance": "not_applicable_no_UI_change",
       "native_acceptance": false
+    },
+    {
+      "id": "eo05b-klaviyo-source-validation-comparison",
+      "date": "2026-11-17",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Tamam onaylıyorum Codex devam edelim — compare original and transaction-local reuse of exactly matching source-context proofs on the same 200-row synthetic F01 workload, including lock wait and result comparison."
+      },
+      "rationale": "Rollback-only comparison with exact JSONB equality and original function restoration. The existing writer is the baseline, and all new evidence is separately validated. No production SQL or runtime changes.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "tests/fixtures/dataset-source-binding-fixture.js",
+        "tools/eo05b-dataset-storage-probe.mjs",
+        "tools/eo05b-source-dataset-binding-probe.mjs"
+      ],
+      "artifact_paths": [
+        "tests/fixtures/dataset-source-binding-fixture.js",
+        "tools/eo05b-source-dataset-binding-probe.mjs",
+        "tools/eo05b-dataset-storage-probe.mjs"
+      ],
+      "tests": [
+        "tests/dataset-source-binding.test.js",
+        "tools/eo05b-source-dataset-binding-probe.mjs",
+        "tools/eo05b-dataset-storage-probe.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ]
     }
   ],
   "dataset_retention_decision": {

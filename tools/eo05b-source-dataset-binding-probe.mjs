@@ -87,5 +87,38 @@ export async function sourceDatasetBindingProbe(client, {ownerFixture}) {
       assert.equal((await client.query(`select count(*)::int n from analytics.${table} where installation_id=$1`, [owner.installationId])).rows[0].n, 0);
     assert.equal((await client.query("select count(*)::int n from evidence.source_batches where installation_id=$1", [owner.installationId])).rows[0].n, 0);
   }
+  const owner = await ownerFixture(client, "klaviyo");
+  const input = await storedBindingFixture(client, owner, {klaviyoProductEvents: 200});
+  let databaseMs = 0, writeMs = 0, readbackMs = 0, writes = 0, readbacks = 0, payloadBytes = 0;
+  const database = {async query(sql, args) {
+    const startedAt = performance.now();
+    try {return await client.query(sql, args);}
+    finally {
+      const elapsed = performance.now() - startedAt;
+      databaseMs += elapsed;
+      if (sql.includes("analytics.commit_dataset_storage(")) {
+        writes++;
+        writeMs += elapsed;
+        payloadBytes = Buffer.byteLength(args[1]);
+      }
+      if (sql.includes("analytics.inspect_dataset_storage(")) {
+        readbacks++;
+        readbackMs += elapsed;
+      }
+    }
+  }};
+  const startedAt = performance.now();
+  const result = await bindStoredDatasetSources({...input, database});
+  const totalMs = performance.now() - startedAt;
+  const {rows: [{count}]} = await client.query(
+    "select count(*)::int as count from analytics.cpd_product_sales_facts where installation_id=$1", [owner.installationId]);
+  assert.equal(result.status, "stored");
+  assert.equal(result.rowsStored, 200);
+  assert.equal(result.storageReceipt.rows.length, 200);
+  assert.deepEqual({count, writes, readbacks}, {count: 200, writes: 1, readbacks: 1});
+  await client.query("select evidence.delete_installation_sources($1::bigint)", [owner.installationId]);
+  console.log("EO05_KLAVIYO_200_DATASET_WRITE_PASS " + JSON.stringify({
+    rows: count, payloadBytes, writes, readbacks, writeMs, readbackMs, databaseMs, adsTableMs: totalMs - databaseMs, totalMs,
+  }));
   console.log("EO05B_SOURCE_DATASET_BINDING_PASS synthetic_only=true native_acceptance=false consumer_receipt=false live_mutation=false");
 }

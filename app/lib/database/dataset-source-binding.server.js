@@ -19,6 +19,10 @@ export async function bindStoredDatasetSources({database, cipher, owner, batches
   batches = structuredClone(batches); limits = structuredClone(limits); policy = structuredClone(policy);
   readReportRetentionPolicy(policy);
   const source = await readStoredDatasetSources({database, cipher, owner, batches, limits, signal, now});
+  if (source.datasets.some(d => d.read.packageCount !== undefined)) {
+    return Object.freeze({sourceVerified: true, consumerReceipt: false, publishable: false, authorizesActivation: false,
+      status: "held", rowsStored: 0, empty: null, storageReceipt: null, holds: [{reason: "daily_package_handoff_required"}], auxiliary: []});
+  }
   const projection = projectors[source.owner.provider](source);
   // Klaviyo's separate configuration envelope participates in metric/account
   // interpretation. Keep that physically verified proof with every derived row.

@@ -9,6 +9,8 @@ import {createTokenEnvelopeCipher,readProviderTokenKeyring} from "../app/lib/oau
 import {KLAVIYO_OAUTH_SCOPES} from "../app/lib/providers/klaviyo-api.server.js";
 import {createKlaviyoRawCaptureExecution} from "../app/lib/refresh/klaviyo-raw-server.server.js";
 import {handleKlaviyoRawCaptureRequest} from "../app/lib/refresh/klaviyo-raw-request.server.js";
+import {storeKlaviyoRawProductPackages} from "../app/lib/database/klaviyo-dataset-source-store.server.js";
+import {createConfiguredSourceEvidenceCipher} from "../app/lib/database/source-evidence-config.server.js";
 import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
 
 export function klaviyoFirstDayRehearsalEnvironment(){
@@ -27,7 +29,8 @@ export async function klaviyoFirstDayRehearsal(client,{workspace,shopId,shopDoma
  try{
   const definitions=async()=>(await client.query("select oid::regprocedure::text name,pg_get_functiondef(oid) body from pg_proc where pronamespace='operations'::regnamespace and proname in ('commit_refresh_preflight','commit_refresh_preflight_with_deadline','commit_refresh_admissions') order by 1")).rows;
   const before=await definitions();
-  for(const path of ["../supabase/migrations/20261104181254_eo05_klaviyo_raw_datasets.sql","./sql/eo05-klaviyo-source-role-install.sql"]){
+  for(const path of ["../supabase/migrations/20261104181254_eo05_klaviyo_raw_datasets.sql",
+   "../supabase/migrations/20261117174509_eo05_klaviyo_daily_raw_packages.sql","./sql/eo05-klaviyo-source-role-install.sql"]){
    await client.query("set local role postgres");
    await client.query(readFileSync(new URL(path,import.meta.url),"utf8").trim().replace(/^begin;/," ").replace(/commit;$/," "));
   }
@@ -89,14 +92,47 @@ export async function klaviyoFirstDayRehearsal(client,{workspace,shopId,shopDoma
      assert.equal(r.rows[0].result,false,mode);
      assert.equal((await client.query("select count(*)::int n from operations.refresh_runs where job_id=$1",[id])).rows[0].n,0);continue;
     }
-    let klaviyoCalls=0,partnerCalls=0,admissionCalls=0,sourceCommits=0;const sourceWrites=[];
+    let klaviyoCalls=0,partnerCalls=0,admissionCalls=0,sourceCommits=0,verifiedPackages=0;const sourceWrites=[];
     function poolFactory(role){return ()=>({on(){},async end(){},async connect(){const name="first_rpc_"+(++ordinal);let committed=false,lastSql="";return {release(){},async query(sql,args){
      if(sql==="begin")return client.query("savepoint "+name);
      if(sql==="commit"){await client.query("set local role adstable_owner");await client.query("release savepoint "+name);committed=true;if(mode==="lost_admission"&&lastSql.includes("commit_klaviyo_raw_preflight")||mode==="lost_write"&&sourceCommits===2&&lastSql.includes("commit_klaviyo_dataset_source"))throw Error("SYNTHETIC-LOST");return {rows:[]};}
      if(sql==="rollback"){if(!committed){await client.query("rollback to savepoint "+name);await client.query("release savepoint "+name);}await client.query("set local role adstable_owner");return {rows:[]};}
      if(sql.startsWith("select pg_catalog.set_config"))return client.query(sql,args);
      assert.ok(!sql.includes("commit_refresh_preflight"),"private Klaviyo path cannot call generic admission");
-     await client.query("set local role "+role);let result;try{result=await client.query(sql,args);}catch(error){console.error("EO05_KLAVIYO_FIRST_DAY_RPC_STOP "+JSON.stringify({role,rpc:sql.match(/^select ([a-z_]+\.[a-z_]+)/)?.[1]??"profile",code:error.code??"UNCONFIRMED",routine:error.routine,constraint:error.constraint}));throw error;}await client.query("set local role adstable_owner");lastSql=sql;
+     await client.query("set local role "+role);
+     if(mode==="nonempty" && sql.includes("commit_klaviyo_dataset_source") && sourceCommits===2){
+      const owner=JSON.parse(args[0]), body=JSON.parse(args[3]), read=JSON.parse(args[4]);
+      const cipher=createConfiguredSourceEvidenceCipher(environment);
+      const pages=body.pages.map(page=>cipher.open({owner,attemptId:args[1],ordinal:0,page}));
+      await client.query("savepoint verify_product_packages");
+      try{
+       const receipts=await storeKlaviyoRawProductPackages({
+        database:client,owner,attemptId:randomUUID(),pages,read,cipher,policy:body.policy,
+        limits:{maxRows:7,maxBytes:1048576},now:new Date().toISOString(),maxPackages:2,guard:async()=>{},
+       });
+       assert.deepEqual(receipts.map(x=>[x.ordinal,x.receiptVerified,x.contentVerified]),[[0,true,true],[1,true,true]]);
+       await client.query("set local role adstable_owner");
+       const ids=receipts.map(x=>x.batchId);
+       const verify=(list,fence=read.fence)=>client.query(
+        "select evidence.assert_klaviyo_daily_product_packages($1::jsonb,$2::text,$3::bigint,$4::date,$5::jsonb)",
+        [JSON.stringify(owner),read.jobId,fence,read.window.from,JSON.stringify(list)]);
+       await verify(ids);
+       for(const [list,fence] of [[ids.slice(0,1),read.fence],[[...ids].reverse(),read.fence],[ids,String(BigInt(read.fence)+1n)]]){
+        await client.query("savepoint reject_wrong_product_package_group");
+        try {
+         await assert.rejects(verify(list,fence),/KLAVIYO_DAILY_SOURCE_GROUP_INVALID/);
+        } finally {
+         await client.query("rollback to savepoint reject_wrong_product_package_group");
+         await client.query("release savepoint reject_wrong_product_package_group");
+        }
+       }
+       verifiedPackages=receipts.length;
+      }finally{
+       await client.query("rollback to savepoint verify_product_packages");
+       await client.query("release savepoint verify_product_packages");
+      }
+     }
+     let result;try{result=await client.query(sql,args);}catch(error){console.error("EO05_KLAVIYO_FIRST_DAY_RPC_STOP "+JSON.stringify({role,rpc:sql.match(/^select ([a-z_]+\.[a-z_]+)/)?.[1]??"profile",code:error.code??"UNCONFIRMED",routine:error.routine,constraint:error.constraint}));throw error;}await client.query("set local role adstable_owner");lastSql=sql;
      if(sql.includes("commit_klaviyo_raw_preflight"))admissionCalls++;
      if(sql.includes("commit_klaviyo_dataset_source")){sourceCommits++;sourceWrites.push(structuredClone(args));}
      if(mode==="tampered_page"&&sourceCommits===2&&sql.startsWith("select evidence.read_source_pages(")&&result.rows[0]?.result?.length)result.rows[0].result[0].ciphertext="00";
@@ -121,7 +157,7 @@ export async function klaviyoFirstDayRehearsal(client,{workspace,shopId,shopDoma
      const complete=["zero_repeat","nonempty"].includes(mode);
      assert.equal(result.status,complete?"stored":"partial",JSON.stringify({mode,result,klaviyoCalls,partnerCalls,admissionCalls}));assert.equal(result.jobPaused,true);assert.equal(result.sourceStored,true);assert.equal(partnerCalls,1);
      if(!complete){assert.equal(result.recordCount,null);assert.equal(result.datasets.account_performance.recordCount,null);assert.equal(result.datasets.account_performance.empty,null);}
-     if(mode==="nonempty")assert.equal(result.datasets.product_performance.recordCount,1);
+     if(mode==="nonempty"){assert.equal(result.datasets.product_performance.recordCount,1);assert.equal(verifiedPackages,2);}
      for(const dataset of Object.values(result.datasets)){assert.equal(dataset.contentVerified,true);assert.equal(dataset.eligibility.timezone,"UTC");assert.equal(dataset.eligibility.businessDate,dates.today);assert.equal(dataset.eligibility.includesPreConnectionHours,true);assert.equal(dataset.eligibility.authorizesReportingDataset,false);}
      if(mode==="zero_repeat"){assert.notEqual((await run()).status,"stored");assert.equal(klaviyoCalls,11);assert.equal(partnerCalls,1);}
     }else{assert.notEqual(result.status,"stored");assert.equal(result.recordCount,null);assert.equal(result.empty,null);if(mode==="lost_admission"){assert.equal(klaviyoCalls+partnerCalls,0);assert.equal(admissionCalls,1);}if(["permission","throttled"].includes(mode))assert.equal(klaviyoCalls,1);}

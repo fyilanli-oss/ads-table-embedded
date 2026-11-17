@@ -32,6 +32,40 @@ export function canonicalDatasetEventTime(value) {
   return new Date(seconds).toISOString().slice(0, 19) + "." + (m[2] ?? "").padEnd(6, "0") + "Z";
 }
 
+/** Prepare bounded requests for one daily reconciliation without publishing
+ * rows. The existing single-request caller retains its original limits. */
+export function prepareDailyDatasetPackages({owner,rows,policy,operationId,now,context,maxPackages=1}) {
+  if (!Number.isSafeInteger(maxPackages) || maxPackages<1 || maxPackages>20) fail("PACKAGE_LIMIT");
+  const prepare = chunk => {
+    const write=chunk.length ? prepareDatasetWrite({owner,rows:chunk,policy,operationId,now}).body
+      : {version:"eo05b-storage-v1",operationId,policy,rows:[]};
+    if (Buffer.byteLength(canonicalSourceJson({write,context}))>1048576) fail("BYTE_LIMIT");
+    return write;
+  };
+  if (maxPackages===1 || rows.length===0) return [prepare(rows)];
+  if (owner.provider!=="klaviyo" || rows.length>maxPackages*200) fail("PACKAGE_LIMIT");
+  const packages=[],keys=new Set();
+  for (let offset=0;offset<rows.length;) {
+    if (packages.length===maxPackages) fail("PACKAGE_LIMIT");
+    let size=Math.min(200,rows.length-offset),write;
+    for (;;) {
+      try {write=prepare(rows.slice(offset,offset+size));break;}
+      catch (error) {
+        if (size===1 || !["DATASET_WRITE_TOO_LARGE","DATASET_RECONCILIATION_BYTE_LIMIT"].includes(error?.message)) throw error;
+        size=Math.floor(size/2);
+      }
+    }
+    for (const {table,row} of write.rows) {
+      const key=table+":"+row.native_key_hash;
+      if (keys.has(key)) fail("DUPLICATE_NATIVE_KEY");
+      keys.add(key);
+    }
+    packages.push(write);
+    offset+=size;
+  }
+  return packages;
+}
+
 /** Fixed private projection of actual AEAD-verified source pages only. The SQL
  * transaction revalidates full coverage, CAS, read order, rows and exact hashes
  * before atomically issuing the real source-consumption/day checkpoint receipt.
@@ -49,6 +83,10 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
   if (admittedScope !== undefined && (source.scope.jobId !== admittedScope?.jobId
     || source.scope.fence !== admittedScope.fence || source.scope.window.from !== admittedScope.from
     || source.scope.window.to !== admittedScope.to)) fail("ADMITTED_SCOPE_MISMATCH");
+  if (source.datasets.some(d => d.read.packageCount !== undefined)) return freezeMaturity({
+    status: "held", holds: [{reason: "daily_package_handoff_required"}], sourceVerified: true, rowsStored: 0,
+    consumerReceipt: false, checkpointAdvanced: false, reportValuesChanged: false, publishable: false, authorizesActivation: false,
+  });
   const projection = projectors[bound.provider](source);
   for (const {row} of projection.rows) if (row.occurred_at !== null && row.occurred_at !== undefined) row.occurred_at = canonicalDatasetEventTime(row.occurred_at);
   const configuration = source.datasets.filter(d => d.dataset === "configuration").flatMap(d => d.pages.map(p => p.ref));
@@ -64,14 +102,12 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
   if (source.datasets.some(d => d.source.timezone !== timeZone)) fail("TIMEZONE_MISMATCH");
   const clocks = source.datasets.map(d => ({started: maturityInstant(d.read.observedAt), completed: maturityInstant(d.read.completedAt)}));
   if (clocks.some(c => c.completed < c.started || Date.parse(c.completed) > now())) fail("CLOCK_INVALID");
-  const policy = resolveReportRetentionPolicy({businessDate, timeZone});
-  const write = projection.rows.length ? prepareDatasetWrite({owner: bound, rows: projection.rows, policy: reportRetentionPolicy(), operationId, now: new Date(now()).toISOString()}).body
-    : {version: "eo05b-storage-v1", operationId, policy, rows: []};
   const context = {version: DATASET_RECONCILIATION_VERSION, expectedRevision, businessDate, timeZone,
     sourceContext: source.datasets[0].sourceContext, sources: source.datasets.flatMap(d => d.pages.map(p => p.ref)),
     batchIds: source.datasets.map(d => d.receipt.batchId),
     startedAt: clocks.map(c => c.started).sort()[0], completedAt: clocks.map(c => c.completed).sort().at(-1)};
-  if (Buffer.byteLength(canonicalSourceJson({write, context})) > 1048576) fail("BYTE_LIMIT");
+  const policy=projection.rows.length ? reportRetentionPolicy() : resolveReportRetentionPolicy({businessDate,timeZone});
+  const [write]=prepareDailyDatasetPackages({owner:bound,rows:projection.rows,policy,operationId,now:new Date(now()).toISOString(),context});
   const requestDigest = sourcePayloadHash({write, context});
   stop(); let receipt;
   try {

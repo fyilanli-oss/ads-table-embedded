@@ -238,8 +238,13 @@ export function createSourceEvidenceRepository(database) {
           ||!instant(read.observedAt)||!instant(read.completedAt)||!instant(read.deadlineAt))fail("READ_BINDING_INVALID");
       }
       if(read!==null&&kind==="klaviyo_dataset"){
-        exact(read,["jobId","fence","window","observedAt","operationId","quotaContext","completedAt","deadlineAt","dataset","coverage"]);
-        if(write.owner.provider!=="klaviyo"||write.ordinal!==0||!uuid.test(read.operationId)||!text(read.jobId,256)||!id(read.fence)
+        const multipart = Object.hasOwn(read,"packageCount");
+        exact(read,["jobId","fence","window","observedAt","operationId","quotaContext","completedAt","deadlineAt","dataset","coverage",
+          ...(multipart?["packageCount"]:[])]);
+        if(write.owner.provider!=="klaviyo"||(!multipart&&write.ordinal!==0)
+          ||(multipart&&(!Number.isInteger(read.packageCount)||read.packageCount<2||read.packageCount>20
+            ||write.ordinal>=read.packageCount||read.dataset!=="product_performance"||write.body.sourceState!=="partial"))
+          ||!uuid.test(read.operationId)||!text(read.jobId,256)||!id(read.fence)
           ||!["configuration","account_performance","product_performance"].includes(read.dataset)||!Array.isArray(read.coverage)
           ||!instant(read.observedAt)||!instant(read.completedAt)||!instant(read.deadlineAt))fail("READ_BINDING_INVALID");
       }

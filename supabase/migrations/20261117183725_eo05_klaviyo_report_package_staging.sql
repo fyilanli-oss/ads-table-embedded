@@ -137,5 +137,57 @@ end $fn$;
 
 revoke all on function analytics.verify_klaviyo_daily_report_stage(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)
   from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+
+-- Compare the proposed day with physical facts without including individual
+-- rows or change entries in the compact daily evidence.
+create function analytics.check_klaviyo_daily_report_facts(
+  o jsonb, c jsonb, d timestamptz, operation uuid, policy jsonb, digests jsonb
+) returns jsonb
+language plpgsql security definer set search_path='' as $fn$
+declare
+  summary jsonb;
+  item jsonb;
+  fact jsonb;
+  table_name text;
+  day date := (c->>'businessDate')::date;
+  total integer:=0;
+  n integer;
+  w uuid := (o->>'workspaceId')::uuid;
+  i bigint := (o->>'installationId')::bigint;
+  g bigint := (o->>'generation')::bigint;
+  a text := o->>'accountId';
+begin
+  summary:=analytics.verify_klaviyo_daily_report_stage(o,c,d,operation,policy,digests);
+  foreach table_name in array array['pd_facts','cpd_product_performance_facts','cpd_product_sales_facts'] loop
+    execute format('select count(*)::int from (select id from analytics.%I where workspace_id=$1 and installation_id=$2 and installation_generation=$3 and platform=''klaviyo'' and platform_account_id=$4 and business_date=$5 limit 4001) actual',table_name)
+      into n using w,i,g,a,day;
+    total:=total+n;
+  end loop;
+  if total<>(summary->>'rowCount')::integer then raise exception 'KLAVIYO_REPORT_FACT_READBACK_MISMATCH'; end if;
+  for item in
+    select value from pg_temp.adstable_klaviyo_daily_report_stage s
+    cross join lateral jsonb_array_elements(s.body->'rows')
+  loop
+    table_name:=item->>'table';
+    if table_name not in ('pd_facts','cpd_product_sales_facts') or table_name is null then
+      raise exception 'KLAVIYO_REPORT_FACT_READBACK_MISMATCH';
+    end if;
+    execute format('select to_jsonb(x) from analytics.%I x where workspace_id=$1 and installation_id=$2 and installation_generation=$3 and platform=''klaviyo'' and platform_account_id=$4 and business_date=$5 and grain_version=$6 and native_key_hash=$7 for share',table_name)
+      into fact using w,i,g,a,day,item->'row'->>'grain_version',item->'row'->>'native_key_hash';
+    if fact is null or fact->>'provider_connection_id' is distinct from o->>'connectionId'
+      or fact->>'native_key_canonical' is distinct from item->'row'->>'native_key_canonical'
+      or (fact->>'retain_until')::timestamptz<=clock_timestamp()
+      or fact->>'payload_digest' is distinct from item->'row'->>'payload_digest'
+      or analytics.reconciliation_fact_digest(table_name,fact) is distinct from item->'row'->>'payload_digest' then
+      raise exception 'KLAVIYO_REPORT_FACT_READBACK_MISMATCH';
+    end if;
+  end loop;
+  if d<=clock_timestamp() then raise exception 'DATASET_RECONCILIATION_DEADLINE'; end if;
+  summary:=(summary-'digest')||jsonb_build_object('comparison','matched','status','facts_verified');
+  return summary||jsonb_build_object('digest',analytics.dataset_digest(summary));
+end $fn$;
+
+revoke all on function analytics.check_klaviyo_daily_report_facts(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)
+  from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
 reset role;
 commit;

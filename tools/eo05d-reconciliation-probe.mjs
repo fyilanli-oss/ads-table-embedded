@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {randomUUID} from "node:crypto";
 import {storedBindingFixture} from "./eo05b-source-dataset-binding-probe.mjs";
 import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
-import {reconcileStoredDatasetSources, inspectDatasetReconciliation, DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {reconcileStoredDatasetSources, inspectDatasetReconciliation, canonicalDatasetEventTime, DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
 import {storeMaturityConfiguration, recordMaturityDecision, inspectMaturityDecision} from "../app/lib/database/maturity-store.server.js";
 import {maturityObservationFixture} from "../tests/fixtures/maturity-fixture.js";
 import {createScheduledDatasetPostgresClient} from "../app/lib/database/dataset-postgres.server.js";
@@ -23,6 +23,11 @@ async function probeKlaviyoReportStage(client,owner,input,previous) {
   const bundle=await readStoredDatasetSources(input);
   const projection=projectStoredKlaviyoDataset(bundle);
   assert.equal(projection.rows.length,2);
+  const configuration=bundle.datasets.find(d=>d.dataset==="configuration").pages.map(page=>page.ref);
+  for(const {row} of projection.rows) {
+    if(row.occurred_at!=null) row.occurred_at=canonicalDatasetEventTime(row.occurred_at);
+    row.provenance.sources=[...new Map([...row.provenance.sources,...configuration].map(ref=>[ref.page_id,ref])).values()];
+  }
   const operationId=randomUUID(),day=bundle.scope.window.from,job=bundle.scope.jobId;
   const deadline=new Date(input.limits.deadlineAt).toISOString();
   const writes=projection.rows.map(item=>prepareDatasetWrite({
@@ -54,6 +59,9 @@ async function probeKlaviyoReportStage(client,owner,input,previous) {
     const verify=(digests)=>client.query(
       "select analytics.verify_klaviyo_daily_report_stage($1::jsonb,$2::jsonb,$3::timestamptz,$4::uuid,$5::jsonb,$6::jsonb) result",
       [JSON.stringify(owner),JSON.stringify(context),deadline,operationId,JSON.stringify(writes[0].policy),JSON.stringify(digests)]);
+    const checkFacts=(digests)=>client.query(
+      "select analytics.check_klaviyo_daily_report_facts($1::jsonb,$2::jsonb,$3::timestamptz,$4::uuid,$5::jsonb,$6::jsonb) result",
+      [JSON.stringify(owner),JSON.stringify(context),deadline,operationId,JSON.stringify(writes[0].policy),JSON.stringify(digests)]);
     const digests=writes.map(write=>sourcePayloadHash({write,context}));
     assert.match((await rejected(client,()=>send(1))).message,/KLAVIYO_REPORT_STAGE_REQUIRED/);
     const prior=async()=>inspectDatasetReconciliation({database:client,owner,operationId:previous.operationId});
@@ -73,12 +81,25 @@ async function probeKlaviyoReportStage(client,owner,input,previous) {
       await client.query("rollback to savepoint report_stage_duplicate_row");
       await client.query("release savepoint report_stage_duplicate_row");
     }
+    await client.query("savepoint report_stage_wrong_fact");
+    try {
+      const wrong=structuredClone(writes[1]);
+      wrong.rows[0].row.payload_digest="a".repeat(64);
+      const changed=(await send(1,context,wrong)).rows[0].result;
+      assert.match((await rejected(client,()=>checkFacts([staged.digest,changed.digest]))).message,/KLAVIYO_REPORT_FACT_READBACK_MISMATCH/);
+      assert.deepEqual(await prior(),previous);
+    } finally {
+      await client.query("rollback to savepoint report_stage_wrong_fact");
+      await client.query("release savepoint report_stage_wrong_fact");
+    }
     assert.equal((await send(1)).rows[0].result.ordinal,1);
     assert.match((await rejected(client,()=>verify([...digests].reverse()))).message,/KLAVIYO_REPORT_PACKAGE_VERIFICATION_FAILED/);
     const summary={status:"stage_verified",operationId,rowCount:2,packageCount:2,
       packages:digests.map((digest,ordinal)=>({ordinal,rowCount:1,digest})),
       consumerReceipt:false,checkpointAdvanced:false};
     assert.deepEqual((await verify(digests)).rows[0].result,{...summary,digest:sourcePayloadHash(summary)});
+    const verified={...summary,status:"facts_verified",comparison:"matched"};
+    assert.deepEqual((await checkFacts(digests)).rows[0].result,{...verified,digest:sourcePayloadHash(verified)});
     assert.deepEqual(await prior(),previous);
     assert.equal((await client.query("select count(*)::int n from pg_temp.adstable_klaviyo_daily_report_stage")).rows[0].n,2);
   } finally {

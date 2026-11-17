@@ -5,6 +5,11 @@ import {bindStoredDatasetSources} from "../app/lib/database/dataset-source-bindi
 import {readStoredDatasetSources} from "../app/lib/database/dataset-source-reader.server.js";
 import {sourceDecimal, addSourceDecimals} from "../app/lib/database/dataset-source-values.server.js";
 import {projectStoredGoogleDataset} from "../app/lib/providers/stored-dataset-projection.server.js";
+import {projectStoredKlaviyoDataset} from "../app/lib/providers/stored-klaviyo-dataset.server.js";
+import {prepareKlaviyoRawDatasetPackages} from "../app/lib/database/klaviyo-dataset-source-store.server.js";
+import {sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
+import {sourceStoreFixture} from "./fixtures/source-store-fixture.js";
+import {randomUUID} from "node:crypto";
 
 test("lossless native decimal tokens normalize exponent/scale and micros without a floating point conversion", () => {
   assert.equal(sourceDecimal({jsonNumber: "9007199254740993.123456789"}), "9007199254740993.123456789");
@@ -50,6 +55,43 @@ test("Klaviyo keeps unrelated native metrics as evidence without using them as S
   assert.equal(r.status, "stored"); assert.equal(r.rowsStored, 2);
   const sale = f.writes[0].rows.find(x => x.table === "cpd_product_sales_facts").row;
   assert.equal(sale.product_context.metric_id, "product");
+});
+
+test("Klaviyo reads only complete ordered package groups and blocks legacy report writes", async () => {
+  const f=await datasetSourceBindingFixture("klaviyo");
+  const input=f.batches.at(-1),original=f.envelopes.get(input.attemptId);
+  const read={...original.receipt.manifest.klaviyoDatasetRead,packageCount:2};
+  const seed=sourceStoreFixture().input;
+  const writes=prepareKlaviyoRawDatasetPackages({owner:f.owner,attemptId:input.attemptId,complete:false,
+    pages:f.native.find(d=>d.dataset==="product_performance").pages,cipher:f.cipher,
+    policy:seed.policy,now:seed.now,limits:{maxRows:7,maxBytes:1048576},maxPackages:2});
+  assert.equal(writes.length,2);
+  const parts=writes.map((write,ordinal)=>{
+    const digest=sourcePayloadHash(write.body);
+    return {receipt:{status:"committed",sourceState:"partial",batchId:String(300+ordinal),commitId:randomUUID(),digest,
+      manifest:{counts:{pages:write.body.pages.length},klaviyoDatasetRead:read,klaviyoDatasetInputDigest:digest,
+        klaviyoPackageCoverage:{pages:ordinal,events:ordinal}}},
+      pages:write.body.pages.map((page,i)=>({...page,id:String(400+ordinal*10+i),available:true,expired:false,retentionPruned:false}))};
+  });
+  f.hooks.query=(sql,args)=>{
+    if(args[1]!==input.attemptId)return;
+    const part=parts[args[2]];
+    if(sql.includes("read_source_receipt"))return {rows:[{result:structuredClone(part.receipt)}]};
+    if(sql.includes("read_source_pages"))return {rows:[{result:part.pages.filter(p=>BigInt(p.id)>BigInt(args[3])).slice(0,args[4])}]};
+  };
+  const batches=[...f.batches,{...input,ordinal:1}];
+  const bundle=await readStoredDatasetSources({...f,batches});
+  assert.equal(bundle.datasets.at(-1).receipt.sourceState,"partial");
+  assert.deepEqual(bundle.datasets.at(-1).packageReceipts,parts.map(part=>part.receipt));
+  const sale=projectStoredKlaviyoDataset(bundle).rows.find(x=>x.table==="cpd_product_sales_facts");
+  assert.equal(sale.row.provider_event_id,"event-1");
+  assert.ok(sale.row.provenance.sources.some(ref=>ref.batch_id===parts[1].receipt.batchId));
+  assert.equal((await bindStoredDatasetSources({...f,batches})).status,"held");
+  assert.deepEqual(f.writes,[]);
+  await assert.rejects(readStoredDatasetSources(f),/PACKAGE_INCOMPLETE/);
+  await assert.rejects(readStoredDatasetSources({...f,batches:[...f.batches,{...input,ordinal:2}]}),/BATCH_INPUT_INVALID/);
+  parts[1].receipt.manifest.klaviyoPackageCoverage.events=2;
+  await assert.rejects(readStoredDatasetSources({...f,batches}),/PACKAGE_COVERAGE_INVALID/);
 });
 
 test("Klaviyo missing metric remains unknown/partial rather than zero", async () => {

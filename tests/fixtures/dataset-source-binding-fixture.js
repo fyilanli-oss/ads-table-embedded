@@ -33,7 +33,7 @@ async function nativeKlaviyoPage(path, body, request = null) {
 
 /** All native responses/credentials/owners are synthetic. Real capture projection,
  * AEAD and decrypt paths are used; this fake DB is not SQL/native acceptance. */
-export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", owner: givenOwner = null, cipher: givenCipher = null} = {}) {
+export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", owner: givenOwner = null, cipher: givenCipher = null, klaviyoProductEvents = 0} = {}) {
   const owner = givenOwner ? structuredClone(givenOwner) : datasetStorageFixture().owner;
   if (!givenOwner) {owner.installationId = "1"; owner.provider = provider; owner.accountId = provider === "meta" ? "act_123" : provider === "klaviyo" ? "account-1" : "123";}
   if (provider === "klaviyo") owner.selectionEpoch = null;
@@ -71,7 +71,7 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
       const input = {accessToken: "synthetic", businessDate: day, timeZone: "UTC", conversionMetricId: id};
       const request = name === "Placed Order" ? (kind === "campaign" ? buildKlaviyoCampaignValuesRequest : buildKlaviyoFlowValuesRequest)(input)
         : buildKlaviyoPdValuesRequest({...input, kind, conversionMetricName: name});
-      const records = nonempty && kind === "campaign" ? [{groupings: {campaign_id: "campaign-1", campaign_name: "Campaign", campaign_message_id: "message-1", campaign_message_name: "Message", send_channel: "email"},
+      const records = nonempty && !klaviyoProductEvents && kind === "campaign" ? [{groupings: {campaign_id: "campaign-1", campaign_name: "Campaign", campaign_message_id: "message-1", campaign_message_name: "Message", send_channel: "email"},
         statistics: {delivered: "9007199254740993", clicks: "4", conversions: "2.5", conversion_value: "12.500000000000000001"}}] : [];
       reports.push(await nativeKlaviyoPage("/api/" + kind + "-values-reports", {data: {type: kind + "-values-report", attributes: {results: records}}, links: {next: null}}, request));
       coverage.push({family: kind + ":" + name, metricId: id, state: "present", pageCount: 1, recordCount: records.length});
@@ -79,18 +79,34 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
     const event = {type: "event", id: "event-1", attributes: {datetime: day + "T12:00:00Z", event_properties: {ProductID: "product-1", Quantity: "2.5", $value: "12.500000000000000001"}},
       relationships: {metric: {data: {type: "metric", id: "product"}}, attributions: {data: [{type: "attribution", id: "attribution-1"}]}}};
     if (eventOrderId !== null) event.attributes.event_properties.OrderId = eventOrderId;
-    const events = await nativeKlaviyoPage("/api/events", {data: nonempty ? [event] : [], included: nonempty ? [{type: "attribution", id: "attribution-1", relationships: {
-      campaign: {data: {type: "campaign", id: "campaign-1"}}, "campaign-message": {data: {type: "campaign-message", id: "message-1"}}, event: {data: {type: "event", id: "event-1"}}}}] : [], links: {next: null}});
+    const eventRows = klaviyoProductEvents ? Array.from({length: klaviyoProductEvents}, (_, index) => {
+      const record = structuredClone(event);
+      record.id = "event-" + (index + 1);
+      record.attributes.event_properties.OrderId = "order-" + (index + 1);
+      record.relationships.attributions.data[0].id = "attribution-" + (index + 1);
+      return record;
+    }) : nonempty ? [event] : [];
+    const events = [];
+    const pageSize = 40;
+    for (let offset = 0; offset < Math.max(1, eventRows.length); offset += pageSize) {
+      const data = eventRows.slice(offset, offset + pageSize);
+      const included = data.map(record => ({type: "attribution", id: record.relationships.attributions.data[0].id, relationships: {
+        campaign: {data: {type: "campaign", id: "campaign-1"}}, "campaign-message": {data: {type: "campaign-message", id: "message-1"}}, event: {data: {type: "event", id: record.id}},
+      }}));
+      const next = offset + pageSize < eventRows.length ? "https://a.klaviyo.com/api/events?page%5Bcursor%5D=" + (offset + pageSize) : null;
+      events.push(await nativeKlaviyoPage("/api/events", {data, included, links: {next}}));
+    }
     native.push({dataset: "configuration", pages: proof, coverage: [{family: "accounts", state: "present"}, {family: "metrics", state: "present"}]},
       {dataset: "account_performance", pages: [...proof, ...reports], partial: missingMetric, coverage},
-      {dataset: "product_performance", pages: [...proof, events], coverage: [{family: "ordered_product_events", metricId: "product", state: "present", pageCount: 1, recordCount: nonempty ? 1 : 0}]});
+      {dataset: "product_performance", pages: [...proof, ...events], coverage: [{family: "ordered_product_events", metricId: "product", state: "present", pageCount: events.length, recordCount: eventRows.length}]});
   }
   const seed = sourceStoreFixture({owner, ...givenCipher ? {cipher: givenCipher} : {}}), cipher = seed.input.cipher, batches = [], envelopes = new Map(); let nextId = 100;
   for (const item of native) {
     const attemptId = randomUUID(), pages = item.pages.map((page, ordinal) => ({key: "p" + ordinal, family: page.family, ordinal, origin: provider,
       captureLayer: "native_response_projection", numericFidelity: "lossless_token", fieldCoverage: page.selectedFields ?? ["records"], schemaVersion: spec.schema, sanitizerVersion: spec.sanitizer, payload: page}));
     const records = Object.fromEntries(["references", "rules", "mappings", "orders", "lines", "journeys", "claims", "links"].map(k => [k, []]));
-    const f = sourceStoreFixture({owner, cipher, attemptId, sourceState: item.partial ? "partial" : "complete", pages, records});
+    const f = sourceStoreFixture({owner, cipher, attemptId, sourceState: item.partial ? "partial" : "complete", pages, records,
+      ...klaviyoProductEvents ? {limits: {maxBytes: 500_000, maxRows: 100}} : {}});
     const write = f.prepare(), batchId = String(++nextId), read = {jobId, fence, window, operationId, dataset: item.dataset, ...(item.coverage ? {coverage: item.coverage} : {})};
     const receipt = {status: "committed", batchId, commitId: randomUUID(), digest: sourcePayloadHash(write.body), sourceState: write.body.sourceState,
       manifest: {counts: {pages: pages.length}, [spec.read]: read, [spec.digest]: sourcePayloadHash(write.body)}};

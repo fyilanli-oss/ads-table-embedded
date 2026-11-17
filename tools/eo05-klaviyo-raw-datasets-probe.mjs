@@ -111,6 +111,21 @@ export async function klaviyoFirstDayRehearsal(client,{workspace,shopId,shopDoma
         limits:{maxRows:7,maxBytes:1048576},now:new Date().toISOString(),maxPackages:2,guard:async()=>{},
        });
        assert.deepEqual(receipts.map(x=>[x.ordinal,x.receiptVerified,x.contentVerified]),[[0,true,true],[1,true,true]]);
+       await client.query("set local role adstable_owner");
+       const ids=receipts.map(x=>x.batchId);
+       const verify=(list,fence=read.fence)=>client.query(
+        "select evidence.assert_klaviyo_daily_product_packages($1::jsonb,$2::text,$3::bigint,$4::date,$5::jsonb)",
+        [JSON.stringify(owner),read.jobId,fence,read.window.from,JSON.stringify(list)]);
+       await verify(ids);
+       for(const [list,fence] of [[ids.slice(0,1),read.fence],[[...ids].reverse(),read.fence],[ids,String(BigInt(read.fence)+1n)]]){
+        await client.query("savepoint reject_wrong_product_package_group");
+        try {
+         await assert.rejects(verify(list,fence),/KLAVIYO_DAILY_SOURCE_GROUP_INVALID/);
+        } finally {
+         await client.query("rollback to savepoint reject_wrong_product_package_group");
+         await client.query("release savepoint reject_wrong_product_package_group");
+        }
+       }
        verifiedPackages=receipts.length;
       }finally{
        await client.query("rollback to savepoint verify_product_packages");

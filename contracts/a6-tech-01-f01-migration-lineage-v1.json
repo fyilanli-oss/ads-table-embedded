@@ -1072,7 +1072,7 @@
       "name": "eo05_klaviyo_daily_raw_packages",
       "file": "supabase/migrations/20261117174509_eo05_klaviyo_daily_raw_packages.sql",
       "created_with": "supabase@2.121.0 migration new eo05_klaviyo_daily_raw_packages",
-      "repository_sql_sha256": "17a7e1baa3adb2874d8a07eab3bc8c2ba651eb4bc42bc4badde0cebd721a2d74",
+      "repository_sql_sha256": "55b131b38f01a944b2623b0a5ea6d684586016e1da2ee52d60718d77c41ab475",
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false

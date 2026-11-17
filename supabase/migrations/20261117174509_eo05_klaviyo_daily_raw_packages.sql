@@ -122,5 +122,75 @@ begin
  if (r->>'deadlineAt')::timestamptz<=clock_timestamp() then raise exception 'KLAVIYO_DATASET_READ_EXPIRED';end if;
  return evidence.read_source_receipt(o,p_attempt,p_ordinal);
 end $fn$;
+
+-- Validate the original physical package receipts as a single input to the
+-- daily writer. This never mutates a source package or consumes its handoff.
+create function evidence.assert_klaviyo_daily_product_packages(
+ o jsonb,j text,f bigint,d date,ids jsonb
+) returns void
+language plpgsql security definer set search_path='' as $fn$
+declare
+ b evidence.source_batches%rowtype;
+ v jsonb;
+ native_read jsonb;
+ binding jsonb;
+ attempt uuid;
+ ordinal integer:=0;
+ package_count integer;
+ event_pages integer:=0;
+ event_records integer:=0;
+ actual_pages integer;
+ actual_events integer;
+begin
+ perform evidence.assert_source_owner(o);
+ if o->>'provider' is distinct from 'klaviyo' or j is null or f is null or d is null
+  or jsonb_typeof(ids) is distinct from 'array' then raise exception 'KLAVIYO_DAILY_SOURCE_GROUP_INVALID'; end if;
+ package_count:=jsonb_array_length(ids);
+ if package_count not between 2 and 20 then raise exception 'KLAVIYO_DAILY_SOURCE_GROUP_INVALID'; end if;
+ for v in select value from jsonb_array_elements(ids) loop
+  if jsonb_typeof(v) is distinct from 'string' or (v#>>'{}') !~ '^[1-9][0-9]{0,18}$' then
+   raise exception 'KLAVIYO_DAILY_SOURCE_GROUP_INVALID';
+  end if;
+  select * into b from evidence.source_batches
+   where id=(v#>>'{}')::bigint and workspace_id=(o->>'workspaceId')::uuid
+   and installation_id=(o->>'installationId')::bigint and installation_generation=(o->>'generation')::bigint
+   and authority=o for share;
+  if not found or b.batch_ordinal<>ordinal or b.storage_state<>'committed' or b.source_state<>'partial'
+   or b.handoff_state<>'pending' or b.retain_until<=clock_timestamp()
+   or b.manifest->'privacyRedacted'='true'::jsonb then
+   raise exception 'KLAVIYO_DAILY_SOURCE_GROUP_INVALID';
+  end if;
+  native_read:=b.manifest->'klaviyoDatasetRead';
+  if ordinal=0 then attempt:=b.attempt_id;binding:=native_read;end if;
+  if b.attempt_id is distinct from attempt or native_read is distinct from binding
+   or native_read->>'dataset' is distinct from 'product_performance'
+   or native_read->'packageCount' is distinct from to_jsonb(package_count)
+   or native_read->>'jobId' is distinct from j or native_read->>'fence' is distinct from f::text
+   or native_read->'window' is distinct from jsonb_build_object('from',d,'to',d) then
+   raise exception 'KLAVIYO_DAILY_SOURCE_GROUP_INVALID';
+  end if;
+  if exists(select 1 from evidence.source_pages p where p.batch_id=b.id
+    and (p.purged_at is not null or p.retain_until<=clock_timestamp())) then
+   raise exception 'KLAVIYO_DAILY_SOURCE_GROUP_INVALID';
+  end if;
+  select count(*)::integer into actual_pages from evidence.source_pages p
+   where p.batch_id=b.id and p.family='klaviyo_ordered_product_events';
+  select count(*)::integer into actual_events from evidence.source_references r
+   join evidence.source_pages p on p.id=r.page_id where p.batch_id=b.id and p.family='klaviyo_ordered_product_events';
+  event_pages:=event_pages+actual_pages;
+  event_records:=event_records+actual_events;
+  if b.manifest->'klaviyoPackageCoverage' is distinct from jsonb_build_object('pages',event_pages,'events',event_records) then
+   raise exception 'KLAVIYO_DAILY_SOURCE_COVERAGE_INVALID';
+  end if;
+  ordinal:=ordinal+1;
+ end loop;
+ if binding->'coverage'->0->>'state' is distinct from 'present'
+  or binding->'coverage'->0->'pageCount' is distinct from to_jsonb(event_pages)
+  or binding->'coverage'->0->'recordCount' is distinct from to_jsonb(event_records) then
+  raise exception 'KLAVIYO_DAILY_SOURCE_COVERAGE_INVALID';
+ end if;
+end $fn$;
+revoke all on function evidence.assert_klaviyo_daily_product_packages(jsonb,text,bigint,date,jsonb)
+ from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
 reset role;
 commit;

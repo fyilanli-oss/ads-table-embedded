@@ -344,5 +344,94 @@ end $fn$;
 
 revoke all on function analytics.plan_klaviyo_staged_report_replacement(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)
   from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+
+-- Isolated replacement step. Reuse the normal row revision permit, retention
+-- checks and package writer. Publication still requires a separate receipt.
+create function analytics.replace_klaviyo_staged_report_day(
+  o jsonb,c jsonb,d timestamptz,operation uuid,policy jsonb,digests jsonb
+) returns jsonb
+language plpgsql security definer set search_path='' as $fn$
+declare
+  s record;
+  item jsonb;
+  r jsonb;
+  old_fact jsonb;
+  written jsonb;
+  table_name text;
+  allowed text[];
+  assignments text;
+  staged_keys jsonb;
+  source_id bigint;
+  day date := (c->>'businessDate')::date;
+  w uuid := (o->>'workspaceId')::uuid;
+  i bigint := (o->>'installationId')::bigint;
+  g bigint := (o->>'generation')::bigint;
+  a text := o->>'accountId';
+begin
+  perform analytics.plan_klaviyo_staged_report_replacement(o,c,d,operation,policy,digests);
+  foreach table_name in array array['pd_facts','cpd_product_performance_facts','cpd_product_sales_facts'] loop
+    select coalesce(jsonb_object_agg(item->'row'->>'native_key_hash',true),'{}'::jsonb)
+      into staged_keys from pg_temp.adstable_klaviyo_daily_report_stage s
+      cross join lateral jsonb_array_elements(s.body->'rows') item
+      where item->>'table'=table_name;
+    execute format('delete from analytics.%I x where workspace_id=$1 and installation_id=$2 and installation_generation=$3 and platform=''klaviyo'' and platform_account_id=$4 and business_date=$5
+      and not ($6 ? x.native_key_hash)',table_name)
+      using w,i,g,a,day,staged_keys;
+  end loop;
+  for s in select body from pg_temp.adstable_klaviyo_daily_report_stage order by package_ordinal loop
+    for item in select value from jsonb_array_elements(s.body->'rows') loop
+      table_name:=item->>'table';
+      r:=item->'row';
+      if table_name is null or table_name not in ('pd_facts','cpd_product_sales_facts')
+        or r->>'business_date' is distinct from day::text
+        or r->'provenance'->'source_context' is distinct from c->'sourceContext' then
+        raise exception 'KLAVIYO_REPORT_PACKAGE_SCOPE_INVALID';
+      end if;
+      execute format('select to_jsonb(x) from analytics.%I x where workspace_id=$1 and installation_id=$2 and installation_generation=$3 and platform=''klaviyo'' and platform_account_id=$4 and grain_version=$5 and native_key_hash=$6 for update',table_name)
+        into old_fact using w,i,g,a,r->>'grain_version',r->>'native_key_hash';
+      if old_fact is null then continue; end if;
+      if old_fact->>'native_key_canonical' is distinct from r->>'native_key_canonical'
+        or old_fact->>'business_date' is distinct from day::text
+        or old_fact->>'source_timezone' is distinct from r->>'source_timezone'
+        or old_fact->>'provider_connection_id' is distinct from o->>'connectionId'
+        or (old_fact->>'retain_until')::timestamptz<=clock_timestamp() then
+        raise exception 'DATASET_RECONCILIATION_KEY_CONFLICT';
+      end if;
+      select array_agg(attname::text),string_agg(format('%I=v.%I',attname,attname),',')
+        into allowed,assignments from pg_catalog.pg_attribute
+        where attrelid=('analytics.'||table_name)::regclass and attnum>0 and not attisdropped
+          and attname not in ('id','workspace_id','installation_id','installation_generation','provider_connection_id',
+            'platform','platform_account_id','canonical_reporting_account_id','revision','created_at','updated_at',
+            'retention_policy_version','retain_until');
+      if (select count(*) from jsonb_object_keys(r))<>cardinality(allowed) or not r ?& allowed
+        or r->>'payload_digest' is distinct from analytics.dataset_digest(r-array['native_key_canonical','native_key_hash','grain_version','row_schema_version','payload_digest']) then
+        raise exception 'DATASET_ROW_SHAPE_INVALID';
+      end if;
+      for source_id in select distinct (ref->>'batch_id')::bigint from jsonb_array_elements(r->'provenance'->'sources') ref loop
+        perform analytics.hold_report_source_batch(o,source_id,(policy->>'until')::timestamptz);
+      end loop;
+      source_id:=(r->>'source_batch_id')::bigint;
+      update evidence.source_batches set manifest=manifest||jsonb_build_object('datasetRevisionPermit',jsonb_build_object(
+        'transactionId',pg_catalog.txid_current()::text,'table',table_name,'id',old_fact->>'id',
+        'fromRevision',old_fact->>'revision','toRevision',((old_fact->>'revision')::bigint+1)::text,
+        'before',old_fact->>'payload_digest','after',r->>'payload_digest'))
+        where id=source_id and authority=o and handoff_state='pending';
+      if not found then raise exception 'DATASET_REVISION_PROTOCOL_REQUIRED'; end if;
+      execute format('update analytics.%I x set %s,revision=x.revision+1,updated_at=clock_timestamp(),
+        retention_policy_version=$3,retain_until=$4 from jsonb_populate_record(null::analytics.%I,$1) v where x.id=$2',
+        table_name,assignments,table_name) using r,(old_fact->>'id')::bigint,policy->>'version',(policy->>'until')::timestamptz;
+      update evidence.source_batches set manifest=manifest-'datasetRevisionPermit' where id=source_id and authority=o;
+    end loop;
+    written:=analytics.commit_dataset_storage(o,s.body||jsonb_build_object('operationId',gen_random_uuid()));
+    if written->>'status' is distinct from 'stored'
+      or jsonb_array_length(written->'rows') is distinct from jsonb_array_length(s.body->'rows') then
+      raise exception 'KLAVIYO_REPORT_PACKAGE_WRITE_INVALID';
+    end if;
+  end loop;
+  return analytics.check_klaviyo_daily_report_facts(o,c,d,operation,policy,digests);
+end $fn$;
+
+revoke all on function analytics.replace_klaviyo_staged_report_day(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)
+  from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
 reset role;
 commit;

@@ -19,7 +19,7 @@ async function rejected(client, action) {
   return error;
 }
 
-async function probeKlaviyoReportStage(client,owner,input,previous) {
+async function probeKlaviyoReportStage(client,owner,input,previous,{replace=false}={}) {
   let bundle=await readStoredDatasetSources(input);
   const operationId=randomUUID(),day=bundle.scope.window.from,job=bundle.scope.jobId;
   const deadline=new Date(input.limits.deadlineAt).toISOString();
@@ -35,7 +35,7 @@ async function probeKlaviyoReportStage(client,owner,input,previous) {
       where workspace_id=$1 and install_generation=$2 and provider=$3 and account_id=$4 and job_id=$5 returning source`,
       [...scope,fence,input.limits.deadlineAt])).rows[0];
     assert.ok(bound?.source,"expected an admitted Klaviyo test job");
-    if(!previous) {
+    if(!previous||replace) {
       for(const batch of input.batches) {
         await client.query("update evidence.source_batches set manifest=jsonb_set(manifest,'{klaviyoDatasetRead,fence}',to_jsonb($3::text)) where authority=$1::jsonb and attempt_id=$2::uuid",
           [JSON.stringify(owner),batch.attemptId,fence]);
@@ -111,7 +111,7 @@ async function probeKlaviyoReportStage(client,owner,input,previous) {
       [JSON.stringify(owner),JSON.stringify(context),deadline,operationId,JSON.stringify(writes[0].policy),JSON.stringify(digests)]);
     const expected={...verified,digest:sourcePayloadHash(verified)};
     if(previous) {
-      assert.deepEqual((await checkFacts(digests)).rows[0].result,expected);
+      if(!replace) assert.deepEqual((await checkFacts(digests)).rows[0].result,expected);
       assert.match((await rejected(client,writeDay)).message,/KLAVIYO_REPORT_FIRST_DAY_REQUIRED/);
       const plan={status:"replacement_planned",operationId,previousDigest:previous.digest,
         stageDigest:sourcePayloadHash(summary),replaced:2,removed:0,inserted:0};
@@ -120,19 +120,30 @@ async function probeKlaviyoReportStage(client,owner,input,previous) {
         [JSON.stringify(owner),JSON.stringify(context),deadline,operationId,JSON.stringify(writes[0].policy),JSON.stringify(digests)]);
       assert.deepEqual(result.rows[0].result,{...plan,digest:sourcePayloadHash(plan)});
       assert.deepEqual(await prior(),previous);
+      if(replace) {
+        const fact=async()=>(await client.query("select id::text,revision::text from analytics.pd_facts where installation_id=$1",
+          [owner.installationId])).rows[0];
+        const before=await fact();
+        const changed=await client.query(
+          "select analytics.replace_klaviyo_staged_report_day($1::jsonb,$2::jsonb,$3::timestamptz,$4::uuid,$5::jsonb,$6::jsonb) result",
+          [JSON.stringify(owner),JSON.stringify(context),deadline,operationId,JSON.stringify(writes[0].policy),JSON.stringify(digests)]);
+        assert.deepEqual(changed.rows[0].result,expected);
+        assert.deepEqual(await fact(),{id:before.id,revision:String(BigInt(before.revision)+1n)});
+      }
     } else {
       assert.deepEqual((await writeDay()).rows[0].result,expected);
     }
     await client.query("update operations.refresh_runs set status='paused',finished_at=clock_timestamp() where fence=$1 and workspace_id=$2",
       [fence,owner.workspaceId]);
     assert.match((await rejected(client,()=>checkFacts(digests))).message,/SCHEDULED_DATASET_CLAIM_REQUIRED/);
-    assert.deepEqual(await prior(),previous);
+    if(!replace) assert.deepEqual(await prior(),previous);
     assert.equal((await client.query("select count(*)::int n from pg_temp.adstable_klaviyo_daily_report_stage")).rows[0].n,2);
   } finally {
     await client.query("rollback to savepoint report_stage_case");
     await client.query("release savepoint report_stage_case");
   }
   assert.equal((await client.query("select to_regclass('pg_temp.adstable_klaviyo_daily_report_stage') staging")).rows[0].staging,null);
+  if(replace) assert.deepEqual(await inspectDatasetReconciliation({database:client,owner,operationId:previous.operationId}),previous);
   console.log("EO05_KLAVIYO_REPORT_STAGE_PROBE two_packages=true compact_summary=true claim_rechecked=true previous_receipt_preserved=true rollback_cleanup=true");
 }
 
@@ -177,6 +188,10 @@ export async function reconciliationProbe(client, {ownerFixture}) {
     }
     const second = await source(owner, {nonempty, googlePurchase: "5"});
     await rejected(client, () => reconcileStoredDatasetSources(second));scenarios++;
+    if(provider==="klaviyo") {
+      const receipt=await inspectDatasetReconciliation({database,owner,operationId:initial.operationId});
+      await probeKlaviyoReportStage(client,owner,second,receipt,{replace:true});scenarios++;
+    }
     const corrected = await reconcileStoredDatasetSources({...second, expectedRevision: 1});
     assert.equal(corrected.revision, 2);assert.equal(corrected.comparison, "matched");scenarios++;
     if (provider === "klaviyo") {

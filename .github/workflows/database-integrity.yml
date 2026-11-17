@@ -98,6 +98,7 @@ on:
       - "app/lib/providers/klaviyo-source-write.server.js"
       - "app/lib/providers/klaviyo-identity-collection.server.js"
       - "tools/eo05-klaviyo-source-capture-probe.mjs"
+      - "tools/eo05-klaviyo-one-job-probe.mjs"
       - "app/lib/database/customer-source-privacy.server.js"
       - "app/lib/shopify/privacy-webhook.server.js"
       - "app/lib/database/privacy-lifecycle-repository.server.js"

@@ -1278,7 +1278,7 @@
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json"
     ],
     "sha256": {
-      ".github/workflows/database-integrity.yml": "51c0fa811d7dd5bb6efe43d8e89e6be2cdbd40e25b8e7f2fb88993139edf5cb2",
+      ".github/workflows/database-integrity.yml": "3ea325156bcf47530eed86ff26cd9d8aebb8bb4744ac42319cc76eea493b6f29",
       ".github/workflows/repository-governance.yml": "d0c6feecc08f145588c72fac541040ca2e14949af7785961e5df27c01628b852",
       ".github/workflows/shopify-app-deploy.yml": "ef078addb630fdb624189c0f12625524a7e3dcaf708f2059f95e7a2884cf5d24",
       "AGENTS.md": "01ef3b2e4fd58cb77b30b030a87562b0436986e200bc342f77f929b34eb19d51",
@@ -4431,6 +4431,7 @@
         "deploy": false
       },
       "changed_paths": [
+        ".github/workflows/database-integrity.yml",
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "tools/check-migration-lineage.mjs",
         "tools/eo05-klaviyo-one-job-probe.mjs",
@@ -4442,7 +4443,8 @@
         "tools/check-migration-lineage.mjs",
         "tools/f01-database-replay.mjs",
         "tools/eo05b-dataset-storage-probe.mjs",
-        "tools/eo05-klaviyo-one-job-probe.mjs"
+        "tools/eo05-klaviyo-one-job-probe.mjs",
+        ".github/workflows/database-integrity.yml"
       ],
       "tests": [
         "tools/check-migration-lineage.mjs",

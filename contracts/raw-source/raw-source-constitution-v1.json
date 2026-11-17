@@ -458,7 +458,7 @@
       "docs/RAW_SOURCE_CONSTITUTION.md"
     ],
     "sha256": {
-      ".github/workflows/database-integrity.yml": "51c0fa811d7dd5bb6efe43d8e89e6be2cdbd40e25b8e7f2fb88993139edf5cb2",
+      ".github/workflows/database-integrity.yml": "3ea325156bcf47530eed86ff26cd9d8aebb8bb4744ac42319cc76eea493b6f29",
       ".github/workflows/repository-governance.yml": "d0c6feecc08f145588c72fac541040ca2e14949af7785961e5df27c01628b852",
       ".github/workflows/shopify-app-deploy.yml": "ef078addb630fdb624189c0f12625524a7e3dcaf708f2059f95e7a2884cf5d24",
       "AGENTS.md": "01ef3b2e4fd58cb77b30b030a87562b0436986e200bc342f77f929b34eb19d51",
@@ -864,7 +864,7 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "6575f6f48b6c3cfd71eb3cd20325aeffd73ba2c09090d1d87a67dd7dee3ab478",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "8f57bfd7c9a0c663729c282e67705e8dc995027d4397e43eaa3d6f4c29491895",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "ccebceed0153b626305d867e056a497e1b360e55a1ca6d0aa5a4aa61087c2f60",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -2408,6 +2408,7 @@
         "deploy": false
       },
       "changed_paths": [
+        ".github/workflows/database-integrity.yml",
         "contracts/a6-tech-01-f01-migration-lineage-v1.json",
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "contracts/raw-source/raw-source-constitution-v1.json",
@@ -2421,7 +2422,8 @@
         "tools/check-migration-lineage.mjs",
         "tools/f01-database-replay.mjs",
         "tools/eo05b-dataset-storage-probe.mjs",
-        "tools/eo05-klaviyo-one-job-probe.mjs"
+        "tools/eo05-klaviyo-one-job-probe.mjs",
+        ".github/workflows/database-integrity.yml"
       ],
       "tests": [
         "tools/check-migration-lineage.mjs",

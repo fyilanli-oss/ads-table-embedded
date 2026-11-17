@@ -32,6 +32,7 @@ async function klaviyoControlLockProbe(client, {ownerFixture, connection}) {
   await client.query("savepoint klaviyo_control_lock");
   try {
     await observer.query("set statement_timeout = '25s'");
+    await observer.query("set role adstable_owner");
     const {rows: [{pid}]} = await observer.query("select pg_backend_pid() as pid");
     const owner = await ownerFixture(client, "klaviyo");
     const input = await storedBindingFixture(client, owner, {klaviyoProductEvents: 200});

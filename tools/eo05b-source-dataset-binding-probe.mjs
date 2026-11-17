@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import pg from "pg";
+import {setTimeout as delay} from "node:timers/promises";
 import {datasetSourceBindingFixture} from "../tests/fixtures/dataset-source-binding-fixture.js";
 import {createSourceEvidenceRepository} from "../app/lib/database/source-evidence-store.server.js";
 import {bindStoredDatasetSources} from "../app/lib/database/dataset-source-binding.server.js";
@@ -23,7 +25,112 @@ export async function storedBindingFixture(client, owner, options = {}) {
 
 /** Called only inside the existing F01 localhost rollback transaction. Native
  * HTTP bodies and admission metadata below are SYNTHETIC, not live acceptance. */
-export async function sourceDatasetBindingProbe(client, {ownerFixture}) {
+async function klaviyoControlLockProbe(client, {ownerFixture, connection}) {
+  const observer = new pg.Client(connection);
+  await observer.connect();
+  let observerWait, profile;
+  const onNotice = ({message}) => {
+    const prefix = "EO05_KLAVIYO_TEST_SQL ";
+    if (message.startsWith(prefix)) profile = JSON.parse(message.slice(prefix.length));
+  };
+  await client.query("savepoint klaviyo_control_lock");
+  try {
+    await observer.query("set statement_timeout = '25s'");
+    await observer.query("set role adstable_owner");
+    const {rows: [{pid}]} = await observer.query("select pg_backend_pid() as pid");
+    const owner = await ownerFixture(client, "klaviyo");
+    const input = await storedBindingFixture(client, owner, {klaviyoProductEvents: 200});
+    await observer.query("select 1 from operations.refresh_control where singleton for update nowait");
+    const readDefinition = async () => (await client.query(
+      "select pg_get_functiondef('analytics.commit_dataset_storage(jsonb,jsonb)'::regprocedure) as definition",
+    )).rows[0].definition;
+    const definition = await readDefinition();
+    let instrumented = definition;
+    const instrument = (anchor, replacement) => {
+      assert.equal(instrumented.split(anchor).length, 2, "SQL timing anchor must be unique");
+      instrumented = instrumented.replace(anchor, replacement);
+    };
+    instrument("begin\n perform 1 from operations.refresh_control", `test_started timestamptz; test_context_ms float8:=0; test_retention_ms float8:=0;
+ test_context_calls integer:=0; test_retention_calls integer:=0;
+begin
+ perform 1 from operations.refresh_control`);
+    const context = "perform analytics.assert_report_source_context(o,r->'provenance'->'source_context',(p->'policy'->>'until')::timestamptz,r->'provenance'->'sources');";
+    const retention = "perform analytics.hold_report_source_batch(o,k::bigint,(p->'policy'->>'until')::timestamptz);";
+    for (const [statement, counter] of [[context, "context"], [retention, "retention"]]) {
+      instrument(statement, `test_started:=clock_timestamp();
+   ${statement}
+   test_${counter}_ms:=test_${counter}_ms + 1000*extract(epoch from (clock_timestamp()-test_started));
+   test_${counter}_calls:=test_${counter}_calls+1;`);
+    }
+    instrument(" return result;", ` raise notice 'EO05_KLAVIYO_TEST_SQL %', json_build_object(
+   'sourceContextMs',test_context_ms,'sourceContextCalls',test_context_calls,
+   'sourceRetentionMs',test_retention_ms,'sourceRetentionCalls',test_retention_calls);
+ return result;`);
+    // This replacement lives only inside the isolated savepoint. All production
+    // statements still execute, and the original definition is restored below.
+    await client.query(instrumented);
+    client.on("notice", onNotice);
+    let databaseMs = 0, writeMs = 0, readbackMs = 0, writes = 0, readbacks = 0, payloadBytes = 0;
+    const database = {async query(sql, args) {
+      const startedAt = performance.now();
+      const writing = sql.includes("analytics.commit_dataset_storage(");
+      if (writing) observerWait = delay(100).then(async () => {
+        const started = performance.now();
+        await observer.query("select 1 from operations.refresh_control where singleton for update");
+        return {ms: performance.now() - started};
+      }).catch(error => ({error}));
+      try {return await client.query(sql, args);}
+      finally {
+        const elapsed = performance.now() - startedAt;
+        databaseMs += elapsed;
+        if (writing) {
+          writes++;
+          writeMs += elapsed;
+          payloadBytes = Buffer.byteLength(args[1]);
+        }
+        if (sql.includes("analytics.inspect_dataset_storage(")) {
+          readbacks++;
+          readbackMs += elapsed;
+        }
+      }
+    }};
+    const startedAt = performance.now();
+    const result = await bindStoredDatasetSources({...input, database});
+    const totalMs = performance.now() - startedAt;
+    const {rows: [{count}]} = await client.query(
+      "select count(*)::int as count from analytics.cpd_product_sales_facts where installation_id=$1", [owner.installationId]);
+    assert.equal(result.status, "stored");
+    assert.equal(result.rowsStored, 200);
+    assert.equal(result.storageReceipt.rows.length, 200);
+    assert.deepEqual({count, writes, readbacks}, {count: 200, writes: 1, readbacks: 1});
+    assert.equal(profile?.sourceContextCalls, 200);
+    assert.equal(profile?.sourceRetentionCalls, 400);
+    assert.ok(profile.sourceContextMs > 0 && profile.sourceRetentionMs > 0);
+    const {rows: [{blocked}]} = await client.query("select pg_backend_pid() = any(pg_blocking_pids($1)) as blocked", [pid]);
+    assert.equal(blocked, true, "the write transaction must block the second connection");
+    await client.query("rollback to savepoint klaviyo_control_lock");
+    const wait = await observerWait;
+    if (wait.error) throw wait.error;
+    assert.equal(await readDefinition(), definition);
+    console.log("EO05_KLAVIYO_200_DATASET_WRITE_PASS " + JSON.stringify({
+      rows: count, payloadBytes, writes, readbacks, writeMs, readbackMs, databaseMs, adsTableMs: totalMs - databaseMs, totalMs,
+    }));
+    console.log("EO05_KLAVIYO_200_CONTROL_LOCK_PASS " + JSON.stringify({writerConfirmedAsBlocker: blocked, competingLockWaitMs: wait.ms}));
+    console.log("EO05_KLAVIYO_200_RETENTION_TIMING_PASS " + JSON.stringify(profile));
+  } finally {
+    client.off("notice", onNotice);
+    try {
+      await client.query("rollback to savepoint klaviyo_control_lock");
+      await client.query("release savepoint klaviyo_control_lock");
+    } finally {
+      await observerWait;
+      await observer.end();
+    }
+  }
+}
+
+export async function sourceDatasetBindingProbe(client, {ownerFixture, connection}) {
+  await klaviyoControlLockProbe(client, {ownerFixture, connection});
   const raw = client;
   client = {async query(sql, args) {try {return await raw.query(sql, args);} catch (error) {
     console.error("EO05B_BINDING_SQL_DIAGNOSTIC", JSON.stringify({code: error.code, message: error.message, where: error.where, position: error.position})); throw error;

@@ -107,6 +107,7 @@ export function projectStoredKlaviyoDataset(bundle) {
         const matching = channels.filter(c => c.source === resolved.source && c.channel_id === resolved.channel_id);
         const used = [page, accountPages.get(sales.dataset), ...matching.map(c => c.page)];
         const r = baseStoredFact(bundle, sales, "cpd_product_sales_facts", used);
+        if (sales.packageReceipts) r.source_batch_id = page.ref.batch_id;
         if (matching.length && pd.receipt.sourceState === "partial") r.source_completeness = "partial";
         Object.assign(r, {provider_event_id: event.provider_event_id, occurred_at: event.occurred_at, native_sold_product_id: productId,
           product_context: {metric_id: event.provider_metric_id, product_id: productId, variant_id: sourceText(record.attributes?.event_properties?.VariantID ?? record.attributes?.event_properties?.["Variant ID"], {nullable: true})},

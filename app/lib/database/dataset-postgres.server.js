@@ -1,5 +1,5 @@
 import pg from "pg";
-import {DATASET_STORAGE_RPC, DATASET_RECONCILIATION_RPC, SCHEDULED_DATASET_RPC} from "./dataset-rpc.server.js";
+import {DATASET_STORAGE_RPC, DATASET_RECONCILIATION_RPC, SCHEDULED_DATASET_RPC, KLAVIYO_DAILY_REPORT_RPC} from "./dataset-rpc.server.js";
 import {SUPABASE_ROOT_CA_2021} from "./supabase-root-ca-2021.server.js";
 import {GOOGLE_DATASET_SOURCE_RPC, GOOGLE_SOURCE_ROLE, GOOGLE_SOURCE_ROLE_CHECK_SQL, readGoogleSourceDatabaseConfig} from "./google-source-postgres.server.js";
 import {META_SOURCE_RPC, META_SOURCE_ROLE, META_SOURCE_ROLE_CHECK_SQL, readMetaSourceDatabaseConfig} from "./meta-source-postgres.server.js";
@@ -38,14 +38,15 @@ const scheduledProfile = `select current_user as role, (
   and not exists(select 1 from unnest($1::text[]) s(signature) where not coalesce(has_function_privilege(current_user,to_regprocedure(s.signature)::oid,'EXECUTE'),false))
   and not exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ${privateSchemas}
     and has_function_privilege(current_user,p.oid,'EXECUTE')
-    and not exists(select 1 from unnest($1::text[]) s(signature) where to_regprocedure(s.signature)::oid=p.oid))
+    and not exists(select 1 from unnest($2::text[]) s(signature) where to_regprocedure(s.signature)::oid=p.oid))
   and not exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ${privateSchemas}
     and ((c.relkind in ('r','p','v','m','f') and (has_table_privilege(current_user,c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
       or has_any_column_privilege(current_user,c.oid,'SELECT,INSERT,UPDATE,REFERENCES')))
       or (c.relkind='S' and has_sequence_privilege(current_user,c.oid,'USAGE,SELECT,UPDATE'))))
 ) as profile_ready`;
 
-export function createScheduledDatasetPostgresClient({environment, deadlineAt, signal, now = Date.now, poolFactory = c => new pg.Pool(c)}) {
+export function createScheduledDatasetPostgresClient({environment, deadlineAt, signal, now = Date.now, poolFactory = c => new pg.Pool(c), klaviyoDailyPackages = false}) {
+  if (typeof klaviyoDailyPackages !== "boolean") throw failure();
   let config;
   try {
     const url = new URL(environment.ADSTABLE_REFRESH_DATASET_DATABASE_URL);
@@ -57,11 +58,14 @@ export function createScheduledDatasetPostgresClient({environment, deadlineAt, s
     url.search = "";
     config = {connectionString: url.toString(), timeoutMs: Number(timeout), ssl: {ca: SUPABASE_ROOT_CA_2021, rejectUnauthorized: true}};
   } catch {throw failure();}
-  return createBoundedDatasetClient({config, rpc: SCHEDULED_DATASET_RPC, signatures: SCHEDULED_DATASET_RPC.map(([, signature]) => signature),
-    profile: scheduledProfile, role: scheduledRole, deadlineAt, signal, now, poolFactory});
+  const rpc = klaviyoDailyPackages ? [...SCHEDULED_DATASET_RPC,...KLAVIYO_DAILY_REPORT_RPC] : SCHEDULED_DATASET_RPC;
+  const signatures = rpc.map(([, signature]) => signature);
+  const recognizedSignatures = [...SCHEDULED_DATASET_RPC,...KLAVIYO_DAILY_REPORT_RPC].map(([, signature]) => signature);
+  return createBoundedDatasetClient({config, rpc, signatures, recognizedSignatures,
+    profile: scheduledProfile, role: scheduledRole, deadlineAt, signal, now, poolFactory, transactionSupport: true});
 }
 
-function createBoundedDatasetClient({config, rpc, signatures, profile, role, deadlineAt, signal, now, poolFactory}) {
+function createBoundedDatasetClient({config, rpc, signatures, recognizedSignatures, profile, role, deadlineAt, signal, now, poolFactory, transactionSupport = false}) {
   if (typeof poolFactory !== "function" || typeof now !== "function" || !Number.isSafeInteger(deadlineAt) || deadlineAt <= now()) throw failure();
   const queries = new Map(rpc.map(([sql]) => [sql, Math.max(...[...sql.matchAll(/\$(\d+)/g)].map(x => Number(x[1])))]));
   const pool = poolFactory({...config, max: 1, query_timeout: config.timeoutMs, connectionTimeoutMillis: Math.min(config.timeoutMs, deadlineAt - now()),
@@ -69,23 +73,56 @@ function createBoundedDatasetClient({config, rpc, signatures, profile, role, dea
   let stopped = false, closed = false, busy = false;
   pool.on("error", () => {stopped = true;});
   const check = () => {if (stopped || closed || signal?.aborted || now() >= deadlineAt) throw failure();};
+  function copyArgs(sql, parameters) {
+    if (!queries.has(sql) || !Array.isArray(parameters) || parameters.length !== queries.get(sql)) throw failure();
+    return structuredClone(parameters);
+  }
+  async function transact(run) {
+    check();
+    if (busy || typeof run !== "function") throw failure();
+    busy=true;
+    let client, broken=false, open=false, failed=false, pending;
+    try {
+      client=await pool.connect(); check(); await client.query("begin");
+      await client.query("select pg_catalog.set_config('statement_timeout',$1,true),pg_catalog.set_config('lock_timeout',$1,true)", [Math.max(1, Math.min(config.timeoutMs,deadlineAt-now()))+"ms"]);
+      const identity=(await client.query(profile,recognizedSignatures?[signatures,recognizedSignatures]:[signatures])).rows; check();
+      if(identity?.length!==1 || identity[0].role!==role || identity[0].profile_ready!==true) throw failure();
+      open=true;
+      const result=await run(Object.freeze({
+        async query(sql,parameters=[]) {
+          if (!open || failed) throw failure();
+          try {
+            check();
+            if (pending) throw failure();
+            const args=copyArgs(sql,parameters);
+            pending=client.query(sql,args);
+            try {const value=await pending; check(); return value;}
+            finally {pending=undefined;}
+          } catch {
+            failed=true;
+            throw failure();
+          }
+        },
+      }));
+      open=false;
+      if (pending || failed) throw failure();
+      check(); await client.query("commit"); check();
+      return result;
+    } catch {
+      open=false; stopped=true; broken=true;
+      if (pending) {try {await pending;} catch {}}
+      if (client) {try {await client.query("rollback");} catch {}}
+      throw failure();
+    } finally {busy=false; client?.release(broken);}
+  }
   return Object.freeze({
-    async query(sql, parameters = []) {
+    async query(sql,parameters=[]) {
       check();
-      if (busy || !queries.has(sql) || !Array.isArray(parameters) || parameters.length !== queries.get(sql)) throw failure();
-      const args = structuredClone(parameters); busy = true; let client, broken = false;
-      try {
-        client = await pool.connect(); check(); await client.query("begin");
-        await client.query("select pg_catalog.set_config('statement_timeout',$1,true),pg_catalog.set_config('lock_timeout',$1,true)", [Math.max(1, Math.min(config.timeoutMs, deadlineAt - now())) + "ms"]);
-        const identity = (await client.query(profile, [signatures])).rows; check();
-        if (identity?.length !== 1 || identity[0].role !== role || identity[0].profile_ready !== true) throw failure();
-        const result = await client.query(sql, args); check(); await client.query("commit"); check(); return result;
-      } catch {
-        stopped = true; broken = true;
-        if (client) {try {await client.query("rollback");} catch {}}
-        throw failure();
-      } finally {busy = false; client?.release(broken);}
+      if (busy) throw failure();
+      const args=copyArgs(sql,parameters);
+      return transact(transaction=>transaction.query(sql,args));
     },
+    ...(transactionSupport ? {transaction:transact} : {}),
     async close() {if (closed) return; closed = true; try {await pool.end();} catch {throw failure();}},
   });
 }

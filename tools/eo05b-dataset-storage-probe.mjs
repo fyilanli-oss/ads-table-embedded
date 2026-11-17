@@ -11,6 +11,7 @@ import {fxReportingCurrencyProbe} from "./eo05b-fx-reporting-currency-probe.mjs"
 import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
 import {maturityProbe} from "./eo05c-maturity-probe.mjs";
 import {reconciliationProbe} from "./eo05d-reconciliation-probe.mjs";
+import {klaviyoDailyTimingProbe} from "./eo05-klaviyo-daily-timing-probe.mjs";
 import {observabilityProbe} from "./eo05e-observability-probe.mjs";
 
 async function rejected(client, action, pattern) {
@@ -69,6 +70,12 @@ export async function datasetStorageProbe(client, connection, environment = proc
       }
     }
     await client.query("set local role adstable_owner");
+    await client.query("savepoint klaviyo_daily_timing");
+    try {await klaviyoDailyTimingProbe(client,{ownerFixture,connection,environment});}
+    finally {
+      await client.query("rollback to savepoint klaviyo_daily_timing");
+      await client.query("release savepoint klaviyo_daily_timing");
+    }
     await sourceDatasetBindingProbe(client, {ownerFixture});
     await reportRetentionProbe(client, {ownerFixture, sourceFixture});
     await fxReportingCurrencyProbe(client, {ownerFixture});

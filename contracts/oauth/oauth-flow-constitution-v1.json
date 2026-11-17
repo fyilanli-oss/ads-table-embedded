@@ -1730,7 +1730,7 @@
       "tests/identity-oauth-atomic-stage.test.js": "ac475e7c1622e6502d2321bbd327348ab779c8914340b12a1ed0a3c46a2d181d",
       "tests/identity-oauth-start-binding.test.js": "53da46cab2b38e9f58650545d97ffdfa7cee5d7989a99479d1f5c3ef26306b3d",
       "tests/identity-permission-preflight.test.js": "5f74265fe234f4937e5cc7f01c9e11ce052daf3ddbd97ae97196b247685e2354",
-      "tests/klaviyo-raw-datasets-permission.test.js": "adc224a1f5f1a1c80acdd09f9f509b802d41978eeb6b0b2d045006f0d0810e6e",
+      "tests/klaviyo-raw-datasets-permission.test.js": "378d2684eefd4e4e43c66748748ebb0ab5b067932b59638e41343f8ef954e066",
       "tests/klaviyo-raw-request-permission.test.js": "fcab9af13b95da38f692e0e861036f6c25d66e0a58ec833a30b5d005c4949da9",
       "tests/klaviyo-scope-provenance.test.js": "73afdd2e1609eec5ab711c19ebee9d30504211ef6b9db329c312c290a971ea53",
       "tests/meta-first-day-permission.test.js": "904e0513a7651e9184eb6818a233e0b3c4a953e3b3e670f765e8f972a3d68faa",

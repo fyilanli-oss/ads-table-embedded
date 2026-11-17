@@ -69,7 +69,7 @@ export async function datasetStorageProbe(client, connection, environment = proc
       }
     }
     await client.query("set local role adstable_owner");
-    await sourceDatasetBindingProbe(client, {ownerFixture});
+    await sourceDatasetBindingProbe(client, {ownerFixture, connection});
     await reportRetentionProbe(client, {ownerFixture, sourceFixture});
     await fxReportingCurrencyProbe(client, {ownerFixture});
     await datasetServerProbe(client, {ownerFixture});

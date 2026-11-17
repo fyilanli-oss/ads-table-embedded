@@ -195,7 +195,10 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
       adsTableAndFixtureOverheadMs:totalMs-postgresqlMs-durations.providerFixture,
     }));
   } catch(error) {
-    console.error("EO05_KLAVIYO_DAILY_TIMING_STOP "+JSON.stringify({phase,code:error.code,message:error.message,where:error.where}));
+    console.error("EO05_KLAVIYO_DAILY_TIMING_STOP "+JSON.stringify({
+      phase,code:error.code,message:error.message,where:error.where,requests,
+      elapsedBeforeStopMs:performance.now()-start,durationsMs:durations,postgresqlMsByPhase:databaseTimings,
+    }));
     throw error;
   }
 }

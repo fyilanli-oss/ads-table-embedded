@@ -1,3 +1,8 @@
+begin;
+set local lock_timeout='5s';
+set local statement_timeout='30s';
+set local role adstable_owner;
+
 -- Individual raw product packages remain partial until a verified day handoff.
 create or replace function evidence.commit_klaviyo_dataset_source(o jsonb,p_attempt uuid,p_ordinal integer,p jsonb,r jsonb)
 returns jsonb language plpgsql security definer set search_path='' as $fn$
@@ -117,3 +122,5 @@ begin
  if (r->>'deadlineAt')::timestamptz<=clock_timestamp() then raise exception 'KLAVIYO_DATASET_READ_EXPIRED';end if;
  return evidence.read_source_receipt(o,p_attempt,p_ordinal);
 end $fn$;
+reset role;
+commit;

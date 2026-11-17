@@ -488,7 +488,7 @@
       "app/lib/database/google-pmax-history.server.js": "d880bab9f8bf60ffec3e8e5e9a4546bb78cfbf1ed43a66611dc2d1994a7aba7c",
       "app/lib/database/google-source-postgres.server.js": "6c0a2460498a7ee2be2c9c335d2cf8f9ad04cf6837c2b0640f536fafae3627f1",
       "app/lib/database/identity-authority-repository.server.js": "a4d157e77dde93c26e2fb28c915f1c5a92fc3ebf11ccc59ca649dca2df032f0c",
-      "app/lib/database/klaviyo-dataset-source-store.server.js": "b9538c408bfcf7f29734350f867c7c9a03aaa9e0cf50e7539356ea16e6e776a8",
+      "app/lib/database/klaviyo-dataset-source-store.server.js": "5c811a8be86b4ece30de12c93d21d2b13afcca8e1dd11ff6daab13ff71d26448",
       "app/lib/database/klaviyo-raw-coordinator-postgres.server.js": "e16cbf3c5d0570706d60577f5d1c39683b4e83a7229b5bff5d7af925f8362344",
       "app/lib/database/klaviyo-setup-repository.server.js": "91886512d89d098ff42030805f81b38c4875e37ddc2786940b699df3703da546",
       "app/lib/database/klaviyo-source-postgres.server.js": "799e5d1d2beb0da922e00f1aba4c25a2a18ce9151b1e0987c775e999c85feed9",
@@ -663,7 +663,7 @@
       "app/lib/refresh/klaviyo-background-owner.server.js": "d6965d0331b0904aff7161b273db6ee4d1d956ddc56ae36300942b718e543756",
       "app/lib/refresh/klaviyo-private-request.server.js": "34240888886b864f79f862e5260ef3dc2dadfe2eb1207653dcf372162e39aedb",
       "app/lib/refresh/klaviyo-raw-collection.server.js": "85f85cc1ef3b9824e3ac9e886e140cf6e7fd488af8f7eed182da90a193df1bd5",
-      "app/lib/refresh/klaviyo-raw-dataset-plan.server.js": "7905c01540210186b33e40623ffff3c8b7f1a4d0c5c865a4c0582ce3c7e58f6a",
+      "app/lib/refresh/klaviyo-raw-dataset-plan.server.js": "d0336c61f9b2512a3a4db2f98b36e92141ea4e98bc07d35c659f077cd77f9012",
       "app/lib/refresh/klaviyo-raw-datasets.server.js": "8488f5f39ec0c99a70d2521ebdc1ace6e435535d6caada5b423ac0ed825b2f5b",
       "app/lib/refresh/klaviyo-raw-eligibility.server.js": "8514e9c26dbc4e6872d14e820c8e0d7d5084b20884438774448cabed130a1f56",
       "app/lib/refresh/klaviyo-raw-request.server.d.ts": "12e920d2c5403b280caa7ae3629d72409a48ea14ab6fb6137efc93f182fe1c98",
@@ -864,7 +864,7 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "6575f6f48b6c3cfd71eb3cd20325aeffd73ba2c09090d1d87a67dd7dee3ab478",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "aa555339106370e64e068a6d4bb58523255b6b5da73f50208b113c273ce39e57",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "ed2b1bbba0514f724f1f894eb5c2696696a22024060adc69677ca1f92a2b2c92",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -1153,7 +1153,7 @@
       "tests/klaviyo-pd-funnel.test.js": "ed59bb43b1bc27c1f93ae6692b7795c36470e78e9012e9df2b26a9e7b9bd5e35",
       "tests/klaviyo-pd-orchestration.test.js": "fb4ab3431ca37476a54aa93336844d79510979a0b6eb4332b1b786ac32df91a3",
       "tests/klaviyo-product-identity.test.js": "e4bed7a28de3dc288d9ecc93025e71ae544fd62e59dc1f4d7a1efef1502fbb7f",
-      "tests/klaviyo-raw-datasets-permission.test.js": "5c8ea92334a6451ccdc3e7eac014333566c9f3bbf07e3037b1f555c7ea1315e8",
+      "tests/klaviyo-raw-datasets-permission.test.js": "2aa188e93014a0a316ca5c70e95c8fe487ef27808dc1cc6d6a288718ab6f92a8",
       "tests/klaviyo-raw-request-permission.test.js": "fcab9af13b95da38f692e0e861036f6c25d66e0a58ec833a30b5d005c4949da9",
       "tests/klaviyo-scope-provenance.test.js": "73afdd2e1609eec5ab711c19ebee9d30504211ef6b9db329c312c290a971ea53",
       "tests/maturity-policy.test.js": "98957a94d5fbdee4df4e8d8b7dc5545a9ff6fbd8e9ee1e5d74f054ca9e011634",
@@ -2381,6 +2381,48 @@
       "tests": [
         "tests/queue-observer-canary.test.js",
         "tests/observability.test.js"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_no_UI_change",
+      "native_acceptance": false
+    },
+    {
+      "id": "eo05-klaviyo-daily-raw-package-preparation-2026-11-17",
+      "date": "2026-11-17",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat 2026-11-17 explicitly approved Klaviyo daily read up to 2,000 records and bounded raw packages for the same daily job."
+      },
+      "rationale": "Prepare bounded encrypted envelopes from consecutive native Klaviyo pages. Preserve single-envelope storage until the database and consumer can verify a complete package sequence.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "app/lib/database/klaviyo-dataset-source-store.server.js",
+        "app/lib/refresh/klaviyo-raw-dataset-plan.server.js",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "tests/klaviyo-raw-datasets-permission.test.js"
+      ],
+      "artifact_paths": [
+        "app/lib/database/klaviyo-dataset-source-store.server.js",
+        "app/lib/refresh/klaviyo-raw-dataset-plan.server.js",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "tests/klaviyo-raw-datasets-permission.test.js"
+      ],
+      "tests": [
+        "tests/klaviyo-raw-datasets-permission.test.js"
       ],
       "acceptance_required": [
         "required_CI",

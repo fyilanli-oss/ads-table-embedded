@@ -20,19 +20,9 @@ async function rejected(client, action) {
 }
 
 async function probeKlaviyoReportStage(client,owner,input,previous) {
-  const bundle=await readStoredDatasetSources(input);
-  const projection=projectStoredKlaviyoDataset(bundle);
-  assert.equal(projection.rows.length,2);
-  const configuration=bundle.datasets.find(d=>d.dataset==="configuration").pages.map(page=>page.ref);
-  for(const {row} of projection.rows) {
-    if(row.occurred_at!=null) row.occurred_at=canonicalDatasetEventTime(row.occurred_at);
-    row.provenance.sources=[...new Map([...row.provenance.sources,...configuration].map(ref=>[ref.page_id,ref])).values()];
-  }
+  let bundle=await readStoredDatasetSources(input);
   const operationId=randomUUID(),day=bundle.scope.window.from,job=bundle.scope.jobId;
   const deadline=new Date(input.limits.deadlineAt).toISOString();
-  const writes=projection.rows.map(item=>prepareDatasetWrite({
-    owner,operationId,rows:[item],policy:input.policy,now:new Date().toISOString(),
-  }).body);
   const stage="select analytics.stage_klaviyo_daily_report_package($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz,$5::integer,$6::integer) result";
   await client.query("savepoint report_stage_case");
   try {
@@ -45,7 +35,24 @@ async function probeKlaviyoReportStage(client,owner,input,previous) {
       where workspace_id=$1 and install_generation=$2 and provider=$3 and account_id=$4 and job_id=$5 returning source`,
       [...scope,fence,input.limits.deadlineAt])).rows[0];
     assert.ok(bound?.source,"expected an admitted Klaviyo test job");
-    const context={businessDate:day,expectedRevision:previous.revision,
+    if(!previous) {
+      for(const batch of input.batches) {
+        await client.query("update evidence.source_batches set manifest=jsonb_set(manifest,'{klaviyoDatasetRead,fence}',to_jsonb($3::text)) where authority=$1::jsonb and attempt_id=$2::uuid",
+          [JSON.stringify(owner),batch.attemptId,fence]);
+      }
+      bundle=await readStoredDatasetSources(input);
+    }
+    const projection=projectStoredKlaviyoDataset(bundle);
+    assert.equal(projection.rows.length,2);
+    const configuration=bundle.datasets.find(d=>d.dataset==="configuration").pages.map(page=>page.ref);
+    for(const {row} of projection.rows) {
+      if(row.occurred_at!=null) row.occurred_at=canonicalDatasetEventTime(row.occurred_at);
+      row.provenance.sources=[...new Map([...row.provenance.sources,...configuration].map(ref=>[ref.page_id,ref])).values()];
+    }
+    const writes=projection.rows.map(item=>prepareDatasetWrite({
+      owner,operationId,rows:[item],policy:input.policy,now:new Date().toISOString(),
+    }).body);
+    const context={businessDate:day,expectedRevision:previous?.revision??0,
       sourceContext:{...bundle.datasets[0].sourceContext,fence,snapshot:bound.source}};
     await client.query(`insert into operations.refresh_runs(workspace_id,install_generation,provider,account_id,job_id,fence,cost,status)
       values ($1,$2,$3,$4,$5,$6,'{"requests":2,"rows":1000,"bytes":1000000,"connections":1,"dbWrites":5}','running')`,[...scope,fence]);
@@ -64,14 +71,14 @@ async function probeKlaviyoReportStage(client,owner,input,previous) {
       [JSON.stringify(owner),JSON.stringify(context),deadline,operationId,JSON.stringify(writes[0].policy),JSON.stringify(digests)]);
     const digests=writes.map(write=>sourcePayloadHash({write,context}));
     assert.match((await rejected(client,()=>send(1))).message,/KLAVIYO_REPORT_STAGE_REQUIRED/);
-    const prior=async()=>inspectDatasetReconciliation({database:client,owner,operationId:previous.operationId});
+    const prior=async()=>inspectDatasetReconciliation({database:client,owner,operationId:previous?.operationId??operationId});
     const staged=(await send(0)).rows[0].result;
     assert.deepEqual(staged,{status:"staged",operationId,ordinal:0,packageCount:2,rowCount:1,
       digest:sourcePayloadHash({write:writes[0],context})});
     assert.deepEqual(await prior(),previous);
     assert.match((await rejected(client,()=>verify(digests))).message,/KLAVIYO_REPORT_PACKAGE_VERIFICATION_FAILED/);
     assert.match((await rejected(client,()=>send(0))).message,/KLAVIYO_REPORT_PACKAGE_SEQUENCE/);
-    assert.match((await rejected(client,()=>send(1,{...context,expectedRevision:0}))).message,/KLAVIYO_REPORT_PACKAGE_SEQUENCE/);
+    assert.match((await rejected(client,()=>send(1,{...context,expectedRevision:context.expectedRevision+1}))).message,/KLAVIYO_REPORT_PACKAGE_SEQUENCE/);
     assert.match((await rejected(client,()=>send(1,context,{...writes[1],rows:Array(201).fill(writes[1].rows[0])}))).message,/KLAVIYO_REPORT_PACKAGE_LIMIT/);
     await client.query("savepoint report_stage_duplicate_row");
     try {
@@ -99,7 +106,16 @@ async function probeKlaviyoReportStage(client,owner,input,previous) {
       consumerReceipt:false,checkpointAdvanced:false};
     assert.deepEqual((await verify(digests)).rows[0].result,{...summary,digest:sourcePayloadHash(summary)});
     const verified={...summary,status:"facts_verified",comparison:"matched"};
-    assert.deepEqual((await checkFacts(digests)).rows[0].result,{...verified,digest:sourcePayloadHash(verified)});
+    const writeDay=()=>client.query(
+      "select analytics.write_klaviyo_staged_first_report_day($1::jsonb,$2::jsonb,$3::timestamptz,$4::uuid,$5::jsonb,$6::jsonb) result",
+      [JSON.stringify(owner),JSON.stringify(context),deadline,operationId,JSON.stringify(writes[0].policy),JSON.stringify(digests)]);
+    const expected={...verified,digest:sourcePayloadHash(verified)};
+    if(previous) {
+      assert.deepEqual((await checkFacts(digests)).rows[0].result,expected);
+      assert.match((await rejected(client,writeDay)).message,/KLAVIYO_REPORT_FIRST_DAY_REQUIRED/);
+    } else {
+      assert.deepEqual((await writeDay()).rows[0].result,expected);
+    }
     await client.query("update operations.refresh_runs set status='paused',finished_at=clock_timestamp() where fence=$1 and workspace_id=$2",
       [fence,owner.workspaceId]);
     assert.match((await rejected(client,()=>checkFacts(digests))).message,/SCHEDULED_DATASET_CLAIM_REQUIRED/);
@@ -136,6 +152,7 @@ export async function reconciliationProbe(client, {ownerFixture}) {
     await assert.rejects(reconcileStoredDatasetSources({...first, admittedScope: {...admittedScope, fence: "2"}}), /ADMITTED_SCOPE_MISMATCH/);
     await rejected(client, () => reconcileStoredDatasetSources({...first, admittedScope, scheduled: true}));
     assert.equal((await client.query("select count(*)::int n from evidence.source_batches where authority=$1::jsonb and handoff_state='consumed'", [JSON.stringify(owner)])).rows[0].n, 0);
+    if(provider==="klaviyo"){await probeKlaviyoReportStage(client,owner,first,null);scenarios++;}
     const initial = await reconcileStoredDatasetSources({...first, admittedScope});
     assert.equal(initial.revision, 1);assert.equal(initial.consumerReceipt, true);scenarios++;
     assert.equal((await client.query("select count(*)::int n from evidence.source_batches where authority=$1::jsonb and handoff_state='consumed'", [JSON.stringify(owner)])).rows[0].n, first.batches.length);

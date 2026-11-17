@@ -204,5 +204,58 @@ end $fn$;
 
 revoke all on function analytics.check_klaviyo_daily_report_facts(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)
   from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+
+-- Private insertion step for a day without a prior report. Completion is a
+-- separate step of the same transaction. No runtime grant is installed here.
+create function analytics.write_klaviyo_staged_first_report_day(
+  o jsonb, c jsonb, d timestamptz, operation uuid, policy jsonb, digests jsonb
+) returns jsonb
+language plpgsql security definer set search_path='' as $fn$
+declare
+  s record;
+  row_body jsonb;
+  written jsonb;
+  table_name text;
+  has_facts boolean;
+  day date := (c->>'businessDate')::date;
+  w uuid := (o->>'workspaceId')::uuid;
+  i bigint := (o->>'installationId')::bigint;
+  g bigint := (o->>'generation')::bigint;
+  a text := o->>'accountId';
+begin
+  perform 1 from operations.refresh_control where singleton for update;
+  if not found then raise exception 'SCHEDULED_DATASET_CLAIM_REQUIRED'; end if;
+  perform analytics.assert_klaviyo_daily_report_claim(o,c,d);
+  perform analytics.verify_klaviyo_daily_report_stage(o,c,d,operation,policy,digests);
+  if c->'expectedRevision' is distinct from '0'::jsonb
+    or exists(select 1 from evidence.source_batches b where b.workspace_id=w and b.installation_id=i
+      and b.installation_generation=g and b.primary_source='klaviyo' and b.authority=o
+      and b.manifest->'datasetReconciliation'->>'businessDate'=c->>'businessDate') then
+    raise exception 'KLAVIYO_REPORT_FIRST_DAY_REQUIRED';
+  end if;
+  foreach table_name in array array['pd_facts','cpd_product_performance_facts','cpd_product_sales_facts'] loop
+    execute format('select exists(select 1 from analytics.%I where workspace_id=$1 and installation_id=$2 and installation_generation=$3 and platform=''klaviyo'' and platform_account_id=$4 and business_date=$5)',table_name)
+      into has_facts using w,i,g,a,day;
+    if has_facts then raise exception 'KLAVIYO_REPORT_FIRST_DAY_REQUIRED'; end if;
+  end loop;
+  for s in select body from pg_temp.adstable_klaviyo_daily_report_stage order by package_ordinal loop
+    for row_body in select value->'row' from jsonb_array_elements(s.body->'rows') loop
+      if row_body->>'business_date' is distinct from day::text
+        or row_body->'provenance'->'source_context' is distinct from c->'sourceContext' then
+        raise exception 'KLAVIYO_REPORT_PACKAGE_SCOPE_INVALID';
+      end if;
+    end loop;
+    -- Reuse the bounded physical writer, retention rules and row triggers.
+    written:=analytics.commit_dataset_storage(o,s.body||jsonb_build_object('operationId',gen_random_uuid()));
+    if written->>'status' is distinct from 'stored'
+      or jsonb_array_length(written->'rows') is distinct from jsonb_array_length(s.body->'rows') then
+      raise exception 'KLAVIYO_REPORT_PACKAGE_WRITE_INVALID';
+    end if;
+  end loop;
+  return analytics.check_klaviyo_daily_report_facts(o,c,d,operation,policy,digests);
+end $fn$;
+
+revoke all on function analytics.write_klaviyo_staged_first_report_day(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)
+  from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
 reset role;
 commit;

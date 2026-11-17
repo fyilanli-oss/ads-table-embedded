@@ -13,6 +13,37 @@ const productEvents=1000;
 const pageSize=100;
 const storageLimits={maxRows:1000,maxBytes:1048576};
 
+async function installPublishTimers(client) {
+  const args="jsonb,jsonb,timestamptz,uuid,jsonb,jsonb";
+  const anchors={
+    publish_klaviyo_staged_report_day:[
+      ["  perform 1 from operations.refresh_control",null],
+      ["  revision:=(c->>'expectedRevision')","sharedSourceChecks"],
+      ["  receipt:=jsonb_build_object('version','klaviyo-daily-receipt-v1'","writerAndVerification"],
+      ["  return receipt;","receiptPersist"],
+    ],
+    write_klaviyo_staged_first_report_day:[
+      ["  for s in select body from pg_temp.adstable_klaviyo_daily_report_stage",null],
+      ["  return analytics.check_klaviyo_daily_report_facts","physicalWrite"],
+    ],
+    check_klaviyo_daily_report_facts:[
+      ["  summary:=analytics.verify_klaviyo_daily_report_stage",null],
+      ["  return summary||jsonb_build_object('digest'","physicalVerification"],
+    ],
+  };
+  for(const [name,points] of Object.entries(anchors)) {
+    const {rows:[{definition}]}=await client.query("select pg_get_functiondef($1::regprocedure) definition",[`analytics.${name}(${args})`]);
+    let sql=definition.replace("declare\n","declare\n  probe_time timestamptz;\n");
+    assert.notEqual(sql,definition);
+    for(const [anchor,label] of points) {
+      assert.equal(sql.split(anchor).length,2,`timing anchor ${name}: ${anchor}`);
+      const notice=label?`  raise notice 'EO05_DAILY_PUBLISH_PHASE ${label} %',1000*extract(epoch from clock_timestamp()-probe_time);\n`:"";
+      sql=sql.replace(anchor,()=>notice+"  probe_time:=clock_timestamp();\n"+anchor);
+    }
+    await client.query(sql);
+  }
+}
+
 function syntheticResponse(endpoint,owner,day) {
   const url=new URL(endpoint);
   assert.equal(url.origin,"https://a.klaviyo.com");
@@ -26,11 +57,7 @@ function syntheticResponse(endpoint,owner,day) {
   });
   if (url.pathname.includes("values-reports")) {
     const kind=url.pathname.includes("campaign")?"campaign":"flow";
-    return Response.json({data:{type:kind+"-values-report",attributes:{results:[{
-      groupings:{[kind+"_id"]:kind,[kind+"_message_id"]:kind+"-message",
-        [kind+"_message_name"]:"Synthetic message",send_channel:"email"},
-      statistics:{conversions:1,conversion_value:10},
-    }]}},links:{next:null}});
+    return Response.json({data:{type:kind+"-values-report",attributes:{results:[]}},links:{next:null}});
   }
   assert.equal(url.pathname,"/api/events");
   const offset=Number(url.searchParams.get("page[cursor]")??0);
@@ -54,6 +81,8 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
   const generation=randomUUID(),operationId=randomUUID(),hash=()=>randomBytes(32).toString("hex");
   const cipher=createSourceEvidenceCipher({keys:new Map([[1,randomBytes(32)]]),activeVersion:1,forbiddenKeys:[]});
   const policy=sourceStoreFixture().input.policy;
+  // The enclosing savepoint is rolled back, including these diagnostics.
+  await installPublishTimers(client);
   await client.query("update integrations.provider_connections set connected_at=clock_timestamp()-interval '3 days' where id=$1",[owner.connectionId]);
   await client.query(`insert into operations.refresh_quota_contexts
     (workspace_id,install_generation,provider,installation_id,connection_id,connection_version,account_id,client_scope_key,connection_scope_key,connection_epoch,api_version,enabled)
@@ -70,6 +99,11 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
   await client.query("update operations.refresh_queue_control set max_workspaces=8,max_accounts=8,max_snapshot_bytes=100000,max_snapshot_age_ms=60000 where singleton");
 
   const databaseTimings={queue:0,rawWrite:0,rawReadback:0,reportSourceRead:0,reportStage:0,reportPublish:0,reportReadback:0,jobClose:0};
+  const publishPhasesMs={};
+  const onNotice=({message})=>{
+    const match=/^EO05_DAILY_PUBLISH_PHASE ([a-zA-Z]+) ([0-9.]+)$/.exec(message);
+    if(match)publishPhasesMs[match[1]]=Number(match[2]);
+  };
   let failed,phase="start",requests=0,claimId,reportReceipt;
   const durations={queueEnqueue:0,queueAndAdmission:0,providerCollection:0,providerFixture:0,rawStore:0,handoff:0,reportFlow:0};
   async function timedQuery(bucket,sql,args) {
@@ -101,6 +135,7 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
     },
   };
   const start=performance.now();
+  client.on("notice",onNotice);
   try {
     await store.checkQueueFromAuthority({expectedRevision:(await store.readQueueCheck()).revision});
     durations.queueEnqueue=performance.now()-start;
@@ -174,8 +209,11 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
     const ended=performance.now();
     durations.reportFlow=ended-reportAt;
     assert.equal(run.work?.status,"completed",JSON.stringify(run));
-    assert.equal(reportReceipt?.rowCount,productEvents+2);
-    assert.ok(reportReceipt.packages.length>=6);
+    assert.equal(reportReceipt?.rowCount,productEvents);
+    assert.deepEqual(reportReceipt.packages.map(part=>part.rowCount),[200,200,200,200,200]);
+    for (const name of ["sharedSourceChecks","physicalWrite","physicalVerification","receiptPersist"]) {
+      assert.ok(Number.isFinite(publishPhasesMs[name]),`missing SQL timing ${name}`);
+    }
     assert.equal(requests,20);
     const status=(await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",
       [owner.workspaceId,claimId])).rows[0]?.status;
@@ -191,14 +229,16 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
     console.log("EO05_KLAVIYO_DAILY_TIMING_PASS "+JSON.stringify({
       provider:"klaviyo",synthetic:true,rollbackOnly:true,queueMode:"isolated_no_backlog",productEvents,reportRows:reportReceipt.rowCount,
       rawPackages:batches.length,reportPackages:reportReceipt.packages.length,receipts,requests,
-      durationsMs:durations,postgresqlMsByPhase:databaseTimings,totalMs,postgresqlMs,
+      durationsMs:durations,postgresqlMsByPhase:databaseTimings,publishPhasesMs,totalMs,postgresqlMs,
       adsTableAndFixtureOverheadMs:totalMs-postgresqlMs-durations.providerFixture,
     }));
   } catch(error) {
     console.error("EO05_KLAVIYO_DAILY_TIMING_STOP "+JSON.stringify({
       phase,code:error.code,message:error.message,where:error.where,requests,
-      elapsedBeforeStopMs:performance.now()-start,durationsMs:durations,postgresqlMsByPhase:databaseTimings,
+      elapsedBeforeStopMs:performance.now()-start,durationsMs:durations,postgresqlMsByPhase:databaseTimings,publishPhasesMs,
     }));
     throw error;
+  } finally {
+    client.off("notice",onNotice);
   }
 }

@@ -65,7 +65,8 @@ begin
       package_ordinal integer primary key,
       day_binding text not null,
       body jsonb not null,
-      digest text not null
+      digest text not null,
+      daily_sources_verified boolean not null default false
     ) on commit drop;
     staging_relation:=pg_catalog.to_regclass('pg_temp.adstable_klaviyo_daily_report_stage');
   end if;
@@ -561,6 +562,7 @@ begin
   perform 1 from operations.refresh_control where singleton for update;
   if not found then raise exception 'SCHEDULED_DATASET_CLAIM_REQUIRED'; end if;
   perform analytics.assert_klaviyo_daily_report_claim(o,c,d);
+  perform analytics.verify_klaviyo_daily_report_stage(o,c,d,operation,policy,digests);
   if jsonb_typeof(c->'batchIds') is distinct from 'array' or jsonb_array_length(c->'batchIds') not between 3 and 22
     or c->'sourceContext'->'window' is distinct from jsonb_build_object('from',day,'to',day)
     or policy->>'version' is distinct from 'report-source-3y-v1'
@@ -613,8 +615,12 @@ begin
   end if;
   if exists(select 1 from pg_temp.adstable_klaviyo_daily_report_stage s
     cross join lateral jsonb_array_elements(s.body->'rows') item
-    cross join lateral jsonb_array_elements(item->'row'->'provenance'->'sources') ref
-    where not (c->'sources' @> jsonb_build_array(ref))) then raise exception 'KLAVIYO_REPORT_RECEIPT_SCOPE_INVALID';end if;
+    where item->'row'->'provenance'->'source_context' is distinct from c->'sourceContext'
+      or jsonb_typeof(item->'row'->'provenance'->'sources') is distinct from 'array'
+      or not (c->'sources' @> (item->'row'->'provenance'->'sources'))) then
+    raise exception 'KLAVIYO_REPORT_RECEIPT_SCOPE_INVALID';
+  end if;
+  update pg_temp.adstable_klaviyo_daily_report_stage set daily_sources_verified=true;
   revision:=(c->>'expectedRevision')::integer+1;
   if revision=1 then
     proof:=analytics.write_klaviyo_staged_first_report_day(o,c,d,operation,policy,digests);
@@ -688,7 +694,7 @@ create or replace function analytics.commit_dataset_storage(o jsonb,p jsonb) ret
 language plpgsql security definer set search_path='' as $fn$
 declare item jsonb; r jsonb; row_input jsonb; injected jsonb; b evidence.source_batches%rowtype; primary_id bigint;
  operation uuid; h text; prior jsonb; result jsonb; ids jsonb:='[]'; found_row jsonb; rid bigint; name text; cols text; allowed text[]; k text;
- staged_klaviyo boolean:=false; grouped record;
+ staged_klaviyo boolean:=false; verified_day_sources boolean:=false; grouped record;
 begin
  perform 1 from operations.refresh_control where singleton for update;
  perform evidence.assert_source_owner(o);
@@ -717,8 +723,11 @@ begin
    where oid=pg_catalog.to_regclass('pg_temp.adstable_klaviyo_daily_report_stage')
      and relnamespace=pg_catalog.pg_my_temp_schema() and relowner=current_user::regrole
      and relpersistence='t' and relkind='r') then
-  select exists(select 1 from pg_temp.adstable_klaviyo_daily_report_stage stage
-    where stage.body-'operationId'=p-'operationId') into staged_klaviyo;
+  select true,stage.daily_sources_verified into staged_klaviyo,verified_day_sources
+    from pg_temp.adstable_klaviyo_daily_report_stage stage
+    where stage.body-'operationId'=p-'operationId' limit 1;
+  staged_klaviyo:=coalesce(staged_klaviyo,false);
+  verified_day_sources:=coalesce(verified_day_sources,false);
  end if;
  if p->'policy'->>'version'='report-source-3y-v1' then
   if exists(select 1 from privacy.deletion_runs where workspace_id=(o->>'workspaceId')::uuid and install_generation=(o->>'generation')::bigint and status in ('pending','running','failed')) then raise exception 'REPORT_RETENTION_PRIVACY_PENDING';end if;
@@ -738,7 +747,7 @@ begin
     if r->>k is not null then perform analytics.hold_report_mapping(o,(r->>k)::bigint,(p->'policy'->>'until')::timestamptz);end if;
    end loop;
   end loop;
-  if staged_klaviyo then
+  if staged_klaviyo and not verified_day_sources then
    -- Verify the same context and page references and retain each source once
    -- per package. Individual scopes, mapping holds and row triggers remain.
    for grouped in

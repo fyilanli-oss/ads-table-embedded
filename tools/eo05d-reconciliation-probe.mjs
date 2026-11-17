@@ -100,7 +100,7 @@ async function probeKlaviyoReportStage(client,owner,input,previous) {
     assert.deepEqual((await verify(digests)).rows[0].result,{...summary,digest:sourcePayloadHash(summary)});
     const verified={...summary,status:"facts_verified",comparison:"matched"};
     assert.deepEqual((await checkFacts(digests)).rows[0].result,{...verified,digest:sourcePayloadHash(verified)});
-    await client.query("update operations.refresh_runs set status='paused' where fence=$1 and workspace_id=$2",
+    await client.query("update operations.refresh_runs set status='paused',finished_at=clock_timestamp() where fence=$1 and workspace_id=$2",
       [fence,owner.workspaceId]);
     assert.match((await rejected(client,()=>checkFacts(digests))).message,/SCHEDULED_DATASET_CLAIM_REQUIRED/);
     assert.deepEqual(await prior(),previous);

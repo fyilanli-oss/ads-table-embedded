@@ -44,7 +44,15 @@ export async function klaviyoOneJobProbe(client, {ownerFixture}) {
   await client.query("set role adstable_owner");
   try {
     const owner = await ownerFixture(client, "klaviyo");
-    const store = createRefreshWorkRepository(client);
+    const store = createRefreshWorkRepository({async query(sql, args) {
+      try {return await client.query(sql, args);}
+      catch (error) {
+        console.error("EO05_KLAVIYO_ONE_JOB_QUEUE_STOP "+JSON.stringify({
+          function: sql.match(/^select ([a-z_]+\.[a-z_]+)/i)?.[1], code: error.code, message: error.message,
+        }));
+        throw error;
+      }
+    }});
     const now = Date.now;
     const day = new Date(now()-86_400_000).toISOString().slice(0, 10);
     const window = {from: day, to: day};
@@ -64,6 +72,7 @@ export async function klaviyoOneJobProbe(client, {ownerFixture}) {
       accounts: [{provider: "klaviyo", accountId: owner.accountId, limit: cost}],
     }, {maxWorkspaces: 8, maxCandidates: 8, maxClaims: 1, maxAdmissions: 1}]);
     await client.query("update operations.refresh_tick_control set enabled=true,generation=$1,last_minute=null,last_checked_at_ms=null,queue_revision=null where singleton", [generation]);
+    await client.query("update operations.refresh_queue_control set max_workspaces=8,max_accounts=8,max_snapshot_bytes=100000,max_snapshot_age_ms=60000 where singleton");
     const start = performance.now();
     await store.checkQueueFromAuthority({expectedRevision: (await store.readQueueCheck()).revision});
     const queueEnqueueMs = performance.now()-start;

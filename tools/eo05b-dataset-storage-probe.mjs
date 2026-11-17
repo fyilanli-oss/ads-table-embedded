@@ -20,7 +20,7 @@ async function rejected(client, action, pattern) {
   assert.ok(error, "invalid SQL operation must fail"); if (pattern) assert.match(error.message, pattern);
 }
 
-async function ownerFixture(client, provider = "google_ads") {
+export async function ownerFixture(client, provider = "google_ads") {
   const shopId = "gid://shopify/Shop/" + BigInt("0x" + randomBytes(6).toString("hex")), shopDomain = "dataset-" + randomBytes(6).toString("hex") + ".myshopify.com";
   const boot = (await client.query("select * from shopify.bootstrap_installation($1,$2,$3,statement_timestamp())", [shopId, shopDomain, randomBytes(32)])).rows[0];
   const iid = (await client.query("select id::text from shopify.installations where workspace_id=$1", [boot.workspace_id])).rows[0].id;

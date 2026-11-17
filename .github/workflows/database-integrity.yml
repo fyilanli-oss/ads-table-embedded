@@ -98,6 +98,7 @@ on:
       - "app/lib/providers/klaviyo-source-write.server.js"
       - "app/lib/providers/klaviyo-identity-collection.server.js"
       - "tools/eo05-klaviyo-source-capture-probe.mjs"
+      - "tools/eo05-klaviyo-one-job-probe.mjs"
       - "app/lib/database/customer-source-privacy.server.js"
       - "app/lib/shopify/privacy-webhook.server.js"
       - "app/lib/database/privacy-lifecycle-repository.server.js"
@@ -217,4 +218,29 @@ jobs:
         run: |
           if test -f "$RUNNER_TEMP/f01b-identity-rollout/supabase/config.toml"; then
             pnpm dlx supabase@2.121.0 stop --no-backup --workdir "$RUNNER_TEMP/f01b-identity-rollout"
+          fi
+
+  klaviyo-one-job:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          version: 11.25.0
+          runtime: node@24
+          install: false
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Start the disposable Klaviyo database
+        run: |
+          mkdir -p "$RUNNER_TEMP/f01b-klaviyo-one-job"
+          pnpm dlx supabase@2.121.0 init --workdir "$RUNNER_TEMP/f01b-klaviyo-one-job"
+          pnpm dlx supabase@2.121.0 db start --workdir "$RUNNER_TEMP/f01b-klaviyo-one-job"
+      - name: Measure one synthetic Klaviyo job
+        run: node tools/f01-database-replay.mjs klaviyo-one-job
+      - name: Destroy the disposable Klaviyo database
+        if: always()
+        run: |
+          if test -f "$RUNNER_TEMP/f01b-klaviyo-one-job/supabase/config.toml"; then
+            pnpm dlx supabase@2.121.0 stop --no-backup --workdir "$RUNNER_TEMP/f01b-klaviyo-one-job"
           fi

@@ -894,6 +894,9 @@
     "merge_authorized": false,
     "deployment_authorized": false
   },
+  "disposable_rehearsals": {
+    "klaviyo_one_job": "commit_in_discarded_f01_container"
+  },
   "prepared_migrations": [
     {
       "version": "20261103221715",

@@ -438,7 +438,7 @@ async function committedRecoveryRoundtrip(client, original) {
 async function main() {
   assertReplayEnvironment(process.env);
   const mode=process.argv[2];
-  assert.ok(["staged","full"].includes(mode),"mode must be staged or full");
+  assert.ok(["staged","full","klaviyo-one-job"].includes(mode),"unsupported replay mode");
   assert.deepEqual(validateMigrationLineage({manifest,files:loadMigrationFiles(root)}),[]);
   const client=new pg.Client(replayConnection);
   await client.connect();
@@ -450,6 +450,12 @@ async function main() {
     for (const entry of migrations) {
       console.log(`F01B_APPLY ${entry.version} ${entry.name}`);
       await executeMigration(client, entry, read(entry.file));
+    }
+    if (mode === "klaviyo-one-job") {
+      assert.equal(manifest.disposable_rehearsals?.klaviyo_one_job, "commit_in_discarded_f01_container");
+      for (const entry of manifest.prepared_migrations) await executeMigration(client, entry, read(entry.file));
+      await klaviyoOneJobProbe(client, {ownerFixture});
+      return;
     }
     let beforeDifferences=[];
     if(mode==="staged") {
@@ -512,12 +518,6 @@ async function main() {
       schema_sha256:hash(after),live_parity:beforeDifferences.length===0,live_difference_categories:beforeDifferences.map(d=>d.category),
       business_data_source:"synthetic_only",production_mutation:false})}`);
     assert.equal(beforeDifferences.length,0,"historical replay differs from captured live schema; review required");
-    if (mode === "full" && manifest.disposable_rehearsals?.klaviyo_one_job === "commit_in_discarded_f01_container") {
-      // Run only after F01 parity and rollback scenarios are complete. The
-      // workflow always destroys this loopback database after the full replay.
-      for (const entry of manifest.prepared_migrations) await executeMigration(client, entry, read(entry.file));
-      await klaviyoOneJobProbe(client, {ownerFixture});
-    }
   } finally { await client.end(); }
 }
 

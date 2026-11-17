@@ -37,7 +37,7 @@ function syntheticResponse(endpoint, owner, day) {
   });
 }
 
-/** Only called at the end of the disposable, full F01 CI database rehearsal. */
+/** Only called in the dedicated disposable F01 CI database rehearsal. */
 export async function klaviyoOneJobProbe(client, {ownerFixture}) {
   assert.equal(process.env.GITHUB_ACTIONS, "true");
   assert.ok(process.env.RUNNER_TEMP);
@@ -82,7 +82,7 @@ export async function klaviyoOneJobProbe(client, {ownerFixture}) {
       partnerApi: {appId, activeSubscription: async () => ({data: {activeSubscription: {
         shop: {id: owner.shopId, myshopifyDomain: owner.shopDomain}, billingPeriod: "EVERY_30_DAYS",
         cancelAtEndOfCycle: false, trialEndsAt: null,
-        currentBillingPeriod: {startTime: new Date(now()-86_400_000).toISOString(), endTime: new Date(now()+86_400_000).toISOString()},
+        currentBillingCycle: {startTime: new Date(now()-86_400_000).toISOString(), endTime: new Date(now()+86_400_000).toISOString()},
         items: [{handle: "monthly", price: {active: true}}],
       }}})},
     });

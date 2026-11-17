@@ -454,7 +454,7 @@ async function main() {
     if (mode === "klaviyo-one-job") {
       assert.equal(manifest.disposable_rehearsals?.klaviyo_one_job, "commit_in_discarded_f01_container");
       for (const entry of manifest.prepared_migrations) await executeMigration(client, entry, read(entry.file));
-      await klaviyoOneJobProbe(client, {ownerFixture});
+      await klaviyoOneJobProbe(client, {ownerFixture, connection: replayConnection});
       return;
     }
     let beforeDifferences=[];

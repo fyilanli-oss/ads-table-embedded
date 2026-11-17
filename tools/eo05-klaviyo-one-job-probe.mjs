@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import {randomBytes, randomUUID} from "node:crypto";
+import {setTimeout as delay} from "node:timers/promises";
+import pg from "pg";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {createSourceEvidenceCipher} from "../app/lib/database/source-evidence-store.server.js";
 import {storeKlaviyoRawDataset} from "../app/lib/database/klaviyo-dataset-source-store.server.js";
@@ -37,11 +39,54 @@ function syntheticResponse(endpoint, owner, day) {
   });
 }
 
+async function installReportTimers(client) {
+  const signatures = [
+    "analytics.commit_scheduled_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)",
+    "analytics._commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)",
+  ];
+  const definitions = [];
+  const restore = async () => {for (const sql of definitions) await client.query(sql);};
+  function inject(sql, anchor, text) {
+    assert.equal(sql.split(anchor).length, 2, "reconciliation timing anchor must be unique");
+    return sql.replace(anchor, text+"\n"+anchor);
+  }
+  function elapsed(label) {
+    return `bench_times:=bench_times || jsonb_build_object('${label}',1000*extract(epoch from (clock_timestamp()-bench_start)));
+ bench_start:=clock_timestamp();`;
+  }
+  try {
+    for (const signature of signatures) {
+      const {rows: [{definition}]} = await client.query("select pg_get_functiondef($1::regprocedure) as definition", [signature]);
+      definitions.push(definition);
+      let sql = inject(definition, "begin\n", "bench_times jsonb:='{}'; bench_start timestamptz:=clock_timestamp();");
+      if (signature === signatures[0]) {
+        sql = inject(sql, "  receipt:=analytics.commit_dataset_reconciliation(o,p,c,d);", elapsed("scheduledLockAndAuthorityMs"));
+        sql = inject(sql, "  if receipt->>'status'='consumed' then", "bench_start:=clock_timestamp();");
+        sql = inject(sql, "  return receipt;", elapsed("scheduledReceiptLinkMs")+"\n raise notice 'EO05_JOB_REPORT_TIMING %', bench_times;");
+      } else {
+        sql = inject(sql, " if o->>'provider'='shopify'", elapsed("writerLockAndAuthorityMs"));
+        sql = inject(sql, " read_key:=case", elapsed("packageValidationMs"));
+        sql = inject(sql, " if (select count(*) from jsonb_array_elements(p->'rows'))<>", elapsed("sourceAndRetentionMs"));
+        sql = inject(sql, " result:=jsonb_build_object('version','eo05d-reconciliation-v1'", elapsed("rowCheckAndWriteMs"));
+        sql = inject(sql, " return result;", elapsed("receiptCreateMs")+"\n raise notice 'EO05_JOB_REPORT_TIMING %', bench_times;");
+      }
+      await client.query(sql);
+    }
+    return restore;
+  } catch (error) {await restore(); throw error;}
+}
+
 /** Only called in the dedicated disposable F01 CI database rehearsal. */
-export async function klaviyoOneJobProbe(client, {ownerFixture}) {
+export async function klaviyoOneJobProbe(client, {ownerFixture, connection}) {
   assert.equal(process.env.GITHUB_ACTIONS, "true");
   assert.ok(process.env.RUNNER_TEMP);
   await client.query("set role adstable_owner");
+  let restoreTimers, contender, inspector, competingWait;
+  const sqlPhases = {};
+  const onNotice = ({message}) => {
+    const prefix = "EO05_JOB_REPORT_TIMING ";
+    if (message.startsWith(prefix)) Object.assign(sqlPhases, JSON.parse(message.slice(prefix.length)));
+  };
   try {
     const owner = await ownerFixture(client, "klaviyo");
     const store = createRefreshWorkRepository({async query(sql, args) {
@@ -73,6 +118,15 @@ export async function klaviyoOneJobProbe(client, {ownerFixture}) {
     }, {maxWorkspaces: 8, maxCandidates: 8, maxClaims: 1, maxAdmissions: 1}]);
     await client.query("update operations.refresh_tick_control set enabled=true,generation=$1,last_minute=null,last_checked_at_ms=null,queue_revision=null where singleton", [generation]);
     await client.query("update operations.refresh_queue_control set max_workspaces=8,max_accounts=8,max_snapshot_bytes=100000,max_snapshot_age_ms=60000 where singleton");
+    restoreTimers = await installReportTimers(client);
+    client.on("notice", onNotice);
+    contender = new pg.Client(connection);
+    inspector = new pg.Client(connection);
+    await contender.connect();
+    await inspector.connect();
+    await contender.query("set role adstable_owner; set statement_timeout='45s'");
+    const {rows: [{pid: contenderPid}]} = await contender.query("select pg_backend_pid() as pid");
+    const {rows: [{pid: writerPid}]} = await client.query("select pg_backend_pid() as pid");
     const start = performance.now();
     await store.checkQueueFromAuthority({expectedRevision: (await store.readQueueCheck()).revision});
     const queueEnqueueMs = performance.now()-start;
@@ -92,6 +146,22 @@ export async function klaviyoOneJobProbe(client, {ownerFixture}) {
     let requests = 0, admittedClaim, failure, reportStarted;
     const reportDatabase = {async query(sql, args) {
       const before = performance.now();
+      if (sql === SCHEDULED_DATASET_RECONCILE_SQL) competingWait = delay(100).then(async () => {
+        const beganWait = performance.now();
+        let waitMs;
+        const waiting = contender.query("select 1 from operations.refresh_control where singleton for update")
+          .then(() => {waitMs = performance.now()-beganWait;}, error => ({error}));
+        let writerConfirmed = false;
+        for (let attempt = 0; attempt < 10 && !writerConfirmed && waitMs === undefined; attempt++) {
+          const {rows: [{blocked}]} = await inspector.query("select $1::int=any(pg_blocking_pids($2::int)) as blocked", [writerPid, contenderPid]);
+          writerConfirmed = blocked;
+          if (!blocked) await delay(15);
+        }
+        const outcome = await waiting;
+        if (outcome?.error) throw outcome.error;
+        assert.equal(writerConfirmed, true);
+        return waitMs;
+      }).then(ms => ({ms}), error => ({error}));
       try {return await client.query(sql, args);}
       catch (error) {failure = error; throw error;}
       finally {
@@ -151,13 +221,30 @@ export async function klaviyoOneJobProbe(client, {ownerFixture}) {
     assert.equal(scheduled.work.claim.id, admittedClaim.id);
     const verified = (await client.query(`
       select r.status, (select count(*)::int from analytics.cpd_product_sales_facts where installation_id=$2) as rows,
-        (select count(*)::int from evidence.source_batches where authority=$3::jsonb and handoff_state='consumed'
-          and manifest->'klaviyoDatasetRead'->>'jobId'=$1 and manifest->'scheduledDatasetClaim'->>'job'=$1) as receipts
+        (select count(*)::int from evidence.source_batches b
+          join evidence.source_batches anchor on anchor.id=(b.manifest->'datasetConsumerReceipt'->>'anchorBatchId')::bigint
+          where b.authority=$3::jsonb and anchor.authority=b.authority and b.handoff_state='consumed'
+            and b.manifest->'klaviyoDatasetRead'->>'jobId'=$1 and anchor.manifest->'scheduledDatasetClaim'->>'job'=$1
+            and b.handoff_receipt=anchor.manifest->'datasetReconciliation'->>'digest') as receipts
       from operations.refresh_runs r where r.job_id=$1 and r.workspace_id=$4`,
     [admittedClaim.id, owner.installationId, JSON.stringify(owner), owner.workspaceId])).rows[0];
     assert.deepEqual(verified, {status: "completed", rows: 200, receipts: 3});
+    assert.equal(Object.keys(sqlPhases).length, 7);
+    const lockWait = await competingWait;
+    if (lockWait.error) throw lockWait.error;
+    await restoreTimers();
+    restoreTimers = undefined;
     console.log("EO05_KLAVIYO_ONE_JOB_PASS "+JSON.stringify({rows: verified.rows, completed: true, requests, liveRequests: 0,
       timings: {...timing, rawAdsTableMs: timing.rawWriteMs-timing.rawDatabaseWriteMs-timing.rawDatabaseReadbackMs,
-        reportNonMeteredMs: ended-reportStarted-timing.reportSourceReadMs-timing.reportWriteMs-timing.reportReadbackMs-timing.closeMs, totalMs}}));
-  } finally {await client.query("reset role");}
+        reportNonMeteredMs: ended-reportStarted-timing.reportSourceReadMs-timing.reportWriteMs-timing.reportReadbackMs-timing.closeMs,
+        reportSqlPhases: sqlPhases, competingLockWaitMs: lockWait.ms, totalMs}}));
+  } finally {
+    client.off("notice", onNotice);
+    try {await restoreTimers?.();}
+    finally {
+      await competingWait;
+      await Promise.allSettled([contender?.end(), inspector?.end()]);
+      await client.query("reset role");
+    }
+  }
 }

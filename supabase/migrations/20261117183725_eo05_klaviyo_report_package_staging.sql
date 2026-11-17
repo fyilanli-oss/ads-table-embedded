@@ -3,11 +3,7 @@ set local lock_timeout='5s';
 set local statement_timeout='30s';
 set local role adstable_owner;
 
--- Staging lives for one PostgreSQL transaction. An interrupted transaction
--- leaves neither staged rows nor a visible change to the previous report.
-create function analytics.stage_klaviyo_daily_report_package(
-  o jsonb, p jsonb, c jsonb, d timestamptz, ordinal integer, package_count integer
-) returns jsonb
+create function analytics.assert_klaviyo_daily_report_claim(o jsonb,c jsonb,d timestamptz) returns void
 language plpgsql security definer set search_path='' as $fn$
 declare
   workspace uuid := (o->>'workspaceId')::uuid;
@@ -16,6 +12,31 @@ declare
   job text := c->'sourceContext'->>'job_id';
   claim_fence bigint := (c->'sourceContext'->>'fence')::bigint;
   day date := (c->>'businessDate')::date;
+begin
+  if o->>'provider' is distinct from 'klaviyo' or d is null or d<=clock_timestamp()
+    or operations.refresh_claim_is_current(workspace,generation,'klaviyo',account,job,claim_fence) is not true
+    or not exists (
+      select 1 from operations.refresh_work_bindings b
+      join operations.refresh_work_progress s on s.fence=b.fence and s.workspace_id=b.workspace_id
+        and s.install_generation=b.install_generation and s.provider=b.provider and s.account_id=b.account_id and s.job_id=b.job_id
+      where b.workspace_id=workspace and b.install_generation=generation and b.provider='klaviyo'
+        and b.account_id=account and b.job_id=job and b.fence=claim_fence
+        and b.from_date=day and b.to_date=day and s.from_date=day and s.to_date=day
+        and s.stage='ready_for_dataset' and b.source=c->'sourceContext'->'snapshot'
+        and extract(epoch from d)*1000<=b.deadline_at_ms
+    ) then raise exception 'SCHEDULED_DATASET_CLAIM_REQUIRED'; end if;
+end $fn$;
+
+revoke all on function analytics.assert_klaviyo_daily_report_claim(jsonb,jsonb,timestamptz)
+  from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+
+-- Staging lives for one PostgreSQL transaction. An interrupted transaction
+-- leaves neither staged rows nor a visible change to the previous report.
+create function analytics.stage_klaviyo_daily_report_package(
+  o jsonb, p jsonb, c jsonb, d timestamptz, ordinal integer, package_count integer
+) returns jsonb
+language plpgsql security definer set search_path='' as $fn$
+declare
   operation uuid := (p->>'operationId')::uuid;
   staged_count integer;
   row_count integer;
@@ -36,18 +57,7 @@ begin
     or octet_length(analytics.dataset_json(jsonb_build_object('write',p,'context',c)))>1048576 then
     raise exception 'KLAVIYO_REPORT_PACKAGE_LIMIT';
   end if;
-  if d is null or d<=clock_timestamp()
-    or operations.refresh_claim_is_current(workspace,generation,'klaviyo',account,job,claim_fence) is not true
-    or not exists (
-      select 1 from operations.refresh_work_bindings b
-      join operations.refresh_work_progress s on s.fence=b.fence and s.workspace_id=b.workspace_id
-        and s.install_generation=b.install_generation and s.provider=b.provider and s.account_id=b.account_id and s.job_id=b.job_id
-      where b.workspace_id=workspace and b.install_generation=generation and b.provider='klaviyo'
-        and b.account_id=account and b.job_id=job and b.fence=claim_fence
-        and b.from_date=day and b.to_date=day and s.from_date=day and s.to_date=day
-        and s.stage='ready_for_dataset' and b.source=c->'sourceContext'->'snapshot'
-        and extract(epoch from d)*1000<=b.deadline_at_ms
-    ) then raise exception 'SCHEDULED_DATASET_CLAIM_REQUIRED'; end if;
+  perform analytics.assert_klaviyo_daily_report_claim(o,c,d);
 
   staging_relation:=pg_catalog.to_regclass('pg_temp.adstable_klaviyo_daily_report_stage');
   if staging_relation is null and ordinal=0 then
@@ -157,6 +167,11 @@ declare
   g bigint := (o->>'generation')::bigint;
   a text := o->>'accountId';
 begin
+  -- Take the existing scheduled-writer lock only at the physical day check,
+  -- after all package transfers. A later handoff must share this transaction.
+  perform 1 from operations.refresh_control where singleton for update;
+  if not found then raise exception 'SCHEDULED_DATASET_CLAIM_REQUIRED'; end if;
+  perform analytics.assert_klaviyo_daily_report_claim(o,c,d);
   summary:=analytics.verify_klaviyo_daily_report_stage(o,c,d,operation,policy,digests);
   foreach table_name in array array['pd_facts','cpd_product_performance_facts','cpd_product_sales_facts'] loop
     execute format('select count(*)::int from (select id from analytics.%I where workspace_id=$1 and installation_id=$2 and installation_generation=$3 and platform=''klaviyo'' and platform_account_id=$4 and business_date=$5 limit 4001) actual',table_name)

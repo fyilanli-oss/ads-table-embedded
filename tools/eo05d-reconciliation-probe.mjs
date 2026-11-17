@@ -100,6 +100,9 @@ async function probeKlaviyoReportStage(client,owner,input,previous) {
     assert.deepEqual((await verify(digests)).rows[0].result,{...summary,digest:sourcePayloadHash(summary)});
     const verified={...summary,status:"facts_verified",comparison:"matched"};
     assert.deepEqual((await checkFacts(digests)).rows[0].result,{...verified,digest:sourcePayloadHash(verified)});
+    await client.query("update operations.refresh_runs set status='paused' where fence=$1 and workspace_id=$2",
+      [fence,owner.workspaceId]);
+    assert.match((await rejected(client,()=>checkFacts(digests))).message,/SCHEDULED_DATASET_CLAIM_REQUIRED/);
     assert.deepEqual(await prior(),previous);
     assert.equal((await client.query("select count(*)::int n from pg_temp.adstable_klaviyo_daily_report_stage")).rows[0].n,2);
   } finally {
@@ -107,7 +110,7 @@ async function probeKlaviyoReportStage(client,owner,input,previous) {
     await client.query("release savepoint report_stage_case");
   }
   assert.equal((await client.query("select to_regclass('pg_temp.adstable_klaviyo_daily_report_stage') staging")).rows[0].staging,null);
-  console.log("EO05_KLAVIYO_REPORT_STAGE_PROBE two_packages=true compact_summary=true previous_receipt_preserved=true rollback_cleanup=true");
+  console.log("EO05_KLAVIYO_REPORT_STAGE_PROBE two_packages=true compact_summary=true claim_rechecked=true previous_receipt_preserved=true rollback_cleanup=true");
 }
 
 /** Existing F01 rollback transaction. Owners, native pages, clocks and keys below

@@ -289,17 +289,21 @@ begin
   if not found then raise exception 'SCHEDULED_DATASET_CLAIM_REQUIRED'; end if;
   perform analytics.assert_klaviyo_daily_report_claim(o,c,d);
   staged:=analytics.verify_klaviyo_daily_report_stage(o,c,d,operation,policy,digests);
-  select b.manifest->'datasetReconciliation' into head
+  select candidate.receipt into head
    from evidence.source_batches b
+   cross join lateral (select coalesce(b.manifest->'klaviyoDailyReceipt',b.manifest->'datasetReconciliation') receipt) candidate
    where b.workspace_id=w and b.installation_id=i and b.installation_generation=g
-     and b.primary_source='klaviyo' and b.authority=o and b.manifest ? 'datasetReconciliation'
-     and b.manifest->'datasetReconciliation'->>'businessDate'=day::text
-     and b.manifest->'datasetReconciliation'->>'timeZone'=timezone
-   order by (b.manifest->'datasetReconciliation'->>'revision')::bigint desc,b.id desc limit 1;
+     and b.primary_source='klaviyo' and b.authority=o and not (b.manifest ? 'datasetSupersededBy')
+     and candidate.receipt->>'businessDate'=day::text and candidate.receipt->>'timeZone'=timezone
+   order by (candidate.receipt->>'revision')::bigint desc,b.id desc limit 1;
   if head is null or head->'revision' is distinct from c->'expectedRevision' then
     raise exception 'KLAVIYO_REPORT_REVISION_CONFLICT';
   end if;
-  prior:=analytics.inspect_dataset_reconciliation(o,(head->>'operationId')::uuid);
+  if head->>'version'='klaviyo-daily-receipt-v1' then
+    prior:=analytics.inspect_klaviyo_daily_report(o,(head->>'operationId')::uuid);
+  else
+    prior:=analytics.inspect_dataset_reconciliation(o,(head->>'operationId')::uuid);
+  end if;
   if prior->>'status' is distinct from 'consumed' or prior->>'comparison' is distinct from 'matched'
     or prior->>'digest' is distinct from head->>'digest'
     or started is null or started>clock_timestamp()
@@ -504,7 +508,7 @@ end $fn$;
 revoke all on function analytics.inspect_klaviyo_daily_report(jsonb,uuid)
   from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
 
-create function analytics.publish_klaviyo_staged_first_report_day(
+create function analytics.publish_klaviyo_staged_report_day(
   o jsonb,c jsonb,d timestamptz,operation uuid,policy jsonb,digests jsonb
 ) returns jsonb
 language plpgsql security definer set search_path='' as $fn$
@@ -516,6 +520,10 @@ declare
   accounts integer:=0;
   proof jsonb;
   receipt jsonb;
+  previous jsonb;
+  native_read jsonb;
+  completed_at timestamptz;
+  revision integer;
   anchor bigint;
   day date := (c->>'businessDate')::date;
   tz text := c->'sourceContext'->'snapshot'->>'timezone';
@@ -526,8 +534,11 @@ begin
   if jsonb_typeof(c->'batchIds') is distinct from 'array' or jsonb_array_length(c->'batchIds') not between 3 and 22
     or c->'sourceContext'->'window' is distinct from jsonb_build_object('from',day,'to',day)
     or policy->>'version' is distinct from 'report-source-3y-v1'
+    or jsonb_typeof(c->'expectedRevision') is distinct from 'number'
+    or coalesce(c->>'expectedRevision','') !~ '^[0-9]{1,9}$'
     or exists(select 1 from evidence.source_batches where authority=o and manifest ? 'klaviyoDailyReceipt'
-      and (manifest->'klaviyoDailyReceipt'->>'businessDate'=day::text or manifest->'klaviyoDailyReceipt'->>'operationId'=operation::text)) then
+      and (manifest->'klaviyoDailyReceipt'->>'operationId'=operation::text
+        or (c->'expectedRevision'='0'::jsonb and manifest->'klaviyoDailyReceipt'->>'businessDate'=day::text))) then
     raise exception 'KLAVIYO_REPORT_RECEIPT_SCOPE_INVALID';
   end if;
   perform analytics.assert_report_source_context(o,c->'sourceContext',(policy->>'until')::timestamptz,c->'sources');
@@ -540,13 +551,18 @@ begin
     and id in (select value::bigint from jsonb_array_elements_text(c->'batchIds')) order by id for update;
   for v in select value from jsonb_array_elements_text(c->'batchIds') loop
     select * into strict b from evidence.source_batches where id=v::bigint and authority=o;
+    native_read:=b.manifest->'klaviyoDatasetRead';
     if b.storage_state<>'committed' or b.handoff_state<>'pending' or b.retain_until<=clock_timestamp()
       or b.manifest->'privacyRedacted'='true'::jsonb or b.manifest ? 'datasetReconciliationMismatch'
       or (select count(*) from evidence.source_pages where batch_id=b.id) <>
         (select count(*) from jsonb_array_elements(c->'sources') ref where ref->>'batch_id'=v) then
       raise exception 'KLAVIYO_REPORT_RECEIPT_SCOPE_INVALID';
     end if;
-    case b.manifest->'klaviyoDatasetRead'->>'dataset'
+    if native_read->>'completedAt' is null or (native_read->>'completedAt')::timestamptz>clock_timestamp() then
+      raise exception 'KLAVIYO_REPORT_RECEIPT_SCOPE_INVALID';
+    end if;
+    completed_at:=greatest(completed_at,(native_read->>'completedAt')::timestamptz);
+    case native_read->>'dataset'
       when 'configuration' then
         if b.source_state<>'complete' then raise exception 'KLAVIYO_REPORT_RECEIPT_SCOPE_INVALID';end if;
         config:=config+1;anchor:=b.id;
@@ -569,10 +585,23 @@ begin
     cross join lateral jsonb_array_elements(s.body->'rows') item
     cross join lateral jsonb_array_elements(item->'row'->'provenance'->'sources') ref
     where not (c->'sources' @> jsonb_build_array(ref))) then raise exception 'KLAVIYO_REPORT_RECEIPT_SCOPE_INVALID';end if;
-  proof:=analytics.write_klaviyo_staged_first_report_day(o,c,d,operation,policy,digests);
+  revision:=(c->>'expectedRevision')::integer+1;
+  if revision=1 then
+    proof:=analytics.write_klaviyo_staged_first_report_day(o,c,d,operation,policy,digests);
+  else
+    select candidate.receipt into previous
+      from evidence.source_batches old
+      cross join lateral (select coalesce(old.manifest->'klaviyoDailyReceipt',old.manifest->'datasetReconciliation') receipt) candidate
+      where old.authority=o and not (old.manifest ? 'datasetSupersededBy')
+        and candidate.receipt->>'businessDate'=day::text and candidate.receipt->>'timeZone'=tz
+        and candidate.receipt->'revision'=c->'expectedRevision' for update of old;
+    if previous is null then raise exception 'KLAVIYO_REPORT_REVISION_CONFLICT'; end if;
+    proof:=analytics.replace_klaviyo_staged_report_day(o,c,d,operation,policy,digests);
+  end if;
   receipt:=jsonb_build_object('version','klaviyo-daily-receipt-v1','operationId',operation,
     'status','consumed','comparison','matched','consumerReceipt',true,'checkpointAdvanced',true,
-    'businessDate',day,'timeZone',tz,'revision',1,'rowCount',proof->'rowCount','packages',proof->'packages',
+    'businessDate',day,'timeZone',tz,'revision',revision,'completedAt',completed_at,
+    'rowCount',proof->'rowCount','packages',proof->'packages',
     'batchIds',c->'batchIds','sources',c->'sources','jobId',c->'sourceContext'->>'job_id','fence',c->'sourceContext'->>'fence',
     'factsDigest',analytics.klaviyo_daily_report_fingerprint(o,day,tz,(proof->>'rowCount')::integer));
   receipt:=receipt||jsonb_build_object('digest',analytics.dataset_digest(receipt));
@@ -583,6 +612,10 @@ begin
     where authority=o and id in (select value::bigint from jsonb_array_elements_text(c->'batchIds'));
   update evidence.source_batches set manifest=manifest||jsonb_build_object('klaviyoDailyReceipt',receipt)
     where id=anchor and authority=o;
+  if previous is not null then
+    update evidence.source_batches set manifest=manifest||jsonb_build_object('datasetSupersededBy',operation::text)
+      where authority=o and id in (select value::bigint from jsonb_array_elements_text(previous->'batchIds'));
+  end if;
   if exists(select 1 from evidence.source_batches where authority=o
     and id in (select value::bigint from jsonb_array_elements_text(c->'batchIds')) and octet_length(manifest::text)>1048576) then
     raise exception 'KLAVIYO_REPORT_RECEIPT_INVALID';
@@ -590,7 +623,36 @@ begin
   return receipt;
 end $fn$;
 
-revoke all on function analytics.publish_klaviyo_staged_first_report_day(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)
+revoke all on function analytics.publish_klaviyo_staged_report_day(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)
+  from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+
+-- The worker calls this only after it has received and read back a known
+-- publication. Recheck the persistent proof and claim under the queue lock.
+create function analytics.finish_klaviyo_daily_report_job(o jsonb,j text,f bigint,op uuid,h text)
+returns boolean language plpgsql security definer set search_path='' as $fn$
+declare
+  w uuid := (o->>'workspaceId')::uuid;
+  g bigint := (o->>'generation')::bigint;
+  a text := o->>'accountId';
+  r jsonb;
+begin
+  perform 1 from operations.refresh_control where singleton for update;
+  if not found then return false; end if;
+  perform evidence.assert_source_owner(o);
+  if o->>'provider' is distinct from 'klaviyo' or op is null or h is null or h !~ '^[0-9a-f]{64}$'
+    or operations.refresh_claim_is_current(w,g,'klaviyo',a,j,f) is not true then return false; end if;
+  r:=analytics.inspect_klaviyo_daily_report(o,op);
+  if r->>'status' is distinct from 'consumed' or r->>'comparison' is distinct from 'matched'
+    or r->'consumerReceipt' is distinct from 'true'::jsonb or r->'checkpointAdvanced' is distinct from 'true'::jsonb
+    or r->>'digest' is distinct from h or r->>'jobId' is distinct from j or r->>'fence' is distinct from f::text
+    or not exists(select 1 from operations.refresh_work_progress s where s.workspace_id=w and s.install_generation=g
+      and s.provider='klaviyo' and s.account_id=a and s.job_id=j and s.fence=f and s.stage='ready_for_dataset'
+      and s.from_date=(r->>'businessDate')::date and s.to_date=s.from_date)
+    or operations.refresh_claim_is_current(w,g,'klaviyo',a,j,f) is not true then return false; end if;
+  return operations.finish_refresh_work_before_stops(w,g,'klaviyo',a,j,f,'completed');
+end $fn$;
+
+revoke all on function analytics.finish_klaviyo_daily_report_job(jsonb,text,bigint,uuid,text)
   from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
 reset role;
 commit;

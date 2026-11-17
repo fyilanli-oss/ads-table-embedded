@@ -128,14 +128,18 @@ async function probeKlaviyoReportStage(client,owner,input,previous,{replace=fals
           [owner.installationId])).rows[0];
         const before=await fact();
         const changed=await client.query(
-          "select analytics.replace_klaviyo_staged_report_day($1::jsonb,$2::jsonb,$3::timestamptz,$4::uuid,$5::jsonb,$6::jsonb) result",
+          "select analytics.publish_klaviyo_staged_report_day($1::jsonb,$2::jsonb,$3::timestamptz,$4::uuid,$5::jsonb,$6::jsonb) result",
           [JSON.stringify(owner),JSON.stringify(context),deadline,operationId,JSON.stringify(writes[0].policy),JSON.stringify(digests)]);
-        assert.deepEqual(changed.rows[0].result,expected);
+        dailyReceipt=changed.rows[0].result;
+        assert.equal(dailyReceipt.revision,previous.revision+1);
+        assert.equal(dailyReceipt.consumerReceipt,true);
+        assert.deepEqual(dailyReceipt.packages,expected.packages);
+        assert.equal((await prior()).status,"superseded");
         assert.deepEqual(await fact(),{id:before.id,revision:String(BigInt(before.revision)+1n)});
       }
     } else {
       const result=await client.query(
-        "select analytics.publish_klaviyo_staged_first_report_day($1::jsonb,$2::jsonb,$3::timestamptz,$4::uuid,$5::jsonb,$6::jsonb) result",
+        "select analytics.publish_klaviyo_staged_report_day($1::jsonb,$2::jsonb,$3::timestamptz,$4::uuid,$5::jsonb,$6::jsonb) result",
         [JSON.stringify(owner),JSON.stringify(context),deadline,operationId,JSON.stringify(writes[0].policy),JSON.stringify(digests)]);
       dailyReceipt=result.rows[0].result;
       assert.equal(dailyReceipt.rowCount,2);
@@ -143,9 +147,15 @@ async function probeKlaviyoReportStage(client,owner,input,previous,{replace=fals
       assert.equal(dailyReceipt.consumerReceipt,true);
       assert.equal(dailyReceipt.checkpointAdvanced,true);
     }
-    await client.query("update operations.refresh_runs set status='paused',finished_at=clock_timestamp() where fence=$1 and workspace_id=$2",
-      [fence,owner.workspaceId]);
-    assert.match((await rejected(client,()=>checkFacts(digests))).message,/SCHEDULED_DATASET_CLAIM_REQUIRED/);
+    await client.query("savepoint report_stage_paused");
+    try {
+      await client.query("update operations.refresh_runs set status='paused',finished_at=clock_timestamp() where fence=$1 and workspace_id=$2",
+        [fence,owner.workspaceId]);
+      assert.match((await rejected(client,()=>checkFacts(digests))).message,/SCHEDULED_DATASET_CLAIM_REQUIRED/);
+    } finally {
+      await client.query("rollback to savepoint report_stage_paused");
+      await client.query("release savepoint report_stage_paused");
+    }
     if(!replace) assert.deepEqual(await prior(),previous);
     assert.equal((await client.query("select count(*)::int n from pg_temp.adstable_klaviyo_daily_report_stage")).rows[0].n,2);
     if(dailyReceipt) {
@@ -153,6 +163,16 @@ async function probeKlaviyoReportStage(client,owner,input,previous,{replace=fals
       const inspected=(await client.query("select analytics.inspect_klaviyo_daily_report($1::jsonb,$2::uuid) result",
         [JSON.stringify(owner),operationId])).rows[0].result;
       assert.deepEqual(inspected,dailyReceipt);
+      const finish=async (digest,claimFence=fence)=>(await client.query(
+        "select analytics.finish_klaviyo_daily_report_job($1::jsonb,$2::text,$3::bigint,$4::uuid,$5::text) result",
+        [JSON.stringify(owner),job,claimFence,operationId,digest])).rows[0].result;
+      const jobStatus=async ()=>(await client.query("select status from operations.refresh_runs where fence=$1",[fence])).rows[0].status;
+      assert.equal(await finish("f".repeat(64)),false);
+      assert.equal(await finish(dailyReceipt.digest,String(BigInt(fence)+1n)),false);
+      assert.equal(await jobStatus(),"running");
+      assert.equal(await finish(dailyReceipt.digest),true);
+      assert.equal(await jobStatus(),"completed");
+      assert.equal(await finish(dailyReceipt.digest),false);
     }
   } finally {
     await client.query("rollback to savepoint report_stage_case");

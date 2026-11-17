@@ -59,6 +59,24 @@ test("Klaviyo plan rejects Reporting Account epoch and caller query selectors",(
  }
 });
 
+test("Klaviyo daily plan separates the read budget from the raw storage budget",()=>{
+ const x=klaviyoRawDatasetsFixture();
+ x.plan.limits.maxRows=2000;
+ x.plan.storageLimits.maxRows=1000;
+ x.setPlan();
+ assert.equal(readKlaviyoRawCapturePlan(x.environment,x.options.now()).limits.maxRows,2000);
+
+ x.plan.limits.maxRows=2001;
+ x.setPlan();
+ assert.throws(()=>readKlaviyoRawCapturePlan(x.environment,x.options.now()),/CAPTURE_CONFIGURATION_REQUIRED/);
+
+ x.plan.limits.maxRows=2000;
+ x.plan.storageLimits.maxRows=1001;
+ x.setPlan();
+ assert.throws(()=>readKlaviyoRawCapturePlan(x.environment,x.options.now()),/CAPTURE_CONFIGURATION_REQUIRED/);
+ assert.equal(x.calls.length,0);
+});
+
 test("lossless report/event numeric tokens survive encryption and PII never enters source pages",async()=>{
  const x=klaviyoRawDatasetsFixture();x.hooks.fetch=u=>{
   if(u.pathname.includes("values-reports")){const k=u.pathname.includes("campaign")?"campaign":"flow";return new Response('{"data":{"type":"'+k+'-values-report","attributes":{"results":[{"groupings":{"'+k+'_id":"c","'+k+'_message_id":"m","'+k+'_message_name":"name","send_channel":"email"},"statistics":{"conversions":9007199254740993,"conversion_value":"0.1234567890123456789"}}]}},"links":{"next":null}}');}

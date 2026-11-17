@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import pg from "pg";
+import {setTimeout as delay} from "node:timers/promises";
 import {datasetSourceBindingFixture} from "../tests/fixtures/dataset-source-binding-fixture.js";
 import {createSourceEvidenceRepository} from "../app/lib/database/source-evidence-store.server.js";
 import {bindStoredDatasetSources} from "../app/lib/database/dataset-source-binding.server.js";
@@ -23,7 +25,96 @@ export async function storedBindingFixture(client, owner, options = {}) {
 
 /** Called only inside the existing F01 localhost rollback transaction. Native
  * HTTP bodies and admission metadata below are SYNTHETIC, not live acceptance. */
-export async function sourceDatasetBindingProbe(client, {ownerFixture}) {
+async function klaviyoWriteProfile(client, {ownerFixture, connection}) {
+  const observer = new pg.Client(connection);
+  await observer.connect();
+  let observerWait, writing = false;
+  const profile = {};
+  const onNotice = ({message}) => {
+    if (!writing) return;
+    const statement = /duration: ([\d.]+) ms[\s\S]*?Query Text: ([^\n]+)/i.exec(message);
+    if (!statement) return;
+    const query = statement[2].trim().toLowerCase();
+    const category = query.includes("analytics.assert_report_source_context(") ? "sourceContext"
+      : query.includes("analytics.hold_report_source_batch(") ? "sourceRetention"
+      : query.startsWith("insert into analytics.cpd_product_sales_facts") ? "salesInsert"
+      : null;
+    if (!category) return;
+    const stat = profile[category] ??= {calls: 0, ms: 0};
+    stat.calls++;
+    stat.ms += Number(statement[1]);
+  };
+  await client.query("savepoint klaviyo_write_profile");
+  try {
+    await observer.query("set statement_timeout = '25s'");
+    const {rows: [{pid}]} = await observer.query("select pg_backend_pid() as pid");
+    await client.query("reset role");
+    await client.query("load 'auto_explain'");
+    await client.query("set local auto_explain.log_level = 'notice'; set local auto_explain.log_parameter_max_length = 0; set local auto_explain.log_nested_statements = on; set local auto_explain.log_min_duration = 0");
+    await client.query("set local role adstable_owner");
+    client.on("notice", onNotice);
+    const owner = await ownerFixture(client, "klaviyo");
+    const input = await storedBindingFixture(client, owner, {klaviyoProductEvents: 200});
+    await observer.query("select 1 from operations.refresh_control where singleton for update nowait");
+    let databaseMs = 0, writeMs = 0, readbackMs = 0, writes = 0, readbacks = 0, payloadBytes = 0;
+    const database = {async query(sql, args) {
+      const startedAt = performance.now();
+      writing = sql.includes("analytics.commit_dataset_storage(");
+      if (writing) observerWait = delay(100).then(async () => {
+        const started = performance.now();
+        await observer.query("select 1 from operations.refresh_control where singleton for update");
+        return {ms: performance.now() - started};
+      }).catch(error => ({error}));
+      try {return await client.query(sql, args);}
+      finally {
+        writing = false;
+        const elapsed = performance.now() - startedAt;
+        databaseMs += elapsed;
+        if (sql.includes("analytics.commit_dataset_storage(")) {
+          writes++;
+          writeMs += elapsed;
+          payloadBytes = Buffer.byteLength(args[1]);
+        }
+        if (sql.includes("analytics.inspect_dataset_storage(")) {
+          readbacks++;
+          readbackMs += elapsed;
+        }
+      }
+    }};
+    const startedAt = performance.now();
+    const result = await bindStoredDatasetSources({...input, database});
+    const totalMs = performance.now() - startedAt;
+    const {rows: [{count}]} = await client.query(
+      "select count(*)::int as count from analytics.cpd_product_sales_facts where installation_id=$1", [owner.installationId]);
+    assert.equal(result.status, "stored");
+    assert.equal(result.rowsStored, 200);
+    assert.equal(result.storageReceipt.rows.length, 200);
+    assert.deepEqual({count, writes, readbacks}, {count: 200, writes: 1, readbacks: 1});
+    const {rows: [{blocked}]} = await client.query("select pg_backend_pid() = any(pg_blocking_pids($1)) as blocked", [pid]);
+    assert.equal(blocked, true, "the write transaction must block the second connection");
+    assert.equal(profile.sourceContext?.calls, 200);
+    assert.equal(profile.sourceRetention?.calls, 400);
+    await client.query("rollback to savepoint klaviyo_write_profile");
+    const wait = await observerWait;
+    if (wait.error) throw wait.error;
+    console.log("EO05_KLAVIYO_200_DATASET_WRITE_PASS " + JSON.stringify({
+      rows: count, payloadBytes, writes, readbacks, writeMs, readbackMs, databaseMs, adsTableMs: totalMs - databaseMs, totalMs,
+    }));
+    console.log("EO05_KLAVIYO_200_SQL_PROFILE_PASS " + JSON.stringify({profile, competingLockWaitMs: wait.ms}));
+  } finally {
+    client.off("notice", onNotice);
+    try {
+      await client.query("rollback to savepoint klaviyo_write_profile");
+      await client.query("release savepoint klaviyo_write_profile");
+    } finally {
+      await observerWait;
+      await observer.end();
+    }
+  }
+}
+
+export async function sourceDatasetBindingProbe(client, {ownerFixture, connection}) {
+  await klaviyoWriteProfile(client, {ownerFixture, connection});
   const raw = client;
   client = {async query(sql, args) {try {return await raw.query(sql, args);} catch (error) {
     console.error("EO05B_BINDING_SQL_DIAGNOSTIC", JSON.stringify({code: error.code, message: error.message, where: error.where, position: error.position})); throw error;

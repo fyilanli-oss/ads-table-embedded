@@ -1806,11 +1806,11 @@
       "tools/eo05-source-rule-probe.mjs": "bdba143e69a0ac680687dfbfce815bf8c97c7fa2228179e22cc5d5d4626477ab",
       "tools/eo05-verified-mapping-probe.mjs": "875aadd0c47e64d66f5fef187b2a803cd9716ff04b0ac0871f17cc97f84f88eb",
       "tools/eo05b-dataset-server-probe.mjs": "d6177954ab377f697209d5753651f7403e82b1c1349e0425405187ce33c3b02c",
-      "tools/eo05b-dataset-storage-probe.mjs": "1cf22bd4e53190939b7dd25d191a26e55c32382531e861e9dbeb843311d929b2",
+      "tools/eo05b-dataset-storage-probe.mjs": "675ebdd3cc0fda810c1588590732a17967515d169468bbad32786170b4d51e09",
       "tools/eo05b-demo-fixture.mjs": "c91cf0e2b82ae6bb4db46d4dfa4ffbc0e1415877075995a5bf5cbc1f30afdd73",
       "tools/eo05b-fx-reporting-currency-probe.mjs": "c5decd13fad2a1aebccacbdf6229bcfec590c429db8ab3380008c318c479a9d5",
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
-      "tools/eo05b-source-dataset-binding-probe.mjs": "d9aa68f202922f0978a05b411781fcbc4685b86337b56cfcab32964316713d79",
+      "tools/eo05b-source-dataset-binding-probe.mjs": "43fe469433508abab85d1d1766de35e92a5b070c31c3c59fac9bc6017264be59",
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
       "tools/eo05d-reconciliation-probe.mjs": "dc3b91451a057b2621d09378948dcd4e80ca7ce52221061dc774b1be9c400608",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
@@ -4413,6 +4413,43 @@
       ],
       "visual_acceptance": "not_applicable_no_UI_change",
       "native_acceptance": false
+    },
+    {
+      "id": "eo05b-klaviyo-200-isolated-sql-profile",
+      "date": "2026-11-17",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Tamam Codex onaylıyorum; Tamam Codex onaylıyorum devam edelim — isolated F01 200-row write, exact receipt verification, nested SQL timing and independently observed contention on the existing control row."
+      },
+      "rationale": "Measure repeated nested SQL and observed lock wait in one rollback-only synthetic Klaviyo Dataset write. Preserve runtime code, persistence boundaries and SQL guards.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "tools/eo05b-dataset-storage-probe.mjs",
+        "tools/eo05b-source-dataset-binding-probe.mjs"
+      ],
+      "artifact_paths": [
+        "tests/fixtures/dataset-source-binding-fixture.js",
+        "tools/eo05b-source-dataset-binding-probe.mjs",
+        "tools/eo05b-dataset-storage-probe.mjs"
+      ],
+      "tests": [
+        "tests/dataset-source-binding.test.js",
+        "tools/eo05b-source-dataset-binding-probe.mjs",
+        "tools/eo05b-dataset-storage-probe.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ]
     }
   ],
   "coverage": {

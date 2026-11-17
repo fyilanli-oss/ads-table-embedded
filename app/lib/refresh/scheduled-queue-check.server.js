@@ -47,7 +47,8 @@ export async function runScheduledRefreshWithDataset({store, generation, work, e
     result = await runScheduledRefreshCheck({store, generation, work: {...work, async loadDatasetInputs(scope) {
       const inputs = await work.loadDatasetInputs(scope);
       if (inputs.fxResolver !== undefined) throw Error("REFRESH_DATASET_FX_POLICY_REQUIRED");
-      database = createScheduledDatasetPostgresClient({environment, deadlineAt: scope.deadlineAt, now: work.now, poolFactory});
+      const klaviyoDailyPackages=inputs.owner?.provider==="klaviyo" && Array.isArray(inputs.batches) && inputs.batches.length>3;
+      database = createScheduledDatasetPostgresClient({environment, deadlineAt: scope.deadlineAt, now: work.now, poolFactory, klaviyoDailyPackages});
       return {owner: inputs.owner, cipher: inputs.cipher, batches: inputs.batches, expectedRevision: inputs.expectedRevision,
         database};
     }}});

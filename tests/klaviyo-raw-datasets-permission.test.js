@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import {randomUUID} from "node:crypto";
 import test from "node:test";
 import {klaviyoRawDatasetsFixture} from "./fixtures/klaviyo-raw-datasets-fixture.js";
 import {createKlaviyoRawCaptureExecution,readKlaviyoRawCapturePlan} from "../app/lib/refresh/klaviyo-raw-server.server.js";
 import {createConfiguredSourceEvidenceCipher} from "../app/lib/database/source-evidence-config.server.js";
-import {createKlaviyoRawPacer} from "../app/lib/refresh/klaviyo-raw-collection.server.js";
+import {prepareKlaviyoRawDatasetPackages} from "../app/lib/database/klaviyo-dataset-source-store.server.js";
+import {collectKlaviyoRawDatasets, createKlaviyoRawPacer} from "../app/lib/refresh/klaviyo-raw-collection.server.js";
 const metrics=names=>Response.json({data:names.map((name,i)=>({type:"metric",id:"m"+i,attributes:{name,integration:{name:"Shopify"}}})),links:{next:null}});
 test("Klaviyo all fixed queries succeed empty: three encrypted readback-verified envelopes",async()=>{
  const x=klaviyoRawDatasetsFixture(),e=createKlaviyoRawCaptureExecution(x.options),r=await e.run();await e.close();
@@ -57,6 +59,109 @@ test("Klaviyo plan rejects Reporting Account epoch and caller query selectors",(
  for(const mutate of [p=>p.target.selectionId="71",p=>p.query="arbitrary",p=>p.limits.maxRequests=22,p=>p.target.window={from:"2026-02-30",to:"2026-02-30"}]){
   const x=klaviyoRawDatasetsFixture();mutate(x.plan);x.setPlan();assert.throws(()=>readKlaviyoRawCapturePlan(x.environment,x.options.now()));assert.equal(x.calls.length,0);
  }
+});
+
+test("Klaviyo daily plan separates the read budget from the raw storage budget",()=>{
+ const x=klaviyoRawDatasetsFixture();
+ x.plan.limits.maxRows=2000;
+ x.plan.storageLimits.maxRows=1000;
+ x.setPlan();
+ assert.equal(readKlaviyoRawCapturePlan(x.environment,x.options.now()).limits.maxRows,2000);
+
+ x.plan.limits.maxRows=2001;
+ x.setPlan();
+ assert.throws(()=>readKlaviyoRawCapturePlan(x.environment,x.options.now()),/CAPTURE_CONFIGURATION_REQUIRED/);
+
+ x.plan.limits.maxRows=2000;
+ x.plan.storageLimits.maxRows=1001;
+ x.setPlan();
+ assert.throws(()=>readKlaviyoRawCapturePlan(x.environment,x.options.now()),/CAPTURE_CONFIGURATION_REQUIRED/);
+ assert.equal(x.calls.length,0);
+});
+
+test("Klaviyo collects 1,000 product events and campaign/flow reports for one business day", async () => {
+ const fixture = klaviyoRawDatasetsFixture();
+ const {target, limits} = fixture.plan;
+ const eventIds = Array.from({length: 1000}, (_, i) => "product-event-" + i);
+ const pageSize = 100;
+ const pageCount = eventIds.length / pageSize;
+ const datasets = [];
+ fixture.hooks.fetch = url => {
+  if (url.pathname.includes("values-reports")) {
+   const kind = url.pathname.includes("campaign") ? "campaign" : "flow";
+   return Response.json({
+    data: {type: kind + "-values-report", attributes: {results: [{
+     groupings: {[kind + "_id"]: "parent", [kind + "_message_id"]: "message",
+      [kind + "_message_name"]: "message name", send_channel: "email"},
+     statistics: {conversions: 1, conversion_value: 10},
+    }]}},
+    links: {next: null},
+   });
+  }
+  if (url.pathname !== "/api/events") return;
+  const page = Number(url.searchParams.get("page[cursor]") ?? 0);
+  assert.ok(Number.isInteger(page) && page >= 0 && page < pageCount);
+  const data = eventIds.slice(page * pageSize, (page + 1) * pageSize).map(id => ({
+   type: "event", id,
+   attributes: {datetime: target.window.from + "T12:00:00Z",
+    event_properties: {ProductID: id, Quantity: 1, "$value": 10}},
+   relationships: {metric: {data: {type: "metric", id: "metric3"}}},
+  }));
+  return Response.json({data, links: {next: page === pageCount - 1 ? null :
+   "https://a.klaviyo.com/api/events?page%5Bcursor%5D=" + (page + 1)}});
+ };
+ await collectKlaviyoRawDatasets({
+  accessToken: "synthetic-collector-token",
+  accountId: target.accountId,
+  source: fixture.f.source,
+  window: target.window,
+  limits: {...limits, maxRows: 2000, maxPages: 10, maxRequests: 21},
+  transport: fixture.options.fetchFn,
+  guard: async () => {},
+  signal: new AbortController().signal,
+  now: fixture.options.now,
+  delay: fixture.options.delay,
+  onDataset: data => datasets.push(data),
+ });
+ assert.deepEqual(datasets.map(d => [d.dataset, d.complete, d.recordCount]), [
+  ["configuration", true, 4], ["account_performance", true, 6], ["product_performance", true, 1000],
+ ]);
+ const product = datasets[2];
+ assert.deepEqual(product.pages.filter(p => p.family === "klaviyo_ordered_product_events")
+  .flatMap(p => p.records.map(r => r.id)), eventIds);
+ const events = fixture.f.http.filter(url => url.pathname === "/api/events");
+ assert.deepEqual(events.map(url => url.searchParams.get("page[cursor]")),
+  Array.from({length: pageCount}, (_, i) => i === 0 ? null : String(i)));
+ const filters = new Set(events.map(url => url.searchParams.get("filter")));
+ assert.equal(filters.size, 1);
+ assert.ok([...filters][0].includes(target.window.from));
+
+ const owner = {
+  workspaceId: target.workspaceId, installationId: "42", generation: target.installGeneration,
+  shopId: target.shopId, shopDomain: target.shopDomain, provider: "klaviyo",
+  connectionId: target.connectionId, connectionVersion: String(target.connectionVersion),
+  credentialId: target.credentialId, accountId: target.accountId, selectionEpoch: null,
+ };
+ const options = {
+  owner, attemptId: randomUUID(), pages: product.pages, complete: true,
+  cipher: createConfiguredSourceEvidenceCipher(fixture.environment),
+  policy: fixture.plan.sourcePolicy, now: new Date(fixture.options.now()).toISOString(),
+  limits: fixture.plan.storageLimits,
+ };
+ assert.throws(() => prepareKlaviyoRawDatasetPackages(options), /SOURCE_STORE_BOUNDS/);
+ const packages = prepareKlaviyoRawDatasetPackages({...options, maxPackages: 2});
+ assert.deepEqual(packages.map(write => write.ordinal), [0, 1]);
+ for (const write of packages) {
+  assert.equal(write.attemptId, options.attemptId);
+  assert.ok(write.body.pages.length + write.body.references.length <= options.limits.maxRows);
+  assert.ok(Buffer.byteLength(JSON.stringify(write.body)) <= options.limits.maxBytes);
+ }
+ assert.deepEqual(packages.flatMap(write => write.body.pages.map(page => options.cipher.open({
+  owner, attemptId: write.attemptId, ordinal: write.ordinal, page,
+ }))), product.pages);
+ assert.throws(() => prepareKlaviyoRawDatasetPackages({
+  ...options, maxPackages: 2, limits: {...options.limits, maxBytes: 100},
+ }), /SOURCE_STORE_BOUNDS/);
 });
 
 test("lossless report/event numeric tokens survive encryption and PII never enters source pages",async()=>{

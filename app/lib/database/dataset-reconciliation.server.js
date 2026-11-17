@@ -8,7 +8,8 @@ import {projectStoredMetaDataset} from "../providers/stored-meta-dataset.server.
 import {projectStoredKlaviyoDataset} from "../providers/stored-klaviyo-dataset.server.js";
 import {applyStoredDatasetFx} from "./dataset-fx-resolver.server.js";
 import {maturityInstant, maturityDate, freezeMaturity} from "../refresh/maturity-policy.server.js";
-import {SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "./dataset-rpc.server.js";
+import {SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL,
+  KLAVIYO_DAILY_STAGE_SQL, KLAVIYO_DAILY_PUBLISH_SQL, KLAVIYO_DAILY_INSPECT_SQL, KLAVIYO_DAILY_FINISH_SQL} from "./dataset-rpc.server.js";
 export {SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL};
 
 export const DATASET_RECONCILIATION_VERSION = "eo05d-reconciliation-v1";
@@ -32,6 +33,40 @@ export function canonicalDatasetEventTime(value) {
   return new Date(seconds).toISOString().slice(0, 19) + "." + (m[2] ?? "").padEnd(6, "0") + "Z";
 }
 
+/** Prepare bounded requests for one daily reconciliation without publishing
+ * rows. The existing single-request caller retains its original limits. */
+export function prepareDailyDatasetPackages({owner,rows,policy,operationId,now,context,maxPackages=1}) {
+  if (!Number.isSafeInteger(maxPackages) || maxPackages<1 || maxPackages>20) fail("PACKAGE_LIMIT");
+  const prepare = chunk => {
+    const write=chunk.length ? prepareDatasetWrite({owner,rows:chunk,policy,operationId,now}).body
+      : {version:"eo05b-storage-v1",operationId,policy,rows:[]};
+    if (Buffer.byteLength(canonicalSourceJson({write,context}))>1048576) fail("BYTE_LIMIT");
+    return write;
+  };
+  if (maxPackages===1 || rows.length===0) return [prepare(rows)];
+  if (owner.provider!=="klaviyo" || rows.length>maxPackages*200) fail("PACKAGE_LIMIT");
+  const packages=[],keys=new Set();
+  for (let offset=0;offset<rows.length;) {
+    if (packages.length===maxPackages) fail("PACKAGE_LIMIT");
+    let size=Math.min(200,rows.length-offset),write;
+    for (;;) {
+      try {write=prepare(rows.slice(offset,offset+size));break;}
+      catch (error) {
+        if (size===1 || !["DATASET_WRITE_TOO_LARGE","DATASET_RECONCILIATION_BYTE_LIMIT"].includes(error?.message)) throw error;
+        size=Math.floor(size/2);
+      }
+    }
+    for (const {table,row} of write.rows) {
+      const key=table+":"+row.native_key_hash;
+      if (keys.has(key)) fail("DUPLICATE_NATIVE_KEY");
+      keys.add(key);
+    }
+    packages.push(write);
+    offset+=size;
+  }
+  return packages;
+}
+
 /** Fixed private projection of actual AEAD-verified source pages only. The SQL
  * transaction revalidates full coverage, CAS, read order, rows and exact hashes
  * before atomically issuing the real source-consumption/day checkpoint receipt.
@@ -49,29 +84,43 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
   if (admittedScope !== undefined && (source.scope.jobId !== admittedScope?.jobId
     || source.scope.fence !== admittedScope.fence || source.scope.window.from !== admittedScope.from
     || source.scope.window.to !== admittedScope.to)) fail("ADMITTED_SCOPE_MISMATCH");
+  const dailyPackages = source.datasets.some(d => d.packageReceipts !== undefined);
+  if (dailyPackages && (!scheduled || typeof database.transaction !== "function")) return freezeMaturity({
+    status: "held", holds: [{reason: "daily_package_handoff_required"}], sourceVerified: true, rowsStored: 0,
+    consumerReceipt: false, checkpointAdvanced: false, reportValuesChanged: false, publishable: false, authorizesActivation: false,
+  });
   const projection = projectors[bound.provider](source);
   for (const {row} of projection.rows) if (row.occurred_at !== null && row.occurred_at !== undefined) row.occurred_at = canonicalDatasetEventTime(row.occurred_at);
   const configuration = source.datasets.filter(d => d.dataset === "configuration").flatMap(d => d.pages.map(p => p.ref));
   if (configuration.length) for (const {row} of projection.rows) row.provenance.sources = [...new Map([...row.provenance.sources, ...configuration].map(r => [r.page_id, r])).values()];
-  if (projection.rows.length > 200) fail("ROW_LIMIT");
+  if (!dailyPackages && projection.rows.length > 200) fail("ROW_LIMIT");
   if (projection.rows.length && fxResolver !== undefined) {
     const fx = await applyStoredDatasetFx({resolver: fxResolver, database, source, rows: projection.rows, deadlineAt: limits.deadlineAt, signal});
     projection.holds.push(...fx.holds);
   }
-  if (projection.holds.length || source.datasets.some(d => d.receipt.sourceState !== "complete")) return freezeMaturity({status: "held", holds: projection.holds,
+  if (projection.holds.length || source.datasets.some(d => d.receipt.sourceState !== "complete" && !d.packageReceipts)
+    || dailyPackages && projection.rows.length===0) return freezeMaturity({status: "held", holds: projection.holds,
     sourceVerified: true, rowsStored: 0, consumerReceipt: false, checkpointAdvanced: false, reportValuesChanged: false, publishable: false, authorizesActivation: false});
   const businessDate = maturityDate(source.scope.window.from), timeZone = source.datasets[0].source.timezone;
   if (source.datasets.some(d => d.source.timezone !== timeZone)) fail("TIMEZONE_MISMATCH");
   const clocks = source.datasets.map(d => ({started: maturityInstant(d.read.observedAt), completed: maturityInstant(d.read.completedAt)}));
   if (clocks.some(c => c.completed < c.started || Date.parse(c.completed) > now())) fail("CLOCK_INVALID");
-  const policy = resolveReportRetentionPolicy({businessDate, timeZone});
-  const write = projection.rows.length ? prepareDatasetWrite({owner: bound, rows: projection.rows, policy: reportRetentionPolicy(), operationId, now: new Date(now()).toISOString()}).body
-    : {version: "eo05b-storage-v1", operationId, policy, rows: []};
   const context = {version: DATASET_RECONCILIATION_VERSION, expectedRevision, businessDate, timeZone,
     sourceContext: source.datasets[0].sourceContext, sources: source.datasets.flatMap(d => d.pages.map(p => p.ref)),
-    batchIds: source.datasets.map(d => d.receipt.batchId),
+    batchIds: source.datasets.flatMap(d => (d.packageReceipts ?? [d.receipt]).map(receipt=>receipt.batchId)),
     startedAt: clocks.map(c => c.started).sort()[0], completedAt: clocks.map(c => c.completed).sort().at(-1)};
-  if (Buffer.byteLength(canonicalSourceJson({write, context})) > 1048576) fail("BYTE_LIMIT");
+  const policy=projection.rows.length ? reportRetentionPolicy() : resolveReportRetentionPolicy({businessDate,timeZone});
+  if (dailyPackages) {
+    const writes=prepareDailyDatasetPackages({owner:bound,rows:projection.rows,policy,operationId,
+      now:new Date(now()).toISOString(),context,maxPackages:20});
+    const receipt=await commitScheduledKlaviyoDailyReport({
+      database,owner:bound,writes,context,operationId,deadlineAt:limits.deadlineAt,admittedScope,stop,
+    });
+    const result=freezeMaturity({...receipt,sourceVerified:true,rowsStored:receipt.rowCount,reportValuesChanged:true,
+      jobCompleted:true,hourlyRefreshActivated:false,authorizesActivation:false,publishable:false});
+    confirmed.set(result,bound);return result;
+  }
+  const [write]=prepareDailyDatasetPackages({owner:bound,rows:projection.rows,policy,operationId,now:new Date(now()).toISOString(),context});
   const requestDigest = sourcePayloadHash({write, context});
   stop(); let receipt;
   try {
@@ -100,6 +149,48 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
     ...(scheduled ? {jobCompleted: true} : {}),
     hourlyRefreshActivated: false, authorizesActivation: false, publishable: false});
   confirmed.set(result, bound); return result;
+}
+
+async function commitScheduledKlaviyoDailyReport({database,owner,writes,context,operationId,deadlineAt,admittedScope,stop}) {
+  const ownerJson=JSON.stringify(owner),contextJson=JSON.stringify(context),deadline=new Date(deadlineAt).toISOString();
+  const packages=writes.map((write,ordinal)=>({ordinal,rowCount:write.rows.length,digest:sourcePayloadHash({write,context})}));
+  const rowCount=packages.reduce((sum,part)=>sum+part.rowCount,0);
+  const digests=packages.map(part=>part.digest);
+  let receipt;
+  try {
+    stop();
+    receipt=await database.transaction(async tx=>{
+      for (const {ordinal,rowCount,digest} of packages) {
+        stop();
+        const staged=(await tx.query(KLAVIYO_DAILY_STAGE_SQL,[ownerJson,JSON.stringify(writes[ordinal]),
+          contextJson,deadline,ordinal,packages.length])).rows?.[0]?.result;
+        if (staged?.status!=="staged" || staged.operationId!==operationId || staged.ordinal!==ordinal
+          || staged.packageCount!==packages.length || staged.rowCount!==rowCount || staged.digest!==digest) fail("RESULT_INVALID");
+      }
+      stop();
+      const written=(await tx.query(KLAVIYO_DAILY_PUBLISH_SQL,[ownerJson,contextJson,deadline,operationId,
+        JSON.stringify(writes[0].policy),JSON.stringify(digests)])).rows?.[0]?.result;
+      if (written?.version!=="klaviyo-daily-receipt-v1" || written.status!=="consumed" || written.operationId!==operationId
+        || written.consumerReceipt!==true || written.checkpointAdvanced!==true || written.comparison!=="matched"
+        || written.rowCount!==rowCount || written.revision!==context.expectedRevision+1
+        || written.jobId!==admittedScope.jobId || written.fence!==admittedScope.fence
+        || written.businessDate!==context.businessDate || written.timeZone!==context.timeZone
+        || !/^[0-9a-f]{64}$/.test(written.digest ?? "")
+        || canonicalSourceJson(written.packages)!==canonicalSourceJson(packages)
+        || canonicalSourceJson(written.batchIds)!==canonicalSourceJson(context.batchIds)) fail("RESULT_INVALID");
+      return written;
+    });
+  } catch {fail("WRITE_UNCONFIRMED");}
+  stop();
+  const readback=(await database.query(KLAVIYO_DAILY_INSPECT_SQL,[ownerJson,operationId])).rows?.[0]?.result;
+  if (canonicalSourceJson(readback??null)!==canonicalSourceJson(receipt)) fail("READBACK_UNCONFIRMED");
+  stop();
+  let finished;
+  try {
+    finished=(await database.query(KLAVIYO_DAILY_FINISH_SQL,[ownerJson,admittedScope.jobId,admittedScope.fence,operationId,receipt.digest])).rows?.[0]?.result;
+  } catch {fail("FINISH_UNCONFIRMED");}
+  if(finished!==true) fail("FINISH_UNCONFIRMED");
+  return receipt;
 }
 
 /** Explicit historical inspection, also used after a KNOWN successful commit.

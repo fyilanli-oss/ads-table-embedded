@@ -3,9 +3,12 @@ import test from "node:test";
 import {randomUUID} from "node:crypto";
 import {datasetSourceBindingFixture} from "./fixtures/dataset-source-binding-fixture.js";
 import {sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
-import {reconcileStoredDatasetSources, canonicalDatasetEventTime, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL, SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {reconcileStoredDatasetSources, canonicalDatasetEventTime, prepareDailyDatasetPackages, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL, SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {readStoredDatasetSources} from "../app/lib/database/dataset-source-reader.server.js";
+import {projectStoredKlaviyoDataset} from "../app/lib/providers/stored-klaviyo-dataset.server.js";
 import {readDatasetWritePlan} from "../app/lib/refresh/dataset-server.server.js";
 import {runScheduledRefreshWithDataset} from "../app/lib/refresh/scheduled-queue-check.server.js";
+import {createScheduledDatasetPostgresClient} from "../app/lib/database/dataset-postgres.server.js";
 
 async function fixture(provider = "google_ads", options = {}) {
   const f = await datasetSourceBindingFixture(provider, options); const key = provider === "google_ads" ? "googleDatasetRead" : provider === "meta" ? "metaDatasetRead" : "klaviyoDatasetRead";
@@ -30,11 +33,81 @@ test("event-time canonicalization preserves exact microseconds and timezone with
   assert.equal(canonicalDatasetEventTime("2026-11-01T15:00:00.123456+03:00"), "2026-11-01T12:00:00.123456Z");
   for (const value of ["2026-11-01T12:00:00.1234567Z", "2026-02-30T12:00:00Z", "2026-11-01T24:00:00Z", null, "invalid"]) assert.throws(() => canonicalDatasetEventTime(value));
 });
+
+test("scheduled report transaction pins allowed calls to one connection and rolls back on a caught error", async () => {
+  const role="adstable_refresh_dataset_runner";
+  const environment={
+    ADSTABLE_REFRESH_DATASET_DATABASE_URL:`postgresql://${role}.podpwkrpmjiksskxhwsu:${"x".repeat(32)}@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require`,
+    ADSTABLE_REFRESH_DATASET_DB_TIMEOUT_MS:"5000",
+  };
+  const params=["synthetic-owner",randomUUID()];
+  for(const mode of ["success","caught_forbidden","lost_commit"]) {
+    let connections=0,releases=[],escaped;
+    const calls=[];
+    const database=createScheduledDatasetPostgresClient({environment,deadlineAt:Date.now()+60000,
+      poolFactory:()=>({on(){},async end(){},async connect(){
+        connections++;
+        return {release(broken){releases.push(broken);},async query(sql,args){
+          calls.push(sql);
+          if(sql.startsWith("select current_user as role")) return {rows:[{role,profile_ready:true}]};
+          if(sql===DATASET_RECONCILE_READ_SQL) return {rows:[{result:args[1]}]};
+          if(sql==="commit"&&mode==="lost_commit") throw Error("lost synthetic commit");
+          return {rows:[]};
+        }};
+      }})});
+    const result=database.transaction(async tx=>{
+      escaped=tx;
+      assert.equal((await tx.query(DATASET_RECONCILE_READ_SQL,params)).rows[0].result,params[1]);
+      if(mode==="caught_forbidden") {
+        await assert.rejects(tx.query("select * from analytics.pd_facts"),/DATABASE_UNCONFIRMED/);
+      } else {
+        await tx.query(DATASET_RECONCILE_READ_SQL,params);
+      }
+      return "verified";
+    });
+    if(mode==="success") {
+      assert.equal(await result,"verified");
+      assert.deepEqual(calls.slice(-3),[DATASET_RECONCILE_READ_SQL,DATASET_RECONCILE_READ_SQL,"commit"]);
+    } else {
+      await assert.rejects(result,/DATABASE_UNCONFIRMED/);
+      assert.equal(calls.at(-1),"rollback");
+      assert.equal(calls.includes("commit"),mode==="lost_commit");
+    }
+    assert.equal(connections,1);
+    assert.deepEqual(releases,[mode!=="success"]);
+    await assert.rejects(escaped.query(DATASET_RECONCILE_READ_SQL,params),/DATABASE_UNCONFIRMED/);
+    await database.close();
+  }
+});
 for (const provider of ["google_ads", "meta", "klaviyo"]) test("reconciliation projects actual source pages and confirms receipt: " + provider, async () => {
   const f = await fixture(provider, {nonempty: provider !== "meta"}), r = await reconcileStoredDatasetSources(f);
   assert.equal(r.consumerReceipt, true); assert.equal(r.checkpointAdvanced, true); assert.equal(r.publishable, false);
   assert.equal(f.request().context.sources.length, [...f.envelopes.values()].reduce((n, b) => n + b.pages.length, 0));
   assert.equal(f.request().write.rows.length, provider === "google_ads" ? 3 : provider === "meta" ? 0 : 2);
+});
+
+test("daily Klaviyo packages keep report rows ordered, bounded and unique across the day", async () => {
+  const f=await fixture("klaviyo");
+  const projection=projectStoredKlaviyoDataset(await readStoredDatasetSources(f));
+  const sample=projection.rows.find(item=>item.table==="cpd_product_sales_facts");
+  const pd=projection.rows.find(item=>item.table==="pd_facts");
+  const rows=[pd,...Array.from({length:1000},(_,i)=>{
+    const item=structuredClone(sample),eventId="synthetic-event-"+i;
+    item.row.provider_event_id=eventId;
+    item.row.source_identity.native.event_id=eventId;
+    return item;
+  })];
+  const options={owner:f.owner,rows,policy:f.policy,operationId:randomUUID(),
+    now:new Date().toISOString(),context:{businessDate:"2026-11-01",timeZone:"UTC"},maxPackages:20};
+  const packages=prepareDailyDatasetPackages(options);
+  assert.deepEqual(packages.map(write=>write.rows.length),[200,200,200,200,200,1]);
+  assert.ok(packages.every(write=>write.operationId===options.operationId
+    && Buffer.byteLength(JSON.stringify({write,context:options.context}))<=1048576));
+  assert.deepEqual(packages.flatMap(write=>write.rows.map(item=>item.row.provider_event_id)),rows.map(item=>item.row.provider_event_id));
+  const oversizedContext={proof:Array.from({length:17},()=>"x".repeat(64000))};
+  assert.throws(()=>prepareDailyDatasetPackages({...options,rows:rows.slice(0,2),context:oversizedContext}),/BYTE_LIMIT/);
+  const acrossBoundary=[...rows.slice(0,201),rows[1]];
+  assert.throws(()=>prepareDailyDatasetPackages({...options,rows:acrossBoundary}),/DUPLICATE_NATIVE_KEY/);
 });
 test("Meta's existing nonempty sales evidence hold is preserved, never consumed", async () => {
   const f = await fixture("meta"); const r = await reconcileStoredDatasetSources(f);

@@ -1066,6 +1066,26 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261117174509",
+      "name": "eo05_klaviyo_daily_raw_packages",
+      "file": "supabase/migrations/20261117174509_eo05_klaviyo_daily_raw_packages.sql",
+      "created_with": "supabase@2.121.0 migration new eo05_klaviyo_daily_raw_packages",
+      "repository_sql_sha256": "55b131b38f01a944b2623b0a5ea6d684586016e1da2ee52d60718d77c41ab475",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
+    },
+    {
+      "version": "20261117183725",
+      "name": "eo05_klaviyo_report_package_staging",
+      "file": "supabase/migrations/20261117183725_eo05_klaviyo_report_package_staging.sql",
+      "created_with": "supabase@2.121.0 migration new eo05_klaviyo_report_package_staging",
+      "repository_sql_sha256": "82a97b23305bfa2b5c1a2c9a7c56aa4786e185a6e38fd20e80bc95018f022340",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

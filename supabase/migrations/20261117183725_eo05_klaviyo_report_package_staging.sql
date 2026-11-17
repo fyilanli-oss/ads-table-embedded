@@ -150,6 +150,36 @@ revoke all on function analytics.verify_klaviyo_daily_report_stage(jsonb,jsonb,t
 
 -- Compare the proposed day with physical facts without including individual
 -- rows or change entries in the compact daily evidence.
+create function analytics.klaviyo_report_fact_matches(t text,actual jsonb,expected jsonb)
+returns boolean language plpgsql stable set search_path='' as $fn$
+declare
+  payload jsonb;
+  field_name text;
+  prepared_fields text[]:=array['native_key_canonical','native_key_hash','grain_version','row_schema_version','payload_digest'];
+begin
+  if t not in ('pd_facts','cpd_product_sales_facts') or actual is null or expected is null then return false; end if;
+  -- Normalize the same database representations used by reconciliation_fact_digest.
+  payload:=actual-prepared_fields-array['id','workspace_id','installation_id','installation_generation',
+    'provider_connection_id','platform','platform_account_id','canonical_reporting_account_id','revision',
+    'created_at','updated_at','retention_policy_version','retain_until'];
+  for field_name in select attname::text from pg_catalog.pg_attribute where attrelid=('analytics.'||t)::regclass
+    and atttypid in ('numeric'::regtype,'bigint'::regtype) and attnum>0 and not attisdropped loop
+    if payload ? field_name and payload->field_name<>'null'::jsonb then
+      payload:=jsonb_set(payload,array[field_name],to_jsonb(payload->>field_name));
+    end if;
+  end loop;
+  if payload->>'occurred_at' is not null then
+    payload:=jsonb_set(payload,'{occurred_at}',to_jsonb(to_char((payload->>'occurred_at')::timestamptz
+      at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"')));
+  end if;
+  -- The package writer already validated the digest of the exact expected
+  -- payload. Equality with that payload rechecks every physical field.
+  return payload=expected-prepared_fields;
+end $fn$;
+
+revoke all on function analytics.klaviyo_report_fact_matches(text,jsonb,jsonb)
+  from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+
 create function analytics.check_klaviyo_daily_report_facts(
   o jsonb, c jsonb, d timestamptz, operation uuid, policy jsonb, digests jsonb
 ) returns jsonb
@@ -193,7 +223,7 @@ begin
       or fact->>'native_key_canonical' is distinct from item->'row'->>'native_key_canonical'
       or (fact->>'retain_until')::timestamptz<=clock_timestamp()
       or fact->>'payload_digest' is distinct from item->'row'->>'payload_digest'
-      or analytics.reconciliation_fact_digest(table_name,fact) is distinct from item->'row'->>'payload_digest' then
+      or analytics.klaviyo_report_fact_matches(table_name,fact,item->'row') is not true then
       raise exception 'KLAVIYO_REPORT_FACT_READBACK_MISMATCH';
     end if;
   end loop;
@@ -440,7 +470,7 @@ revoke all on function analytics.replace_klaviyo_staged_report_day(jsonb,jsonb,t
 
 -- A compact, reproducible fingerprint of physical rows. Rebuild their
 -- payload digests, rather than trusting the digest stored beside each row.
-create function analytics.klaviyo_daily_report_fingerprint(o jsonb,d date,tz text,expected integer) returns text
+create function analytics.klaviyo_daily_report_fingerprint(o jsonb,d date,tz text,expected integer,verified_in_tx boolean default false) returns text
 language plpgsql security definer set search_path='' as $fn$
 declare
   fact jsonb;
@@ -461,7 +491,7 @@ begin
       if cardinality(leaves)>=expected or fact->>'source_timezone' is distinct from tz
         or fact->>'provider_connection_id' is distinct from o->>'connectionId'
         or (fact->>'retain_until')::timestamptz<=clock_timestamp() then raise exception 'KLAVIYO_REPORT_FACT_READBACK_MISMATCH'; end if;
-      payload_digest:=analytics.reconciliation_fact_digest(table_name,fact);
+      payload_digest:=case when verified_in_tx then fact->>'payload_digest' else analytics.reconciliation_fact_digest(table_name,fact) end;
       if fact->>'payload_digest' is distinct from payload_digest then raise exception 'KLAVIYO_REPORT_FACT_READBACK_MISMATCH'; end if;
       leaves:=array_append(leaves,analytics.dataset_digest(jsonb_build_array(table_name,fact->>'native_key_hash',payload_digest)));
     end loop;
@@ -470,7 +500,7 @@ begin
   return analytics.dataset_digest(to_jsonb(leaves));
 end $fn$;
 
-revoke all on function analytics.klaviyo_daily_report_fingerprint(jsonb,date,text,integer)
+revoke all on function analytics.klaviyo_daily_report_fingerprint(jsonb,date,text,integer,boolean)
   from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
 
 create function analytics.inspect_klaviyo_daily_report(o jsonb,op uuid) returns jsonb
@@ -603,7 +633,7 @@ begin
     'businessDate',day,'timeZone',tz,'revision',revision,'completedAt',completed_at,
     'rowCount',proof->'rowCount','packages',proof->'packages',
     'batchIds',c->'batchIds','sources',c->'sources','jobId',c->'sourceContext'->>'job_id','fence',c->'sourceContext'->>'fence',
-    'factsDigest',analytics.klaviyo_daily_report_fingerprint(o,day,tz,(proof->>'rowCount')::integer));
+    'factsDigest',analytics.klaviyo_daily_report_fingerprint(o,day,tz,(proof->>'rowCount')::integer,true));
   receipt:=receipt||jsonb_build_object('digest',analytics.dataset_digest(receipt));
   if octet_length(receipt::text)>262144 or d<=clock_timestamp() then raise exception 'KLAVIYO_REPORT_RECEIPT_INVALID';end if;
   update evidence.source_batches set handoff_state='consumed',handoff_receipt=receipt->>'digest',

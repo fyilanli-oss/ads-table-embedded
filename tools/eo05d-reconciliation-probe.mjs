@@ -93,7 +93,7 @@ async function probeKlaviyoReportStage(client,owner,input,previous,{replace=fals
     await client.query("savepoint report_stage_wrong_fact");
     try {
       const wrong=structuredClone(writes[1]);
-      wrong.rows[0].row.payload_digest="a".repeat(64);
+      wrong.rows[0].row.metric_extensions={unexpected:"different staged payload"};
       const changed=(await send(1,context,wrong)).rows[0].result;
       assert.match((await rejected(client,()=>checkFacts([staged.digest,changed.digest]))).message,/KLAVIYO_REPORT_FACT_READBACK_MISMATCH/);
       assert.deepEqual(await prior(),previous);

@@ -1,4 +1,5 @@
-import {datasetStorageProbe} from "./eo05b-dataset-storage-probe.mjs";
+import {datasetStorageProbe, ownerFixture} from "./eo05b-dataset-storage-probe.mjs";
+import {klaviyoOneJobProbe} from "./eo05-klaviyo-one-job-probe.mjs";
 import assert from "node:assert/strict";
 import {sourceEvidenceProbe} from "./eo05-source-evidence-probe.mjs";
 import {createHash, randomBytes, randomUUID} from "node:crypto";
@@ -437,7 +438,7 @@ async function committedRecoveryRoundtrip(client, original) {
 async function main() {
   assertReplayEnvironment(process.env);
   const mode=process.argv[2];
-  assert.ok(["staged","full"].includes(mode),"mode must be staged or full");
+  assert.ok(["staged","full","klaviyo-one-job"].includes(mode),"unsupported replay mode");
   assert.deepEqual(validateMigrationLineage({manifest,files:loadMigrationFiles(root)}),[]);
   const client=new pg.Client(replayConnection);
   await client.connect();
@@ -449,6 +450,31 @@ async function main() {
     for (const entry of migrations) {
       console.log(`F01B_APPLY ${entry.version} ${entry.name}`);
       await executeMigration(client, entry, read(entry.file));
+    }
+    if (mode === "klaviyo-one-job") {
+      assert.equal(manifest.disposable_rehearsals?.klaviyo_one_job, "commit_in_discarded_f01_container");
+      const candidate = manifest.prepared_migrations.at(-1);
+      assert.equal(candidate.name, "eo05_daily_source_validate_once");
+      for (const entry of manifest.prepared_migrations.slice(0, -1)) await executeMigration(client, entry, read(entry.file));
+      const {rows: [{definition}]} = await client.query(
+        "select pg_get_functiondef('analytics._commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)'::regprocedure) as definition",
+      );
+      const probe = () => klaviyoOneJobProbe(client, {ownerFixture, connection: replayConnection, profileReport: false});
+      const firstBaseline = await probe();
+      await executeMigration(client, candidate, read(candidate.file));
+      const firstCandidate = await probe(), secondCandidate = await probe();
+      await client.query("begin");
+      try {
+        await client.query("set local role adstable_owner");
+        await client.query(definition);
+        await client.query("commit");
+      } catch (error) {await client.query("rollback");throw error;}
+      const secondBaseline = await probe();
+      for (const run of [firstCandidate, secondCandidate, secondBaseline]) assert.deepEqual(run.facts, firstBaseline.facts);
+      console.log("EO05_KLAVIYO_ONE_JOB_ABBA_PASS "+JSON.stringify({
+        baseline: [firstBaseline.result, secondBaseline.result], candidate: [firstCandidate.result, secondCandidate.result],
+      }));
+      return;
     }
     let beforeDifferences=[];
     if(mode==="staged") {

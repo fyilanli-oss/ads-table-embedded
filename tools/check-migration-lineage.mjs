@@ -26,6 +26,11 @@ export function sqlHash(sql) {
 
 export function validateMigrationLineage({manifest, files, liveLedger}) {
   const errors = [];
+  const disposable = manifest.disposable_rehearsals;
+  if (disposable !== undefined && (typeof disposable !== "object" || disposable === null
+    || Object.keys(disposable).length !== 1 || disposable.klaviyo_one_job !== "commit_in_discarded_f01_container")) {
+    errors.push("DISPOSABLE_REHEARSAL_SCOPE_INVALID");
+  }
   const expected = [...manifest.historical_migrations, ...(manifest.forward_migrations ?? []), ...manifest.pending_migrations,
     ...(manifest.prepared_migrations ?? [])];
   for (const entry of manifest.prepared_migrations ?? []) {

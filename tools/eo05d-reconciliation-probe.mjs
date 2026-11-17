@@ -53,6 +53,8 @@ async function probeKlaviyoReportStage(client,owner,input,previous,{replace=fals
       owner,operationId,rows:[item],policy:input.policy,now:new Date().toISOString(),
     }).body);
     const context={businessDate:day,expectedRevision:previous?.revision??0,startedAt:new Date().toISOString(),
+      batchIds:bundle.datasets.map(dataset=>dataset.receipt.batchId),
+      sources:bundle.datasets.flatMap(dataset=>dataset.pages.map(page=>page.ref)),
       sourceContext:{...bundle.datasets[0].sourceContext,fence,snapshot:bound.source}};
     await client.query(`insert into operations.refresh_runs(workspace_id,install_generation,provider,account_id,job_id,fence,cost,status)
       values ($1,$2,$3,$4,$5,$6,'{"requests":2,"rows":1000,"bytes":1000000,"connections":1,"dbWrites":5}','running')`,[...scope,fence]);
@@ -110,6 +112,7 @@ async function probeKlaviyoReportStage(client,owner,input,previous,{replace=fals
       "select analytics.write_klaviyo_staged_first_report_day($1::jsonb,$2::jsonb,$3::timestamptz,$4::uuid,$5::jsonb,$6::jsonb) result",
       [JSON.stringify(owner),JSON.stringify(context),deadline,operationId,JSON.stringify(writes[0].policy),JSON.stringify(digests)]);
     const expected={...verified,digest:sourcePayloadHash(verified)};
+    let dailyReceipt;
     if(previous) {
       if(!replace) assert.deepEqual((await checkFacts(digests)).rows[0].result,expected);
       assert.match((await rejected(client,writeDay)).message,/KLAVIYO_REPORT_FIRST_DAY_REQUIRED/);
@@ -131,13 +134,26 @@ async function probeKlaviyoReportStage(client,owner,input,previous,{replace=fals
         assert.deepEqual(await fact(),{id:before.id,revision:String(BigInt(before.revision)+1n)});
       }
     } else {
-      assert.deepEqual((await writeDay()).rows[0].result,expected);
+      const result=await client.query(
+        "select analytics.publish_klaviyo_staged_first_report_day($1::jsonb,$2::jsonb,$3::timestamptz,$4::uuid,$5::jsonb,$6::jsonb) result",
+        [JSON.stringify(owner),JSON.stringify(context),deadline,operationId,JSON.stringify(writes[0].policy),JSON.stringify(digests)]);
+      dailyReceipt=result.rows[0].result;
+      assert.equal(dailyReceipt.rowCount,2);
+      assert.deepEqual(dailyReceipt.packages,expected.packages);
+      assert.equal(dailyReceipt.consumerReceipt,true);
+      assert.equal(dailyReceipt.checkpointAdvanced,true);
     }
     await client.query("update operations.refresh_runs set status='paused',finished_at=clock_timestamp() where fence=$1 and workspace_id=$2",
       [fence,owner.workspaceId]);
     assert.match((await rejected(client,()=>checkFacts(digests))).message,/SCHEDULED_DATASET_CLAIM_REQUIRED/);
     if(!replace) assert.deepEqual(await prior(),previous);
     assert.equal((await client.query("select count(*)::int n from pg_temp.adstable_klaviyo_daily_report_stage")).rows[0].n,2);
+    if(dailyReceipt) {
+      await client.query("drop table pg_temp.adstable_klaviyo_daily_report_stage");
+      const inspected=(await client.query("select analytics.inspect_klaviyo_daily_report($1::jsonb,$2::uuid) result",
+        [JSON.stringify(owner),operationId])).rows[0].result;
+      assert.deepEqual(inspected,dailyReceipt);
+    }
   } finally {
     await client.query("rollback to savepoint report_stage_case");
     await client.query("release savepoint report_stage_case");

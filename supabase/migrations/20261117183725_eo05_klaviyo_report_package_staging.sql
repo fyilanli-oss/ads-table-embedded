@@ -371,9 +371,9 @@ begin
   perform analytics.plan_klaviyo_staged_report_replacement(o,c,d,operation,policy,digests);
   foreach table_name in array array['pd_facts','cpd_product_performance_facts','cpd_product_sales_facts'] loop
     select coalesce(jsonb_object_agg(item->'row'->>'native_key_hash',true),'{}'::jsonb)
-      into staged_keys from pg_temp.adstable_klaviyo_daily_report_stage s
-      cross join lateral jsonb_array_elements(s.body->'rows') item
-      where item->>'table'=table_name;
+      into staged_keys from pg_temp.adstable_klaviyo_daily_report_stage staged
+      cross join lateral jsonb_array_elements(staged.body->'rows') entry
+      where entry->>'table'=table_name;
     execute format('delete from analytics.%I x where workspace_id=$1 and installation_id=$2 and installation_generation=$3 and platform=''klaviyo'' and platform_account_id=$4 and business_date=$5
       and not ($6 ? x.native_key_hash)',table_name)
       using w,i,g,a,day,staged_keys;
@@ -432,6 +432,165 @@ begin
 end $fn$;
 
 revoke all on function analytics.replace_klaviyo_staged_report_day(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)
+  from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+
+-- A compact, reproducible fingerprint of physical rows. Rebuild their
+-- payload digests, rather than trusting the digest stored beside each row.
+create function analytics.klaviyo_daily_report_fingerprint(o jsonb,d date,tz text,expected integer) returns text
+language plpgsql security definer set search_path='' as $fn$
+declare
+  fact jsonb;
+  payload_digest text;
+  table_name text;
+  leaves text[]:='{}';
+  w uuid := (o->>'workspaceId')::uuid;
+  i bigint := (o->>'installationId')::bigint;
+  g bigint := (o->>'generation')::bigint;
+begin
+  perform evidence.assert_source_owner(o);
+  if o->>'provider' is distinct from 'klaviyo' or d is null or tz is null
+    or expected is null or expected not between 1 and 4000 then raise exception 'KLAVIYO_REPORT_FACT_READBACK_MISMATCH'; end if;
+  foreach table_name in array array['pd_facts','cpd_product_performance_facts','cpd_product_sales_facts'] loop
+    for fact in execute format('select to_jsonb(x) from analytics.%I x where workspace_id=$1 and installation_id=$2 and installation_generation=$3 and platform=''klaviyo'' and platform_account_id=$4 and business_date=$5 order by native_key_hash collate "C" limit 4001',table_name)
+      using w,i,g,o->>'accountId',d
+    loop
+      if cardinality(leaves)>=expected or fact->>'source_timezone' is distinct from tz
+        or fact->>'provider_connection_id' is distinct from o->>'connectionId'
+        or (fact->>'retain_until')::timestamptz<=clock_timestamp() then raise exception 'KLAVIYO_REPORT_FACT_READBACK_MISMATCH'; end if;
+      payload_digest:=analytics.reconciliation_fact_digest(table_name,fact);
+      if fact->>'payload_digest' is distinct from payload_digest then raise exception 'KLAVIYO_REPORT_FACT_READBACK_MISMATCH'; end if;
+      leaves:=array_append(leaves,analytics.dataset_digest(jsonb_build_array(table_name,fact->>'native_key_hash',payload_digest)));
+    end loop;
+  end loop;
+  if cardinality(leaves)<>expected then raise exception 'KLAVIYO_REPORT_FACT_READBACK_MISMATCH'; end if;
+  return analytics.dataset_digest(to_jsonb(leaves));
+end $fn$;
+
+revoke all on function analytics.klaviyo_daily_report_fingerprint(jsonb,date,text,integer)
+  from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+
+create function analytics.inspect_klaviyo_daily_report(o jsonb,op uuid) returns jsonb
+language plpgsql security definer set search_path='' as $fn$
+declare
+  b evidence.source_batches%rowtype;
+  receipt jsonb;
+  ref jsonb;
+begin
+  perform evidence.assert_source_owner(o);
+  select * into b from evidence.source_batches where workspace_id=(o->>'workspaceId')::uuid
+    and installation_id=(o->>'installationId')::bigint and installation_generation=(o->>'generation')::bigint
+    and authority=o and manifest->'klaviyoDailyReceipt'->>'operationId'=op::text for share;
+  if not found then return null; end if;
+  receipt:=b.manifest->'klaviyoDailyReceipt';
+  if b.storage_state<>'committed' or b.retain_until<=clock_timestamp()
+    or b.manifest->'privacyRedacted'='true'::jsonb
+    or receipt->>'digest' is distinct from analytics.dataset_digest(receipt-'digest') then
+    raise exception 'KLAVIYO_REPORT_RECEIPT_INVALID';
+  end if;
+  if b.manifest ? 'datasetSupersededBy' then
+    return receipt||jsonb_build_object('status','superseded','checkpointAdvanced',false);
+  end if;
+  for ref in select value from jsonb_array_elements(receipt->'sources') loop
+    perform analytics.assert_dataset_source(o,ref);
+    if not exists(select 1 from evidence.source_batches x where x.id=(ref->>'batch_id')::bigint and x.authority=o
+      and x.handoff_state='consumed' and x.handoff_receipt=receipt->>'digest'
+      and x.manifest->'privacyRedacted' is distinct from 'true'::jsonb) then raise exception 'KLAVIYO_REPORT_RECEIPT_INVALID'; end if;
+  end loop;
+  if analytics.klaviyo_daily_report_fingerprint(o,(receipt->>'businessDate')::date,receipt->>'timeZone',
+    (receipt->>'rowCount')::integer) is distinct from receipt->>'factsDigest' then raise exception 'KLAVIYO_REPORT_FACT_READBACK_MISMATCH';end if;
+  return receipt;
+end $fn$;
+
+revoke all on function analytics.inspect_klaviyo_daily_report(jsonb,uuid)
+  from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+
+create function analytics.publish_klaviyo_staged_first_report_day(
+  o jsonb,c jsonb,d timestamptz,operation uuid,policy jsonb,digests jsonb
+) returns jsonb
+language plpgsql security definer set search_path='' as $fn$
+declare
+  v text;
+  b evidence.source_batches%rowtype;
+  products jsonb:='[]';
+  config integer:=0;
+  accounts integer:=0;
+  proof jsonb;
+  receipt jsonb;
+  anchor bigint;
+  day date := (c->>'businessDate')::date;
+  tz text := c->'sourceContext'->'snapshot'->>'timezone';
+begin
+  perform 1 from operations.refresh_control where singleton for update;
+  if not found then raise exception 'SCHEDULED_DATASET_CLAIM_REQUIRED'; end if;
+  perform analytics.assert_klaviyo_daily_report_claim(o,c,d);
+  if jsonb_typeof(c->'batchIds') is distinct from 'array' or jsonb_array_length(c->'batchIds') not between 3 and 22
+    or c->'sourceContext'->'window' is distinct from jsonb_build_object('from',day,'to',day)
+    or policy->>'version' is distinct from 'report-source-3y-v1'
+    or exists(select 1 from evidence.source_batches where authority=o and manifest ? 'klaviyoDailyReceipt'
+      and (manifest->'klaviyoDailyReceipt'->>'businessDate'=day::text or manifest->'klaviyoDailyReceipt'->>'operationId'=operation::text)) then
+    raise exception 'KLAVIYO_REPORT_RECEIPT_SCOPE_INVALID';
+  end if;
+  perform analytics.assert_report_source_context(o,c->'sourceContext',(policy->>'until')::timestamptz,c->'sources');
+  if (select count(distinct value) from jsonb_array_elements_text(c->'batchIds'))<>jsonb_array_length(c->'batchIds')
+    or (select count(distinct value->>'page_id') from jsonb_array_elements(c->'sources'))<>jsonb_array_length(c->'sources')
+    or exists(select 1 from jsonb_array_elements(c->'sources') ref where not (c->'batchIds' ? (ref->>'batch_id'))) then
+    raise exception 'KLAVIYO_REPORT_RECEIPT_SCOPE_INVALID';
+  end if;
+  perform id from evidence.source_batches where authority=o
+    and id in (select value::bigint from jsonb_array_elements_text(c->'batchIds')) order by id for update;
+  for v in select value from jsonb_array_elements_text(c->'batchIds') loop
+    select * into strict b from evidence.source_batches where id=v::bigint and authority=o;
+    if b.storage_state<>'committed' or b.handoff_state<>'pending' or b.retain_until<=clock_timestamp()
+      or b.manifest->'privacyRedacted'='true'::jsonb or b.manifest ? 'datasetReconciliationMismatch'
+      or (select count(*) from evidence.source_pages where batch_id=b.id) <>
+        (select count(*) from jsonb_array_elements(c->'sources') ref where ref->>'batch_id'=v) then
+      raise exception 'KLAVIYO_REPORT_RECEIPT_SCOPE_INVALID';
+    end if;
+    case b.manifest->'klaviyoDatasetRead'->>'dataset'
+      when 'configuration' then
+        if b.source_state<>'complete' then raise exception 'KLAVIYO_REPORT_RECEIPT_SCOPE_INVALID';end if;
+        config:=config+1;anchor:=b.id;
+      when 'account_performance' then
+        if b.source_state<>'complete' then raise exception 'KLAVIYO_REPORT_RECEIPT_SCOPE_INVALID';end if;
+        accounts:=accounts+1;
+      when 'product_performance' then products:=products||jsonb_build_array(v);
+      else raise exception 'KLAVIYO_REPORT_RECEIPT_SCOPE_INVALID';
+    end case;
+    perform analytics.hold_report_source_batch(o,b.id,(policy->>'until')::timestamptz);
+  end loop;
+  if config<>1 or accounts<>1 or jsonb_array_length(products)<1 then raise exception 'KLAVIYO_REPORT_RECEIPT_SCOPE_INVALID';end if;
+  if jsonb_array_length(products)>1 then
+    perform evidence.assert_klaviyo_daily_product_packages(o,c->'sourceContext'->>'job_id',(c->'sourceContext'->>'fence')::bigint,day,products);
+  elsif not exists(select 1 from evidence.source_batches where id=(products->>0)::bigint
+    and source_state='complete' and not (manifest->'klaviyoDatasetRead' ? 'packageCount')) then
+    raise exception 'KLAVIYO_REPORT_RECEIPT_SCOPE_INVALID';
+  end if;
+  if exists(select 1 from pg_temp.adstable_klaviyo_daily_report_stage s
+    cross join lateral jsonb_array_elements(s.body->'rows') item
+    cross join lateral jsonb_array_elements(item->'row'->'provenance'->'sources') ref
+    where not (c->'sources' @> jsonb_build_array(ref))) then raise exception 'KLAVIYO_REPORT_RECEIPT_SCOPE_INVALID';end if;
+  proof:=analytics.write_klaviyo_staged_first_report_day(o,c,d,operation,policy,digests);
+  receipt:=jsonb_build_object('version','klaviyo-daily-receipt-v1','operationId',operation,
+    'status','consumed','comparison','matched','consumerReceipt',true,'checkpointAdvanced',true,
+    'businessDate',day,'timeZone',tz,'revision',1,'rowCount',proof->'rowCount','packages',proof->'packages',
+    'batchIds',c->'batchIds','sources',c->'sources','jobId',c->'sourceContext'->>'job_id','fence',c->'sourceContext'->>'fence',
+    'factsDigest',analytics.klaviyo_daily_report_fingerprint(o,day,tz,(proof->>'rowCount')::integer));
+  receipt:=receipt||jsonb_build_object('digest',analytics.dataset_digest(receipt));
+  if octet_length(receipt::text)>262144 or d<=clock_timestamp() then raise exception 'KLAVIYO_REPORT_RECEIPT_INVALID';end if;
+  update evidence.source_batches set handoff_state='consumed',handoff_receipt=receipt->>'digest',
+    manifest=manifest||jsonb_build_object('datasetConsumerReceipt',jsonb_build_object(
+      'operationId',operation,'anchorBatchId',anchor::text,'digest',receipt->>'digest'))
+    where authority=o and id in (select value::bigint from jsonb_array_elements_text(c->'batchIds'));
+  update evidence.source_batches set manifest=manifest||jsonb_build_object('klaviyoDailyReceipt',receipt)
+    where id=anchor and authority=o;
+  if exists(select 1 from evidence.source_batches where authority=o
+    and id in (select value::bigint from jsonb_array_elements_text(c->'batchIds')) and octet_length(manifest::text)>1048576) then
+    raise exception 'KLAVIYO_REPORT_RECEIPT_INVALID';
+  end if;
+  return receipt;
+end $fn$;
+
+revoke all on function analytics.publish_klaviyo_staged_first_report_day(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)
   from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
 reset role;
 commit;

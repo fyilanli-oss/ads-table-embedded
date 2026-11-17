@@ -52,7 +52,7 @@ async function probeKlaviyoReportStage(client,owner,input,previous) {
     const writes=projection.rows.map(item=>prepareDatasetWrite({
       owner,operationId,rows:[item],policy:input.policy,now:new Date().toISOString(),
     }).body);
-    const context={businessDate:day,expectedRevision:previous?.revision??0,
+    const context={businessDate:day,expectedRevision:previous?.revision??0,startedAt:new Date().toISOString(),
       sourceContext:{...bundle.datasets[0].sourceContext,fence,snapshot:bound.source}};
     await client.query(`insert into operations.refresh_runs(workspace_id,install_generation,provider,account_id,job_id,fence,cost,status)
       values ($1,$2,$3,$4,$5,$6,'{"requests":2,"rows":1000,"bytes":1000000,"connections":1,"dbWrites":5}','running')`,[...scope,fence]);
@@ -113,6 +113,13 @@ async function probeKlaviyoReportStage(client,owner,input,previous) {
     if(previous) {
       assert.deepEqual((await checkFacts(digests)).rows[0].result,expected);
       assert.match((await rejected(client,writeDay)).message,/KLAVIYO_REPORT_FIRST_DAY_REQUIRED/);
+      const plan={status:"replacement_planned",operationId,previousDigest:previous.digest,
+        stageDigest:sourcePayloadHash(summary),replaced:2,removed:0,inserted:0};
+      const result=await client.query(
+        "select analytics.plan_klaviyo_staged_report_replacement($1::jsonb,$2::jsonb,$3::timestamptz,$4::uuid,$5::jsonb,$6::jsonb) result",
+        [JSON.stringify(owner),JSON.stringify(context),deadline,operationId,JSON.stringify(writes[0].policy),JSON.stringify(digests)]);
+      assert.deepEqual(result.rows[0].result,{...plan,digest:sourcePayloadHash(plan)});
+      assert.deepEqual(await prior(),previous);
     } else {
       assert.deepEqual((await writeDay()).rows[0].result,expected);
     }

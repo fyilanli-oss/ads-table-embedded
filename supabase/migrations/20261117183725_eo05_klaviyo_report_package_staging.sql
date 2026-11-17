@@ -257,5 +257,92 @@ end $fn$;
 
 revoke all on function analytics.write_klaviyo_staged_first_report_day(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)
   from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+
+-- Check what must change before replacing a published day. No fact or receipt
+-- is changed here. The write must use the same transaction and coordinator lock.
+create function analytics.plan_klaviyo_staged_report_replacement(
+  o jsonb, c jsonb, d timestamptz, operation uuid, policy jsonb, digests jsonb
+) returns jsonb
+language plpgsql security definer set search_path='' as $fn$
+declare
+  staged jsonb;
+  head jsonb;
+  prior jsonb;
+  old_fact jsonb;
+  ref jsonb;
+  table_name text;
+  completed timestamptz;
+  day date := (c->>'businessDate')::date;
+  timezone text := c->'sourceContext'->'snapshot'->>'timezone';
+  started timestamptz := (c->>'startedAt')::timestamptz;
+  w uuid := (o->>'workspaceId')::uuid;
+  i bigint := (o->>'installationId')::bigint;
+  g bigint := (o->>'generation')::bigint;
+  a text := o->>'accountId';
+  row_total integer:=0;
+  replacement_count integer:=0;
+  removal_count integer:=0;
+  staged_keys jsonb;
+  plan jsonb;
+begin
+  perform 1 from operations.refresh_control where singleton for update;
+  if not found then raise exception 'SCHEDULED_DATASET_CLAIM_REQUIRED'; end if;
+  perform analytics.assert_klaviyo_daily_report_claim(o,c,d);
+  staged:=analytics.verify_klaviyo_daily_report_stage(o,c,d,operation,policy,digests);
+  select b.manifest->'datasetReconciliation' into head
+   from evidence.source_batches b
+   where b.workspace_id=w and b.installation_id=i and b.installation_generation=g
+     and b.primary_source='klaviyo' and b.authority=o and b.manifest ? 'datasetReconciliation'
+     and b.manifest->'datasetReconciliation'->>'businessDate'=day::text
+     and b.manifest->'datasetReconciliation'->>'timeZone'=timezone
+   order by (b.manifest->'datasetReconciliation'->>'revision')::bigint desc,b.id desc limit 1;
+  if head is null or head->'revision' is distinct from c->'expectedRevision' then
+    raise exception 'KLAVIYO_REPORT_REVISION_CONFLICT';
+  end if;
+  prior:=analytics.inspect_dataset_reconciliation(o,(head->>'operationId')::uuid);
+  if prior->>'status' is distinct from 'consumed' or prior->>'comparison' is distinct from 'matched'
+    or prior->>'digest' is distinct from head->>'digest'
+    or started is null or started>clock_timestamp()
+    or (prior->>'completedAt')::timestamptz>started then
+    raise exception 'KLAVIYO_REPORT_PREVIOUS_REVISION_UNAVAILABLE';
+  end if;
+  select jsonb_object_agg((item->>'table')||':'||(item->'row'->>'native_key_hash'),true)
+    into staged_keys from pg_temp.adstable_klaviyo_daily_report_stage s
+    cross join lateral jsonb_array_elements(s.body->'rows') item;
+  foreach table_name in array array['pd_facts','cpd_product_performance_facts','cpd_product_sales_facts'] loop
+    for old_fact in execute format('select to_jsonb(x) from analytics.%I x where workspace_id=$1 and installation_id=$2 and installation_generation=$3 and platform=''klaviyo'' and platform_account_id=$4 and business_date=$5 order by id limit 4001 for update',table_name)
+      using w,i,g,a,day
+    loop
+      row_total:=row_total+1;
+      if row_total>4000 or old_fact->>'source_timezone' is distinct from timezone
+        or old_fact->>'provider_connection_id' is distinct from o->>'connectionId'
+        or (old_fact->>'retain_until')::timestamptz<=clock_timestamp() then
+        raise exception 'KLAVIYO_REPORT_REPLACEMENT_SCOPE_INVALID';
+      end if;
+      for ref in select value from jsonb_array_elements(old_fact->'provenance'->'sources') loop
+        perform analytics.assert_dataset_source(o,ref);
+        select (b.manifest->'klaviyoDatasetRead'->>'completedAt')::timestamptz into completed
+          from evidence.source_batches b where b.id=(ref->>'batch_id')::bigint and b.authority=o;
+        if completed is null or completed>started then raise exception 'KLAVIYO_REPORT_REPLACEMENT_STALE'; end if;
+      end loop;
+      if staged_keys ? (table_name||':'||(old_fact->>'native_key_hash')) then
+        replacement_count:=replacement_count+1;
+      else
+        if analytics.dataset_retention_has_dependents(table_name,old_fact) then raise exception 'DATASET_RECONCILIATION_DEPENDENT'; end if;
+        removal_count:=removal_count+1;
+      end if;
+    end loop;
+  end loop;
+  if row_total is distinct from (prior->>'rowCount')::integer or d<=clock_timestamp() then
+    raise exception 'KLAVIYO_REPORT_REPLACEMENT_SCOPE_INVALID';
+  end if;
+  plan:=jsonb_build_object('status','replacement_planned','operationId',operation,'previousDigest',prior->>'digest',
+    'stageDigest',staged->>'digest','replaced',replacement_count,'removed',removal_count,
+    'inserted',(staged->>'rowCount')::integer-replacement_count);
+  return plan||jsonb_build_object('digest',analytics.dataset_digest(plan));
+end $fn$;
+
+revoke all on function analytics.plan_klaviyo_staged_report_replacement(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)
+  from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
 reset role;
 commit;

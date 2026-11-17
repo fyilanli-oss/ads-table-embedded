@@ -1479,7 +1479,7 @@
       "app/lib/refresh/klaviyo-background-owner.server.js": "d6965d0331b0904aff7161b273db6ee4d1d956ddc56ae36300942b718e543756",
       "app/lib/refresh/klaviyo-private-request.server.js": "34240888886b864f79f862e5260ef3dc2dadfe2eb1207653dcf372162e39aedb",
       "app/lib/refresh/klaviyo-raw-collection.server.js": "85f85cc1ef3b9824e3ac9e886e140cf6e7fd488af8f7eed182da90a193df1bd5",
-      "app/lib/refresh/klaviyo-raw-dataset-plan.server.js": "7905c01540210186b33e40623ffff3c8b7f1a4d0c5c865a4c0582ce3c7e58f6a",
+      "app/lib/refresh/klaviyo-raw-dataset-plan.server.js": "d0336c61f9b2512a3a4db2f98b36e92141ea4e98bc07d35c659f077cd77f9012",
       "app/lib/refresh/klaviyo-raw-datasets.server.js": "8488f5f39ec0c99a70d2521ebdc1ace6e435535d6caada5b423ac0ed825b2f5b",
       "app/lib/refresh/klaviyo-raw-eligibility.server.js": "8514e9c26dbc4e6872d14e820c8e0d7d5084b20884438774448cabed130a1f56",
       "app/lib/refresh/klaviyo-raw-request.server.d.ts": "12e920d2c5403b280caa7ae3629d72409a48ea14ab6fb6137efc93f182fe1c98",
@@ -1730,7 +1730,7 @@
       "tests/identity-oauth-atomic-stage.test.js": "ac475e7c1622e6502d2321bbd327348ab779c8914340b12a1ed0a3c46a2d181d",
       "tests/identity-oauth-start-binding.test.js": "53da46cab2b38e9f58650545d97ffdfa7cee5d7989a99479d1f5c3ef26306b3d",
       "tests/identity-permission-preflight.test.js": "5f74265fe234f4937e5cc7f01c9e11ce052daf3ddbd97ae97196b247685e2354",
-      "tests/klaviyo-raw-datasets-permission.test.js": "5c8ea92334a6451ccdc3e7eac014333566c9f3bbf07e3037b1f555c7ea1315e8",
+      "tests/klaviyo-raw-datasets-permission.test.js": "378d2684eefd4e4e43c66748748ebb0ab5b067932b59638e41343f8ef954e066",
       "tests/klaviyo-raw-request-permission.test.js": "fcab9af13b95da38f692e0e861036f6c25d66e0a58ec833a30b5d005c4949da9",
       "tests/klaviyo-scope-provenance.test.js": "73afdd2e1609eec5ab711c19ebee9d30504211ef6b9db329c312c290a971ea53",
       "tests/meta-first-day-permission.test.js": "904e0513a7651e9184eb6818a233e0b3c4a953e3b3e670f765e8f972a3d68faa",
@@ -4413,6 +4413,45 @@
       ],
       "visual_acceptance": "not_applicable_no_UI_change",
       "native_acceptance": false
+    },
+    {
+      "id": "eo05-klaviyo-daily-read-budget-2026-11-17",
+      "date": "2026-11-17",
+      "owner_approval": {
+        "explicit": true,
+        "source": "2026-11-17 owner chat: 'Tamam onaylıyorum devam edelim' in direct reply to the proposal to increase the Klaviyo daily read budget to 2,000 aggregate records."
+      },
+      "rationale": "A single Klaviyo daily read counts configuration, campaign and flow rows in addition to Ordered Product events. Permit a 2,000-record collection budget independent of the bounded 1,000-entry source write. No identity or credential flow changes.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "artifact_paths": [
+        "app/lib/refresh/klaviyo-raw-dataset-plan.server.js",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "tests/klaviyo-raw-datasets-permission.test.js"
+      ],
+      "tests": [
+        "tests/klaviyo-raw-datasets-permission.test.js"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_no_UI_change",
+      "native_acceptance": false,
+      "changed_paths": [
+        "app/lib/refresh/klaviyo-raw-dataset-plan.server.js",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "tests/klaviyo-raw-datasets-permission.test.js"
+      ]
     }
   ],
   "coverage": {

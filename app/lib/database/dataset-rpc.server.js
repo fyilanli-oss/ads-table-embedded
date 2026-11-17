@@ -22,6 +22,16 @@ export const DATASET_RECONCILIATION_RPC = Object.freeze([
 ].map(Object.freeze));
 export const SCHEDULED_DATASET_RECONCILE_SQL = "select analytics.commit_scheduled_dataset_reconciliation($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz) as result";
 export const SCHEDULED_DATASET_FINISH_SQL = "select analytics.finish_scheduled_dataset_reconciliation($1::jsonb,$2::text,$3::bigint,$4::uuid,$5::text) as result";
+export const KLAVIYO_DAILY_STAGE_SQL = "select analytics.stage_klaviyo_daily_report_package($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz,$5::integer,$6::integer) as result";
+export const KLAVIYO_DAILY_PUBLISH_SQL = "select analytics.publish_klaviyo_staged_report_day($1::jsonb,$2::jsonb,$3::timestamptz,$4::uuid,$5::jsonb,$6::jsonb) as result";
+export const KLAVIYO_DAILY_INSPECT_SQL = "select analytics.inspect_klaviyo_daily_report($1::jsonb,$2::uuid) as result";
+export const KLAVIYO_DAILY_FINISH_SQL = "select analytics.finish_klaviyo_daily_report_job($1::jsonb,$2::text,$3::bigint,$4::uuid,$5::text) as result";
+export const KLAVIYO_DAILY_REPORT_RPC = Object.freeze([
+  [KLAVIYO_DAILY_STAGE_SQL,"analytics.stage_klaviyo_daily_report_package(jsonb,jsonb,jsonb,timestamptz,integer,integer)"],
+  [KLAVIYO_DAILY_PUBLISH_SQL,"analytics.publish_klaviyo_staged_report_day(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)"],
+  [KLAVIYO_DAILY_INSPECT_SQL,"analytics.inspect_klaviyo_daily_report(jsonb,uuid)"],
+  [KLAVIYO_DAILY_FINISH_SQL,"analytics.finish_klaviyo_daily_report_job(jsonb,text,bigint,uuid,text)"],
+].map(Object.freeze));
 export const SCHEDULED_DATASET_RPC = Object.freeze([
   ...DATASET_STORAGE_RPC.filter(([, signature]) => signature.startsWith("evidence.") && !signature.startsWith("evidence.begin_")),
   ...DATASET_RECONCILIATION_RPC.filter(([, signature]) => signature.startsWith("analytics.inspect_")),

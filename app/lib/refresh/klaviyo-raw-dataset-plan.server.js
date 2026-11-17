@@ -15,7 +15,7 @@ export function readKlaviyoRawDatasetPlan(p,now) {
   ||typeof t.expiresAt!=="string"||!Number.isFinite(Date.parse(t.expiresAt))||Date.parse(t.expiresAt)<=now||Date.parse(t.expiresAt)>now+900000)fail();
  if(!exact(l,["maxBytes","maxElapsedMs","maxPages","maxRows","maxRequests"])
   ||Object.values(l).some(v=>!Number.isSafeInteger(v)||v<1)||l.maxBytes>1048576||l.maxElapsedMs<90000||l.maxElapsedMs>120000
-  ||l.maxRequests<11||l.maxRequests>21||l.maxPages>10||l.maxRows>1000
+  ||l.maxRequests<11||l.maxRequests>21||l.maxPages>10||l.maxRows>2000
   ||!exact(s,["maxBytes","maxRows"])||!Number.isSafeInteger(s.maxBytes)||s.maxBytes<1||s.maxBytes>1048576
   ||!Number.isSafeInteger(s.maxRows)||s.maxRows<1||s.maxRows>1000)fail();
  return {...p,sourcePolicy:readSourceStoragePolicy(p.sourcePolicy,now)};

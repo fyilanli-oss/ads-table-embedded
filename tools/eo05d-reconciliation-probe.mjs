@@ -6,6 +6,10 @@ import {reconcileStoredDatasetSources, inspectDatasetReconciliation, DATASET_REC
 import {storeMaturityConfiguration, recordMaturityDecision, inspectMaturityDecision} from "../app/lib/database/maturity-store.server.js";
 import {maturityObservationFixture} from "../tests/fixtures/maturity-fixture.js";
 import {createScheduledDatasetPostgresClient} from "../app/lib/database/dataset-postgres.server.js";
+import {readStoredDatasetSources} from "../app/lib/database/dataset-source-reader.server.js";
+import {projectStoredKlaviyoDataset} from "../app/lib/providers/stored-klaviyo-dataset.server.js";
+import {prepareDatasetWrite} from "../app/lib/database/dataset-storage.server.js";
+import {sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
 
 async function rejected(client, action) {
   await client.query("savepoint reconciliation_expected_failure"); let error;
@@ -13,6 +17,52 @@ async function rejected(client, action) {
   await client.query("rollback to savepoint reconciliation_expected_failure");await client.query("release savepoint reconciliation_expected_failure");
   assert.ok(error, "invalid reconciliation must fail");
   return error;
+}
+
+async function probeKlaviyoReportStage(client,owner,input,previous) {
+  const bundle=await readStoredDatasetSources(input);
+  const projection=projectStoredKlaviyoDataset(bundle);
+  assert.equal(projection.rows.length,2);
+  const operationId=randomUUID(),day=bundle.scope.window.from,job=bundle.scope.jobId;
+  const deadline=new Date(input.limits.deadlineAt).toISOString();
+  const writes=projection.rows.map(item=>prepareDatasetWrite({
+    owner,operationId,rows:[item],policy:input.policy,now:new Date().toISOString(),
+  }).body);
+  const stage="select analytics.stage_klaviyo_daily_report_package($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz,$5::integer,$6::integer) result";
+  await client.query("savepoint report_stage_case");
+  try {
+    const scope=[owner.workspaceId,owner.generation,owner.provider,owner.accountId,job];
+    const fence=(await client.query("select (coalesce(max(fence),0)+1)::text n from operations.refresh_runs")).rows[0].n;
+    const context={businessDate:day,expectedRevision:previous.revision,
+      sourceContext:{...bundle.datasets[0].sourceContext,fence}};
+    await client.query(`update operations.refresh_work_bindings set fence=$6,deadline_at_ms=$7
+      where workspace_id=$1 and install_generation=$2 and provider=$3 and account_id=$4 and job_id=$5`,
+      [...scope,fence,input.limits.deadlineAt]);
+    await client.query(`insert into operations.refresh_runs(workspace_id,install_generation,provider,account_id,job_id,fence,cost,status)
+      values ($1,$2,$3,$4,$5,$6,'{"requests":2,"rows":1000,"bytes":1000000,"connections":1,"dbWrites":5}','running')`,[...scope,fence]);
+    await client.query(`insert into operations.refresh_work_progress(workspace_id,install_generation,provider,account_id,job_id,fence,stage,from_date,to_date)
+      values ($1,$2,$3,$4,$5,$6,'ready_for_dataset',$7,$7)`,[...scope,fence,day]);
+    const send=(ordinal,ctx=context,write=writes[ordinal])=>client.query(stage,[
+      JSON.stringify(owner),JSON.stringify(write),JSON.stringify(ctx),deadline,ordinal,2,
+    ]);
+    assert.match((await rejected(client,()=>send(1))).message,/KLAVIYO_REPORT_STAGE_REQUIRED/);
+    const prior=async()=>inspectDatasetReconciliation({database:client,owner,operationId:previous.operationId});
+    const staged=(await send(0)).rows[0].result;
+    assert.deepEqual(staged,{status:"staged",operationId,ordinal:0,packageCount:2,rowCount:1,
+      digest:sourcePayloadHash({write:writes[0],context})});
+    assert.deepEqual(await prior(),previous);
+    assert.match((await rejected(client,()=>send(0))).message,/KLAVIYO_REPORT_PACKAGE_SEQUENCE/);
+    assert.match((await rejected(client,()=>send(1,{...context,expectedRevision:0}))).message,/KLAVIYO_REPORT_PACKAGE_SEQUENCE/);
+    assert.match((await rejected(client,()=>send(1,context,{...writes[1],rows:Array(201).fill(writes[1].rows[0])}))).message,/KLAVIYO_REPORT_PACKAGE_LIMIT/);
+    assert.equal((await send(1)).rows[0].result.ordinal,1);
+    assert.deepEqual(await prior(),previous);
+    assert.equal((await client.query("select count(*)::int n from pg_temp.adstable_klaviyo_daily_report_stage")).rows[0].n,2);
+  } finally {
+    await client.query("rollback to savepoint report_stage_case");
+    await client.query("release savepoint report_stage_case");
+  }
+  assert.equal((await client.query("select to_regclass('pg_temp.adstable_klaviyo_daily_report_stage') staging")).rows[0].staging,null);
+  console.log("EO05_KLAVIYO_REPORT_STAGE_PROBE two_packages=true previous_receipt_preserved=true rollback_cleanup=true");
 }
 
 /** Existing F01 rollback transaction. Owners, native pages, clocks and keys below
@@ -57,6 +107,10 @@ export async function reconciliationProbe(client, {ownerFixture}) {
     await rejected(client, () => reconcileStoredDatasetSources(second));scenarios++;
     const corrected = await reconcileStoredDatasetSources({...second, expectedRevision: 1});
     assert.equal(corrected.revision, 2);assert.equal(corrected.comparison, "matched");scenarios++;
+    if (provider === "klaviyo") {
+      const receipt=await inspectDatasetReconciliation({database,owner,operationId:corrected.operationId});
+      await probeKlaviyoReportStage(client,owner,second,receipt);scenarios++;
+    }
     if (nonempty) {
       await rejected(client, () => client.query("update analytics.pd_facts set purchase=purchase+1,revision=revision+1 where installation_id=$1", [owner.installationId]));scenarios++;
     }

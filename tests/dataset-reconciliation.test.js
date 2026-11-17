@@ -3,7 +3,9 @@ import test from "node:test";
 import {randomUUID} from "node:crypto";
 import {datasetSourceBindingFixture} from "./fixtures/dataset-source-binding-fixture.js";
 import {sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
-import {reconcileStoredDatasetSources, canonicalDatasetEventTime, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL, SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {reconcileStoredDatasetSources, canonicalDatasetEventTime, prepareDailyDatasetPackages, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL, SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {readStoredDatasetSources} from "../app/lib/database/dataset-source-reader.server.js";
+import {projectStoredKlaviyoDataset} from "../app/lib/providers/stored-klaviyo-dataset.server.js";
 import {readDatasetWritePlan} from "../app/lib/refresh/dataset-server.server.js";
 import {runScheduledRefreshWithDataset} from "../app/lib/refresh/scheduled-queue-check.server.js";
 
@@ -35,6 +37,30 @@ for (const provider of ["google_ads", "meta", "klaviyo"]) test("reconciliation p
   assert.equal(r.consumerReceipt, true); assert.equal(r.checkpointAdvanced, true); assert.equal(r.publishable, false);
   assert.equal(f.request().context.sources.length, [...f.envelopes.values()].reduce((n, b) => n + b.pages.length, 0));
   assert.equal(f.request().write.rows.length, provider === "google_ads" ? 3 : provider === "meta" ? 0 : 2);
+});
+
+test("daily Klaviyo packages keep report rows ordered, bounded and unique across the day", async () => {
+  const f=await fixture("klaviyo");
+  const projection=projectStoredKlaviyoDataset(await readStoredDatasetSources(f));
+  const sample=projection.rows.find(item=>item.table==="cpd_product_sales_facts");
+  const pd=projection.rows.find(item=>item.table==="pd_facts");
+  const rows=[pd,...Array.from({length:1000},(_,i)=>{
+    const item=structuredClone(sample),eventId="synthetic-event-"+i;
+    item.row.provider_event_id=eventId;
+    item.row.source_identity.native.event_id=eventId;
+    return item;
+  })];
+  const options={owner:f.owner,rows,policy:f.policy,operationId:randomUUID(),
+    now:new Date().toISOString(),context:{businessDate:"2026-11-01",timeZone:"UTC"},maxPackages:20};
+  const packages=prepareDailyDatasetPackages(options);
+  assert.deepEqual(packages.map(write=>write.rows.length),[200,200,200,200,200,1]);
+  assert.ok(packages.every(write=>write.operationId===options.operationId
+    && Buffer.byteLength(JSON.stringify({write,context:options.context}))<=1048576));
+  assert.deepEqual(packages.flatMap(write=>write.rows.map(item=>item.row.provider_event_id)),rows.map(item=>item.row.provider_event_id));
+  const oversizedContext={proof:Array.from({length:17},()=>"x".repeat(64000))};
+  assert.throws(()=>prepareDailyDatasetPackages({...options,rows:rows.slice(0,2),context:oversizedContext}),/BYTE_LIMIT/);
+  const acrossBoundary=[...rows.slice(0,201),rows[1]];
+  assert.throws(()=>prepareDailyDatasetPackages({...options,rows:acrossBoundary}),/DUPLICATE_NATIVE_KEY/);
 });
 test("Meta's existing nonempty sales evidence hold is preserved, never consumed", async () => {
   const f = await fixture("meta"); const r = await reconcileStoredDatasetSources(f);

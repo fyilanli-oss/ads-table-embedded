@@ -337,14 +337,49 @@ function syntheticResponse(endpoint,owner,day) {
 }
 
 /** Run within the existing F01 localhost rollback transaction. */
-export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,environment=process.env,mode="report",retentionVariant,combinedVerification=false}) {
+export async function klaviyoDailyTimingProbe(client,options) {
+  const {connection,environment=process.env}=options;
+  assert.equal(environment.GITHUB_ACTIONS,"true");assert.ok(environment.RUNNER_TEMP);
+  assert.equal(connection.host,"127.0.0.1");assert.equal(connection.port,54322);
+  return runKlaviyoDailyTimingProbe(client,options);
+}
+
+export async function klaviyoHostedReportProbe(client,{ownerFixture,connection}) {
+  assert.equal(connection.host,"aws-1-eu-central-1.pooler.supabase.com");
+  assert.equal(connection.port,5432);
+  assert.equal(connection.database,"postgres");
+  assert.equal(connection.user,"adstable_benchmark_session.lxphenczjmueblnonklm");
+  const {rows:[identity]}=await client.query("select session_user as login,current_user as role");
+  assert.deepEqual(identity,{login:"adstable_benchmark_session",role:"adstable_owner"});
+  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,hosted:true});
+}
+
+async function installHostedReportClocks(client) {
+  await client.query(`create temp table eo05_clock_namespace (unused boolean) on commit drop;
+    create function pg_temp.eo05_time_stage(o jsonb,p jsonb,c jsonb,d timestamptz,i integer,n integer)
+    returns table(result jsonb, elapsed_ms double precision) language plpgsql as $clock$
+    declare started timestamptz:=clock_timestamp();
+    begin
+      result:=analytics.stage_klaviyo_daily_report_package(o,p,c,d,i,n);
+      elapsed_ms:=1000*extract(epoch from clock_timestamp()-started);
+      return next;
+    end $clock$;
+    create function pg_temp.eo05_time_publish(o jsonb,c jsonb,d timestamptz,i uuid,p jsonb,g jsonb)
+    returns table(result jsonb, elapsed_ms double precision) language plpgsql as $clock$
+    declare started timestamptz:=clock_timestamp();
+    begin
+      result:=analytics.publish_klaviyo_staged_report_day(o,c,d,i,p,g);
+      elapsed_ms:=1000*extract(epoch from clock_timestamp()-started);
+      return next;
+    end $clock$;`);
+}
+
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,hosted=false}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
   const detailed=mode==="detailed",reportOnly=mode==="report",measureReport=detailed||reportOnly;
   if(retentionOnly||retentionWall) assert.ok(["current","cached"].includes(retentionVariant));
-  assert.equal(environment.GITHUB_ACTIONS,"true");assert.ok(environment.RUNNER_TEMP);
-  assert.equal(connection.host,"127.0.0.1");assert.equal(connection.port,54322);
   await installExactBulkWriter(client);
   // The enclosing rehearsal savepoint restores the inherited timeout.
   await client.query("set local statement_timeout='60s'");
@@ -363,6 +398,7 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
     assert.ok(reportBoundary&&retentionVariant==="cached");
     await installCombinedFactVerification(client);
   }
+  if(hosted) await installHostedReportClocks(client);
   await client.query("update integrations.provider_connections set connected_at=clock_timestamp()-interval '3 days' where id=$1",[owner.connectionId]);
   await client.query(`insert into operations.refresh_quota_contexts
     (workspace_id,install_generation,provider,installation_id,connection_id,connection_version,account_id,client_scope_key,connection_scope_key,connection_epoch,api_version,enabled)
@@ -394,6 +430,7 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
     }
   };
   let failed,phase="start",requests=0,claimId,reportReceipt,reportWriteMs;
+  const hostedReportMs=[];
   const durations={queueEnqueue:0,queueAndAdmission:0,providerCollection:0,providerFixture:0,rawStore:0,handoff:0,reportFlow:0};
   async function timedQuery(bucket,sql,args) {
     if (!detailed&&(!reportOnly||!["reportStage","reportPublish"].includes(bucket))) return client.query(sql,args);
@@ -405,7 +442,17 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
   const store=createRefreshWorkRepository({query:(sql,args)=>timedQuery("queue",sql,args)});
   const rawDatabase={query:(sql,args)=>timedQuery(sql.includes("commit_klaviyo_dataset_source(")?"rawWrite":"rawReadback",sql,args)};
   const reportDatabase={
-    query(sql,args) {
+    async query(sql,args) {
+      if(hosted&&(sql===KLAVIYO_DAILY_STAGE_SQL||sql===KLAVIYO_DAILY_PUBLISH_SQL)) {
+        const timedSql=sql===KLAVIYO_DAILY_STAGE_SQL
+          ?"select * from pg_temp.eo05_time_stage($1,$2,$3,$4,$5,$6)"
+          :"select * from pg_temp.eo05_time_publish($1,$2,$3,$4,$5,$6)";
+        try {
+          const result=await client.query(timedSql,args);
+          hostedReportMs.push(result.rows[0].elapsed_ms);
+          return result;
+        } catch(error) {failed??=error;throw error;}
+      }
       const bucket=sql===KLAVIYO_DAILY_STAGE_SQL?"reportStage":sql===KLAVIYO_DAILY_PUBLISH_SQL?"reportPublish":
         sql===KLAVIYO_DAILY_INSPECT_SQL?"reportReadback":sql===KLAVIYO_DAILY_FINISH_SQL?"jobClose":"reportSourceRead";
       return timedQuery(bucket,sql,args);
@@ -533,6 +580,11 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
     if(retentionWall) {
       const totalMs=ended-start;
       if(reportBoundary) assert.ok(reportWriteMs>0&&reportWriteMs<totalMs);
+      if(hosted) {
+        assert.equal(hostedReportMs.length,6);
+        assert.ok(hostedReportMs.every(value=>Number.isFinite(value)&&value>0));
+        return {...summary,reportWriteMs:hostedReportMs.reduce((sum,ms)=>sum+ms,0)};
+      }
       return {...summary,variant:retentionVariant,totalMs,reportWriteMs,combinedVerification,detailsMeasured:false};
     }
     if (!measureReport) {

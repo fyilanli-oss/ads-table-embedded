@@ -26,12 +26,13 @@ async function installExactBulkWriter(client) {
 
 const writerPhases=["lookupLock","packageValidation","packageHash","sourceRetention","rowValidation","rowHash","rowPreparation","bulkStatement","packageReceipt"];
 
-async function installWriterTimers(client) {
-  await client.query(`create temp table eo05_bulk_plan_inputs (
+async function installWriterTimers(client,{capturePlans}) {
+  if(capturePlans) await client.query(`create temp table eo05_bulk_plan_inputs (
     ordinal bigint generated always as identity, fact_table text, columns text,
     payload jsonb, check_retention boolean
   ) on commit drop`);
-  await client.query(`create function pg_temp.eo05_timed_json_size(p jsonb) returns integer
+  else await installSalesTriggerTimer(client);
+  await client.query(`create function analytics.eo05_timed_json_size(p jsonb) returns integer
     language plpgsql set search_path='' as $measure$
     declare started timestamptz:=clock_timestamp(); bytes integer;
     begin
@@ -44,7 +45,7 @@ async function installWriterTimers(client) {
   let sql=definition;
   const packageSize="octet_length(analytics.dataset_json(p))";
   assert.equal(sql.split(packageSize).length,2);
-  sql=sql.replace(packageSize,"pg_temp.eo05_timed_json_size(p)");
+  sql=sql.replace(packageSize,"analytics.eo05_timed_json_size(p)");
   function before(anchor,instrumentation) {
     assert.equal(sql.split(anchor).length,2,`writer timing anchor: ${anchor}`);
     sql=sql.replace(anchor,()=>instrumentation+"\n"+anchor);
@@ -66,12 +67,26 @@ async function installWriterTimers(client) {
   before("  row_input:=r-array",finish("rowValidation"));
   before("  injected:=r||jsonb_build_object",finish("rowHash"));
   before("   continue;",finish("rowPreparation"));
-  before("   for stored in execute format($bulk$", `   insert into pg_temp.eo05_bulk_plan_inputs(fact_table,columns,payload,check_retention)
-     values(name,cols,bulk_rows->name,p->'policy'->>'version'='report-source-3y-v1');
-   eo05_bulk_measured:=false; eo05_started:=clock_timestamp();`);
+  const capture=capturePlans?`   insert into pg_temp.eo05_bulk_plan_inputs(fact_table,columns,payload,check_retention)
+     values(name,cols,bulk_rows->name,p->'policy'->>'version'='report-source-3y-v1');\n`:"";
+  before("   for stored in execute format($bulk$",`${capture}   eo05_bulk_measured:=false; eo05_started:=clock_timestamp();`);
   before("    if stored.native_conflict",`    if not eo05_bulk_measured then\n${finish("bulkStatement")}\n     eo05_bulk_measured:=true;\n    end if;`);
   before(" result:=jsonb_build_object('status','stored'", " eo05_started:=clock_timestamp();");
   before(" return result;",`${finish("packageReceipt")}\n${writerPhases.map(phase=>` raise notice 'EO05_WRITER_TIMING ${phase} %',eo05_timing_${phase};`).join("\n")}`);
+  await client.query(sql);
+}
+
+async function installSalesTriggerTimer(client) {
+  const {rows:[{definition}]}=await client.query(
+    "select pg_get_functiondef('analytics.validate_dataset_fact()'::regprocedure) definition");
+  assert.equal(definition.split("\ndeclare ").length,2);
+  assert.equal(definition.split("\n return new;").length,2);
+  const sql=definition.replace("\ndeclare ","\ndeclare eo05_trigger_start timestamptz:=clock_timestamp(); ")
+    .replace("\n return new;",`\n perform set_config('eo05.sales_trigger_ms',
+      (current_setting('eo05.sales_trigger_ms')::double precision
+        +1000*extract(epoch from clock_timestamp()-eo05_trigger_start))::text,true);
+ return new;`);
+  await client.query("set local eo05.sales_trigger_ms='0'");
   await client.query(sql);
 }
 
@@ -154,11 +169,15 @@ async function measurePlainSalesInserts(client,installationId) {
   return {rows:count,packageMs,executionMs:packageMs.reduce((total,ms)=>total+ms,0)};
 }
 
-async function installPublishTimers(client) {
+async function installPublishTimers(client,{reportOnly}) {
   const args="jsonb,jsonb,timestamptz,uuid,jsonb,jsonb";
   const anchors={
     publish_klaviyo_staged_report_day:[
       ["  perform 1 from operations.refresh_control",null],
+      ...(reportOnly?[
+        ["  perform analytics.verify_klaviyo_daily_report_stage", "publishLockAuthority"],
+        ["  perform analytics.assert_report_source_context", "publishPackageValidation"],
+      ]:[]),
       ["  revision:=(c->>'expectedRevision')","sharedSourceChecks"],
       ["  receipt:=jsonb_build_object('version','klaviyo-daily-receipt-v1'","writerAndVerification"],
       ["  return receipt;","receiptPersist"],
@@ -214,7 +233,9 @@ function syntheticResponse(endpoint,owner,day) {
 }
 
 /** Run within the existing F01 localhost rollback transaction. */
-export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,environment=process.env,detailed=false}) {
+export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,environment=process.env,mode="report"}) {
+  assert.ok(["report","wall","detailed"].includes(mode));
+  const detailed=mode==="detailed",reportOnly=mode==="report",measureReport=mode!=="wall";
   assert.equal(environment.GITHUB_ACTIONS,"true");assert.ok(environment.RUNNER_TEMP);
   assert.equal(connection.host,"127.0.0.1");assert.equal(connection.port,54322);
   await installExactBulkWriter(client);
@@ -226,9 +247,9 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
   const cipher=createSourceEvidenceCipher({keys:new Map([[1,randomBytes(32)]]),activeVersion:1,forbiddenKeys:[]});
   const policy=sourceStoreFixture().input.policy;
   // The enclosing savepoint is rolled back, including these diagnostics.
-  if (detailed) {
-    await installPublishTimers(client);
-    await installWriterTimers(client);
+  if (measureReport) {
+    await installPublishTimers(client,{reportOnly});
+    await installWriterTimers(client,{capturePlans:detailed});
   }
   await client.query("update integrations.provider_connections set connected_at=clock_timestamp()-interval '3 days' where id=$1",[owner.connectionId]);
   await client.query(`insert into operations.refresh_quota_contexts
@@ -260,7 +281,7 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
   let failed,phase="start",requests=0,claimId,reportReceipt;
   const durations={queueEnqueue:0,queueAndAdmission:0,providerCollection:0,providerFixture:0,rawStore:0,handoff:0,reportFlow:0};
   async function timedQuery(bucket,sql,args) {
-    if (!detailed) return client.query(sql,args);
+    if (!detailed&&(!reportOnly||!["reportStage","reportPublish"].includes(bucket))) return client.query(sql,args);
     const start=performance.now();
     try {return await client.query(sql,args);}
     catch(error) {failed??=error;throw error;}
@@ -288,8 +309,8 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
       }
     },
   };
-  const start=performance.now();
-  if (detailed) client.on("notice",onNotice);
+  const start=reportOnly?null:performance.now();
+  if (measureReport) client.on("notice",onNotice);
   try {
     await store.checkQueueFromAuthority({expectedRevision:(await store.readQueueCheck()).revision});
     if (detailed) durations.queueEnqueue=performance.now()-start;
@@ -366,7 +387,7 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
       },
     }});
     if (failed) throw failed;
-    const ended=performance.now();
+    const ended=reportOnly?null:performance.now();
     if (detailed) durations.reportFlow=ended-reportAt;
     assert.equal(run.work?.status,"completed",JSON.stringify(run));
     assert.equal(reportReceipt?.rowCount,productEvents);
@@ -384,9 +405,9 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
     assert.equal(receipts,1);
     const summary={provider:"klaviyo",synthetic:true,rollbackOnly:true,writerCommit:bulkWriterCommit,
       queueMode:"isolated_no_backlog",productEvents,reportRows:reportReceipt.rowCount,rawPackages:batches.length,
-      reportPackages:reportReceipt.packages.length,receipts,requests,totalMs:ended-start};
-    if (!detailed) {
-      console.log("EO05_KLAVIYO_WALL_TIME_PASS "+JSON.stringify({...summary,detailsMeasured:false}));
+      reportPackages:reportReceipt.packages.length,receipts,requests};
+    if (!measureReport) {
+      console.log("EO05_KLAVIYO_WALL_TIME_PASS "+JSON.stringify({...summary,totalMs:ended-start,detailsMeasured:false}));
       return;
     }
     for (const name of ["sharedSourceChecks","physicalWrite","physicalVerification","receiptPersist"]) {
@@ -396,22 +417,33 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
       assert.equal(writerPhaseCounts[name],5,`expected five package timings for ${name}`);
       assert.ok(Number.isFinite(writerPhasesMs[name]),`missing writer timing ${name}`);
     }
+    if (reportOnly) {
+      const {rows:[{triggerMs}]}=await client.query("select current_setting('eo05.sales_trigger_ms')::double precision \"triggerMs\"");
+      assert.ok(triggerMs>0&&triggerMs<=writerPhasesMs.bulkStatement);
+      assert.ok(Number.isFinite(publishPhasesMs.publishLockAuthority));
+      assert.ok(Number.isFinite(publishPhasesMs.publishPackageValidation));
+      console.log("EO05_KLAVIYO_REPORT_ONLY_PASS "+JSON.stringify({
+        ...summary,totalMs:databaseTimings.reportStage+databaseTimings.reportPublish,reportStageMs:databaseTimings.reportStage,
+        reportPublishMs:databaseTimings.reportPublish,publishPhasesMs,writerPhasesMs,triggerMs,
+      }));
+      return;
+    }
     const postgresqlMs=Object.values(databaseTimings).reduce((sum,ms)=>sum+ms,0);
     phase="plain_insert";
     const plainInsert=await measurePlainSalesInserts(client,owner.installationId);
     phase="bulk_plan_sample";
     bulkPlans=await measureBulkPlans(client,owner.installationId);
     console.log("EO05_KLAVIYO_DAILY_TIMING_PASS "+JSON.stringify({
-      ...summary,durationsMs:durations,postgresqlMsByPhase:databaseTimings,publishPhasesMs,writerPhasesMs,bulkPlans,postgresqlMs,
-      adsTableAndFixtureOverheadMs:summary.totalMs-postgresqlMs-durations.providerFixture,plainInsert,
+      ...summary,totalMs:ended-start,durationsMs:durations,postgresqlMsByPhase:databaseTimings,publishPhasesMs,writerPhasesMs,bulkPlans,postgresqlMs,
+      adsTableAndFixtureOverheadMs:ended-start-postgresqlMs-durations.providerFixture,plainInsert,
     }));
   } catch(error) {
     console.error("EO05_KLAVIYO_DAILY_TIMING_STOP "+JSON.stringify({
       phase,code:error.code,message:error.message,where:error.where,requests,
-      elapsedBeforeStopMs:performance.now()-start,durationsMs:durations,postgresqlMsByPhase:databaseTimings,publishPhasesMs,writerPhasesMs,bulkPlans,
+      elapsedBeforeStopMs:reportOnly?undefined:performance.now()-start,durationsMs:durations,postgresqlMsByPhase:databaseTimings,publishPhasesMs,writerPhasesMs,bulkPlans,
     }));
     throw error;
   } finally {
-    if (detailed) client.off("notice",onNotice);
+    if (measureReport) client.off("notice",onNotice);
   }
 }

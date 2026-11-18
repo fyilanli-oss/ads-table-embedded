@@ -1771,7 +1771,7 @@
       "tools/eo05-google-source-role-probe.mjs": "fba96de648dd50a099dae4cdfd1e17807e5eb250cbc139d967a3f6e96b8ad19a",
       "tools/eo05-identity-authority-snapshot-probe.mjs": "0136e8dc5a5720b78d1cb4dca081f19e8b473812b6d66129b94f64fd5edf672c",
       "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
-      "tools/eo05-klaviyo-daily-timing-probe.mjs": "9490fa27fc276e3defa5cf6c55e6cc5637ae5a808ef4a70c6c55dd3a93b6a3d7",
+      "tools/eo05-klaviyo-daily-timing-probe.mjs": "3b39dc3ee49a996319e2552c717f7929a3615f111f9865a596f41a8e0c92c9a2",
       "tools/eo05-klaviyo-raw-datasets-probe.mjs": "e7d504cd848ad8380575fa8a9dd6755fc95354d9a208db4d7f1a40693cc50888",
       "tools/eo05-klaviyo-source-capture-probe.mjs": "c9b9f604a72611fb0f39a8e6a178dadd72fcc6ee2f340a4396d0d6058bbaf5ab",
       "tools/eo05-merchant-quota-context-probe.mjs": "699aae3f090c490ca59abba882ea3e36fbe25e817d7ce697a55a0cb294269deb",
@@ -4501,9 +4501,9 @@
       "date": "2026-11-18",
       "owner_approval": {
         "explicit": true,
-        "source": "Owner chat 2026-11-18: 'Tamam başlayalım onaylıyorum' after the precise proposal to measure five direct INSERTs for the same 1,000 synthetic rows on an isolated GitHub Actions PostgreSQL table copy, and compare them with the normal flow. Owner then explicitly requested repeating measurement with the exact PR #378 writer, the same 1,000 rows, and measurement-only changes."
+        "source": "Owner chat 2026-11-18: 'Tamam başlayalım onaylıyorum' after the precise proposal to measure five direct INSERTs for the same 1,000 synthetic rows on an isolated GitHub Actions PostgreSQL table copy, and compare them with the normal flow. Owner then explicitly requested repeating measurement with the exact PR #378 writer, the same 1,000 rows, and measurement-only changes. Owner explicitly approved the same 1,000 rows with the exact #378 writer and timing-only instrumentation inside the writer."
       },
-      "rationale": "Extend only the existing rollback-only Klaviyo timing probe. Time five 200-row inserts on a disposable logged copy with indexes and foreign keys preserved and AdsTable trigger logic absent from the copy. The normal path is measured independently with its guards and triggers enabled. No OAuth behavior or product runtime changes. Include changes to the timing probe in the existing F01 path filter so SQL execution is verified in CI. Replay the byte-verified PR #378 SQL as a test fixture within the isolated savepoint, leaving the original PR and production migration lineage untouched.",
+      "rationale": "Extend only the existing rollback-only Klaviyo timing probe. Time five 200-row inserts on a disposable logged copy with indexes and foreign keys preserved and AdsTable trigger logic absent from the copy. The normal path is measured independently with its guards and triggers enabled. No OAuth behavior or product runtime changes. Include changes to the timing probe in the existing F01 path filter so SQL execution is verified in CI. Replay the byte-verified PR #378 SQL as a test fixture within the isolated savepoint, leaving the original PR and production migration lineage untouched. Collect package-level clocks and actual bulk execution plans with trigger timings inside the existing localhost-only, rollback-only probe. The byte-verified original SQL fixture and runtime migration stay unchanged.",
       "scope": {
         "runtime_code": false,
         "live_provider": false,

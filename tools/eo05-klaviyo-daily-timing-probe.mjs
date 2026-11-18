@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import {randomBytes,randomUUID} from "node:crypto";
+import {createHash,randomBytes,randomUUID} from "node:crypto";
+import {readFileSync} from "node:fs";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {createSourceEvidenceCipher} from "../app/lib/database/source-evidence-store.server.js";
 import {storeKlaviyoRawDataset,storeKlaviyoRawProductPackages} from "../app/lib/database/klaviyo-dataset-source-store.server.js";
@@ -12,6 +13,16 @@ import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
 const productEvents=1000;
 const pageSize=100;
 const storageLimits={maxRows:1000,maxBytes:1048576};
+const bulkWriterCommit="e591f130a19d43db796b23901f1fe36680c3b541";
+
+async function installExactBulkWriter(client) {
+  const sql=readFileSync(new URL("../tests/fixtures/eo05-klaviyo-bulk-writer-378.sql",import.meta.url));
+  assert.equal(createHash("sha256").update(sql).digest("hex"),
+    "9f91643d8c11d61318bf108dc81f217f348d404b218e0f749c360bcfeb513659");
+  // Reuse the enclosing rollback transaction instead of committing the migration.
+  await client.query(sql.toString("utf8").trim().replace(/^begin;/," ").replace(/commit;$/," "));
+  await client.query("set local role adstable_owner");
+}
 
 async function measurePlainSalesInserts(client,installationId) {
   // Keep WAL, indexes and declarative constraints on a disposable logged table.
@@ -112,6 +123,7 @@ function syntheticResponse(endpoint,owner,day) {
 export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,environment=process.env}) {
   assert.equal(environment.GITHUB_ACTIONS,"true");assert.ok(environment.RUNNER_TEMP);
   assert.equal(connection.host,"127.0.0.1");assert.equal(connection.port,54322);
+  await installExactBulkWriter(client);
   // The enclosing rehearsal savepoint restores the inherited timeout.
   await client.query("set local statement_timeout='60s'");
   const owner=await ownerFixture(client,"klaviyo"),now=Date.now;
@@ -267,7 +279,7 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
     phase="plain_insert";
     const plainInsert=await measurePlainSalesInserts(client,owner.installationId);
     console.log("EO05_KLAVIYO_DAILY_TIMING_PASS "+JSON.stringify({
-      provider:"klaviyo",synthetic:true,rollbackOnly:true,queueMode:"isolated_no_backlog",productEvents,reportRows:reportReceipt.rowCount,
+      provider:"klaviyo",synthetic:true,rollbackOnly:true,writerCommit:bulkWriterCommit,queueMode:"isolated_no_backlog",productEvents,reportRows:reportReceipt.rowCount,
       rawPackages:batches.length,reportPackages:reportReceipt.packages.length,receipts,requests,
       durationsMs:durations,postgresqlMsByPhase:databaseTimings,publishPhasesMs,totalMs,postgresqlMs,
       adsTableAndFixtureOverheadMs:totalMs-postgresqlMs-durations.providerFixture,plainInsert,

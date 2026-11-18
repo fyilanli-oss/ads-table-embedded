@@ -27,9 +27,24 @@ async function installExactBulkWriter(client) {
 const writerPhases=["lookupLock","packageValidation","packageHash","sourceRetention","rowValidation","rowHash","rowPreparation","bulkStatement","packageReceipt"];
 
 async function installWriterTimers(client) {
+  await client.query(`create temp table eo05_bulk_plan_inputs (
+    ordinal bigint generated always as identity, fact_table text, columns text,
+    payload jsonb, check_retention boolean
+  ) on commit drop`);
+  await client.query(`create function pg_temp.eo05_timed_json_size(p jsonb) returns integer
+    language plpgsql set search_path='' as $measure$
+    declare started timestamptz:=clock_timestamp(); bytes integer;
+    begin
+      bytes:=octet_length(analytics.dataset_json(p));
+      raise notice 'EO05_WRITER_TIMING packageJsonSize %',1000*extract(epoch from clock_timestamp()-started);
+      return bytes;
+    end $measure$`);
   const {rows:[{definition}]}=await client.query(
     "select pg_get_functiondef('analytics.commit_dataset_storage(jsonb,jsonb)'::regprocedure) definition");
   let sql=definition;
+  const packageSize="octet_length(analytics.dataset_json(p))";
+  assert.equal(sql.split(packageSize).length,2);
+  sql=sql.replace(packageSize,"pg_temp.eo05_timed_json_size(p)");
   function before(anchor,instrumentation) {
     assert.equal(sql.split(anchor).length,2,`writer timing anchor: ${anchor}`);
     sql=sql.replace(anchor,()=>instrumentation+"\n"+anchor);
@@ -51,34 +66,16 @@ async function installWriterTimers(client) {
   before("  row_input:=r-array",finish("rowValidation"));
   before("  injected:=r||jsonb_build_object",finish("rowHash"));
   before("   continue;",finish("rowPreparation"));
-  before("   for stored in execute format($bulk$", "   eo05_bulk_measured:=false; eo05_started:=clock_timestamp();");
+  before("   for stored in execute format($bulk$", `   insert into pg_temp.eo05_bulk_plan_inputs(fact_table,columns,payload,check_retention)
+     values(name,cols,bulk_rows->name,p->'policy'->>'version'='report-source-3y-v1');
+   eo05_bulk_measured:=false; eo05_started:=clock_timestamp();`);
   before("    if stored.native_conflict",`    if not eo05_bulk_measured then\n${finish("bulkStatement")}\n     eo05_bulk_measured:=true;\n    end if;`);
   before(" result:=jsonb_build_object('status','stored'", " eo05_started:=clock_timestamp();");
   before(" return result;",`${finish("packageReceipt")}\n${writerPhases.map(phase=>` raise notice 'EO05_WRITER_TIMING ${phase} %',eo05_timing_${phase};`).join("\n")}`);
   await client.query(sql);
 }
 
-async function setBulkPlanCapture(client,enabled) {
-  // auto_explain settings require the disposable cluster's administrative session.
-  await client.query("reset role");
-  if(enabled) await client.query(`load 'auto_explain';
-    set local client_min_messages=notice;
-    set local auto_explain.log_analyze=on;
-    set local auto_explain.log_timing=on;
-    set local auto_explain.log_triggers=on;
-    set local auto_explain.log_nested_statements=on;
-    set local auto_explain.log_format=json;
-    set local auto_explain.log_level=notice;
-    set local auto_explain.log_min_duration='100ms'`);
-  else await client.query("set local auto_explain.log_min_duration=-1");
-  await client.query("set local role adstable_owner");
-}
-
-function explainBulkTiming(message) {
-  const match=/^duration: ([\d.]+) ms {2}plan:\s*([\s\S]+)$/.exec(message);
-  if(!match||!match[2].includes('CTE existing')||!match[2].includes('jsonb_populate_recordset'))return null;
-  const root=JSON.parse(match[2]);
-  if(!root["Query Text"]?.trimStart().startsWith("with incoming as materialized"))return null;
+function explainBulkTiming(root) {
   const nodes=root.Plan.Plans;
   const lookup=nodes.find(node=>node["Subplan Name"]==="CTE existing");
   const insert=nodes.find(node=>node["Subplan Name"]==="CTE inserted");
@@ -90,8 +87,35 @@ function explainBulkTiming(message) {
   // BEFORE triggers are included in the INSERT node. Remove its input plan and
   // BEFORE validation to report the measured net INSERT node work separately.
   const inputMs=insert.Plans.reduce((sum,node)=>sum+ms(node),0);
-  return {statementMs:Number(match[1]),lookupMs:ms(lookup),triggerMs,triggerCalls:triggers[0].Calls,
+  return {statementMs:root["Execution Time"],lookupMs:ms(lookup),triggerMs,triggerCalls:triggers[0].Calls,
     insertNodeNetMs:Math.max(0,ms(insert)-inputMs-triggerMs),insertInputMs:inputMs};
+}
+
+async function measureBulkPlans(client,installationId) {
+  const fixture=readFileSync(new URL("../tests/fixtures/eo05-klaviyo-bulk-writer-378.sql",import.meta.url),"utf8");
+  // Use the unmodified inner statement and its original inputs after measuring
+  // the normal flow. Restore the published facts when the plan sample is done.
+  const statement=fixture.split("$bulk$")[1];
+  assert.ok(statement?.includes("with incoming as materialized"));
+  const {rows:inputs}=await client.query(`select format($1,fact_table,columns) statement,
+    payload::text payload,check_retention from pg_temp.eo05_bulk_plan_inputs order by ordinal`,[statement]);
+  assert.equal(inputs.length,5);
+  const plans=[];
+  await client.query("savepoint eo05_bulk_plan_sample");
+  try {
+    const removed=await client.query("delete from analytics.cpd_product_sales_facts where installation_id=$1",[installationId]);
+    assert.equal(removed.rowCount,productEvents);
+    for (const input of inputs) {
+      const {rows:[plan]}=await client.query("explain (analyze,timing on,format json) "+input.statement,
+        [input.payload,input.check_retention]);
+      plans.push(explainBulkTiming(plan["QUERY PLAN"][0]));
+    }
+  } finally {
+    await client.query("rollback to savepoint eo05_bulk_plan_sample");
+    await client.query("release savepoint eo05_bulk_plan_sample");
+  }
+  assert.equal(plans.reduce((sum,plan)=>sum+plan.triggerCalls,0),productEvents);
+  return plans;
 }
 
 async function measurePlainSalesInserts(client,installationId) {
@@ -220,8 +244,8 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
   await client.query("update operations.refresh_queue_control set max_workspaces=8,max_accounts=8,max_snapshot_bytes=100000,max_snapshot_age_ms=60000 where singleton");
 
   const databaseTimings={queue:0,rawWrite:0,rawReadback:0,reportSourceRead:0,reportStage:0,reportPublish:0,reportReadback:0,jobClose:0};
-  const publishPhasesMs={},writerPhasesMs={},writerPhaseCounts={},bulkPlans=[];
-  let planFailure;
+  const publishPhasesMs={},writerPhasesMs={},writerPhaseCounts={};
+  let bulkPlans;
   const onNotice=({message})=>{
     const match=/^EO05_DAILY_PUBLISH_PHASE ([a-zA-Z]+) ([0-9.]+)$/.exec(message);
     if(match)publishPhasesMs[match[1]]=Number(match[2]);
@@ -230,10 +254,6 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
       writerPhasesMs[writer[1]]=(writerPhasesMs[writer[1]]??0)+Number(writer[2]);
       writerPhaseCounts[writer[1]]=(writerPhaseCounts[writer[1]]??0)+1;
     }
-    try {
-      const plan=explainBulkTiming(message);
-      if(plan) bulkPlans.push(plan);
-    } catch(error) {planFailure??=error;}
   };
   let failed,phase="start",requests=0,claimId,reportReceipt;
   const durations={queueEnqueue:0,queueAndAdmission:0,providerCollection:0,providerFixture:0,rawStore:0,handoff:0,reportFlow:0};
@@ -246,15 +266,9 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
   const store=createRefreshWorkRepository({query:(sql,args)=>timedQuery("queue",sql,args)});
   const rawDatabase={query:(sql,args)=>timedQuery(sql.includes("commit_klaviyo_dataset_source(")?"rawWrite":"rawReadback",sql,args)};
   const reportDatabase={
-    async query(sql,args) {
+    query(sql,args) {
       const bucket=sql===KLAVIYO_DAILY_STAGE_SQL?"reportStage":sql===KLAVIYO_DAILY_PUBLISH_SQL?"reportPublish":
         sql===KLAVIYO_DAILY_INSPECT_SQL?"reportReadback":sql===KLAVIYO_DAILY_FINISH_SQL?"jobClose":"reportSourceRead";
-      if(sql===KLAVIYO_DAILY_PUBLISH_SQL) {
-        await setBulkPlanCapture(client,true);
-        const result=await timedQuery(bucket,sql,args);
-        await setBulkPlanCapture(client,false);
-        return result;
-      }
       return timedQuery(bucket,sql,args);
     },
     async transaction(run) {
@@ -351,10 +365,7 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
     for (const name of ["sharedSourceChecks","physicalWrite","physicalVerification","receiptPersist"]) {
       assert.ok(Number.isFinite(publishPhasesMs[name]),`missing SQL timing ${name}`);
     }
-    if(planFailure) throw planFailure;
-    assert.equal(bulkPlans.length,5,"expected one bulk INSERT plan per 200-row package");
-    assert.equal(bulkPlans.reduce((sum,plan)=>sum+plan.triggerCalls,0),productEvents);
-    for (const name of writerPhases) {
+    for (const name of [...writerPhases,"packageJsonSize"]) {
       assert.equal(writerPhaseCounts[name],5,`expected five package timings for ${name}`);
       assert.ok(Number.isFinite(writerPhasesMs[name]),`missing writer timing ${name}`);
     }
@@ -372,6 +383,8 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
     const postgresqlMs=Object.values(databaseTimings).reduce((sum,ms)=>sum+ms,0),totalMs=ended-start;
     phase="plain_insert";
     const plainInsert=await measurePlainSalesInserts(client,owner.installationId);
+    phase="bulk_plan_sample";
+    bulkPlans=await measureBulkPlans(client,owner.installationId);
     console.log("EO05_KLAVIYO_DAILY_TIMING_PASS "+JSON.stringify({
       provider:"klaviyo",synthetic:true,rollbackOnly:true,writerCommit:bulkWriterCommit,queueMode:"isolated_no_backlog",productEvents,reportRows:reportReceipt.rowCount,
       rawPackages:batches.length,reportPackages:reportReceipt.packages.length,receipts,requests,

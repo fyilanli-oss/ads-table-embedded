@@ -792,14 +792,14 @@ export async function klaviyoDailyTimingProbe(client,options) {
   return runKlaviyoDailyTimingProbe(client,options);
 }
 
-export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false}) {
+export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,callBreakdown=false}) {
   assert.equal(connection.host,"aws-1-eu-central-1.pooler.supabase.com");
   assert.equal(connection.port,5432);
   assert.equal(connection.database,"postgres");
   assert.equal(connection.user,"adstable_benchmark_session.lxphenczjmueblnonklm");
   const {rows:[identity]}=await client.query("select session_user as login,current_user as role");
   assert.deepEqual(identity,{login:"adstable_benchmark_session",role:"adstable_owner"});
-  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup,phaseCandidate,reuseStagedCanonical,triggerPhaseDetail,reuseCanonicalRows,endToEnd,optimizeReadback});
+  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup,phaseCandidate,reuseStagedCanonical,triggerPhaseDetail,reuseCanonicalRows,endToEnd,optimizeReadback,callBreakdown});
 }
 
 async function installHostedReportClocks(client) {
@@ -822,7 +822,7 @@ async function installHostedReportClocks(client) {
     end $clock$;`);
 }
 
-async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false}) {
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,callBreakdown=false}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
@@ -881,6 +881,21 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     if(triggerPhaseDetail) await installTriggerPhaseTimers(client);
   }
   if(hosted) await installHostedReportClocks(client);
+  if(callBreakdown) {
+    assert.ok(endToEnd);
+    await client.query(`create function pg_temp.eo05_time_query(statement text, parameters jsonb)
+      returns table(payload jsonb,elapsed_ms double precision)
+      language plpgsql security invoker set search_path='' as $clock$
+      declare started timestamptz;
+      begin
+        if statement !~* '^select ' then raise exception 'BENCHMARK_SELECT_REQUIRED';end if;
+        started:=clock_timestamp();
+        execute 'select coalesce(jsonb_agg(to_jsonb(output)),''[]''::jsonb) from ('||statement||') output'
+          into payload using parameters;
+        elapsed_ms:=1000*extract(epoch from clock_timestamp()-started);
+        return next;
+      end $clock$`);
+  }
   await client.query("update integrations.provider_connections set connected_at=clock_timestamp()-interval '3 days' where id=$1",[owner.connectionId]);
   await client.query(`insert into operations.refresh_quota_contexts
     (workspace_id,install_generation,provider,installation_id,connection_id,connection_version,account_id,client_scope_key,connection_scope_key,connection_epoch,api_version,enabled)
@@ -913,12 +928,39 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   };
   let failed,phase="start",requests=0,claimId,reportReceipt,reportWriteMs,reportCpuStart;
   let reportQueueCallsMs=0;
+  let timingStep="queueEnqueue";
+  const callTimings=[];
+  async function executeMeasured(sql,args=[],bucket) {
+    if(!callBreakdown) return client.query(sql,args);
+    const step=timingStep==="reportPreparation"&&bucket!=="queue"?bucket:timingStep;
+    const started=performance.now();
+    if(!/^select /i.test(sql)) {
+      assert.match(sql,/^(savepoint|release savepoint) daily_timing_report$/);
+      const result=await client.query(sql,args);
+      callTimings.push({step,bucket,wallMs:performance.now()-started,sqlMs:null});
+      return result;
+    }
+    const parameters=args.map(value=>{
+      if(value===null||value===undefined) return null;
+      if(Buffer.isBuffer(value)) return "\\x"+value.toString("hex");
+      if(value instanceof Date) return value.toISOString();
+      if(typeof value==="object") return JSON.stringify(value);
+      return String(value);
+    });
+    const statement=sql.replace(/\$(\d+)/g,(_match,index)=>`($1->>${Number(index)-1})`);
+    const {rows:[measurement]}=await client.query("select * from pg_temp.eo05_time_query($1,$2)",[statement,JSON.stringify(parameters)]);
+    assert.ok(Number.isFinite(measurement.elapsed_ms)&&measurement.elapsed_ms>=0);
+    assert.ok(Array.isArray(measurement.payload));
+    callTimings.push({step,bucket,wallMs:performance.now()-started,sqlMs:measurement.elapsed_ms,
+      operation:sql.match(/(?:operations|evidence|analytics|pg_temp)\.[a-z_]+/)?.[0]??"select"});
+    return {rows:measurement.payload,rowCount:measurement.payload.length};
+  }
   const hostedReportMs=[];
   const durations={queueEnqueue:0,queueAndAdmission:0,providerCollection:0,providerFixture:0,rawStore:0,handoff:0,reportFlow:0};
   async function timedQuery(bucket,sql,args) {
     if (!endToEnd&&!detailed&&(!reportOnly||!["reportStage","reportPublish"].includes(bucket))) return client.query(sql,args);
     const start=performance.now();
-    try {return await client.query(sql,args);}
+    try {return await executeMeasured(sql,args,bucket);}
     catch(error) {failed??=error;throw error;}
     finally {
       const elapsed=performance.now()-start;
@@ -932,12 +974,12 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     async query(sql,args) {
       if(hosted&&(sql===KLAVIYO_DAILY_STAGE_SQL||sql===KLAVIYO_DAILY_PUBLISH_SQL)) {
         const timedSql=sql===KLAVIYO_DAILY_STAGE_SQL
-          ?"select * from pg_temp.eo05_time_stage($1,$2,$3,$4,$5,$6)"
-          :"select * from pg_temp.eo05_time_publish($1,$2,$3,$4,$5,$6)";
+          ?"select * from pg_temp.eo05_time_stage($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz,$5::integer,$6::integer)"
+          :"select * from pg_temp.eo05_time_publish($1::jsonb,$2::jsonb,$3::timestamptz,$4::uuid,$5::jsonb,$6::jsonb)";
         try {
           if(!endToEnd&&reuseStagedCanonical&&sql===KLAVIYO_DAILY_PUBLISH_SQL) await verifyStageTamperRejection(client,args,reuseCanonicalRows);
           const callStart=performance.now();
-          const result=await client.query(timedSql,args);
+          const result=await executeMeasured(timedSql,args,sql===KLAVIYO_DAILY_STAGE_SQL?"reportStage":"reportPublish");
           if(endToEnd) databaseTimings[sql===KLAVIYO_DAILY_STAGE_SQL?"reportStage":"reportPublish"]+=performance.now()-callStart;
           hostedReportMs.push(result.rows[0].elapsed_ms);
           return result;
@@ -968,6 +1010,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   try {
     await store.checkQueueFromAuthority({expectedRevision:(await store.readQueueCheck()).revision});
     if (detailed||endToEnd) durations.queueEnqueue=performance.now()-start;
+    timingStep="queueAndAdmission";
     const limits={deadlineAt:now()+120000,requestTimeoutMs:100000,finishReserveMs:2000,maxRows:2000,maxBytes:4000000};
     const appId="gid://shopify/App/456";
     const entitlementVerifier=createRefreshEntitlementVerifier({store,appId,now,limits,authorizeRead:async()=>true,
@@ -993,6 +1036,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
           const beforeCollect=detailed||endToEnd?performance.now():0;
           if (detailed||endToEnd) durations.queueAndAdmission=beforeCollect-start-durations.queueEnqueue;
           phase="collection";
+          timingStep="providerCollection";
           const guard=async()=>assert.equal(await store.isClaimCurrent({claim}),true);
           await collectKlaviyoRawDatasets({
             accessToken:"synthetic-only",accountId:owner.accountId,source:{timezone:"UTC",currency:"USD"},
@@ -1005,6 +1049,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
               finally {durations.providerFixture+=performance.now()-before;}
             },
             async onDataset({dataset,pages,complete,coverage}) {
+              timingStep="rawStore";
               assert.equal(complete,true);
               const begin=detailed||endToEnd?performance.now():0,attemptId=randomUUID(),stamp=new Date(now()).toISOString();
               const read={jobId:claim.id,fence:String(claim.fence),window,operationId,quotaContext,
@@ -1020,12 +1065,14 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
                 batches.push({attemptId,ordinal:0});
               }
               if (detailed||endToEnd) durations.rawStore+=performance.now()-begin;
+              timingStep="providerCollection";
             },
           });
           if (detailed||endToEnd) {
             collectedAt=performance.now();
             durations.providerCollection=collectedAt-beforeCollect-durations.rawStore;
           }
+          timingStep="handoff";
           return {kind:"complete",payload:{batchCount:batches.length}};
         } catch(error) {failed??=error;throw error;}
       },
@@ -1033,6 +1080,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
       async loadDatasetInputs({claim}) {
         assert.equal(claim.id,claimId);
         phase="report";
+        timingStep="reportPreparation";
         if (detailed||endToEnd) {
           reportAt=performance.now();
           if(endToEnd) reportCpuStart=process.cpuUsage();
@@ -1095,7 +1143,8 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
         const reportWriteMs=hostedReportMs.reduce((sum,ms)=>sum+ms,0);
         if(endToEnd) return {...summary,totalMs:ended-start,reportWriteMs,durationsMs:durations,
           databaseCallsMs:databaseTimings,reportQueueCallsMs,
-          reportCpuMs:(reportCpu.user+reportCpu.system)/1000,detailsMeasured:false,providerNetworkMeasured:false};
+          reportCpuMs:(reportCpu.user+reportCpu.system)/1000,callTimings:callBreakdown?callTimings:undefined,
+          detailsMeasured:false,providerNetworkMeasured:false};
         if(!hostedDetail) return {...summary,reportWriteMs};
         for(const name of ["publishLockAcquire","publishAuthority","publishPackageValidation","sharedSourceChecks",
           "beforeWriter","physicalWrite","readbackAuthority","physicalVerification","writerAndVerification","receiptPersist"]) {

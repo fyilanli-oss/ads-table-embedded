@@ -6,7 +6,7 @@ import {klaviyoHostedReportProbe} from "./eo05-klaviyo-daily-timing-probe.mjs";
 
 const host="aws-1-eu-central-1.pooler.supabase.com";
 const flags=process.argv.slice(2);
-if(flags.length>1 || flags.some(flag=>!["--reduce-report-repeats","--details","--cleanup","--compare-details","--compare-phases","--compare-staged-json","--compare-package-rows","--end-to-end","--end-to-end-optimized"].includes(flag))) {
+if(flags.length>1 || flags.some(flag=>!["--reduce-report-repeats","--details","--cleanup","--compare-details","--compare-phases","--compare-staged-json","--compare-package-rows","--end-to-end","--end-to-end-optimized","--end-to-end-breakdown"].includes(flag))) {
   throw new Error("Invalid benchmark mode");
 }
 const compareDetails=flags[0]==="--compare-details";
@@ -17,6 +17,7 @@ const hostedDetail=flags[0]==="--details"||compareDetails||comparePhases||compar
 const variants=flags[0]?.startsWith("--end-to-end")?Array.from({length:3},()=>({
   reportWriteCleanup:true,phaseCandidate:"ordered-json",reuseStagedCanonical:true,reuseCanonicalRows:true,endToEnd:true,
   optimizeReadback:flags[0]==="--end-to-end-optimized",
+  callBreakdown:flags[0]==="--end-to-end-breakdown",
 })):comparePackageRows?[false,true].map(reuseCanonicalRows=>({
   reportWriteCleanup:true,phaseCandidate:"ordered-json",reuseStagedCanonical:true,triggerPhaseDetail:true,reuseCanonicalRows,
 })):compareStagedJson?[false,true].map(reuseStagedCanonical=>({

@@ -112,6 +112,8 @@ function syntheticResponse(endpoint,owner,day) {
 export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,environment=process.env}) {
   assert.equal(environment.GITHUB_ACTIONS,"true");assert.ok(environment.RUNNER_TEMP);
   assert.equal(connection.host,"127.0.0.1");assert.equal(connection.port,54322);
+  // The enclosing rehearsal savepoint restores the inherited timeout.
+  await client.query("set local statement_timeout='60s'");
   const owner=await ownerFixture(client,"klaviyo"),now=Date.now;
   const day=new Date(now()-86400000).toISOString().slice(0,10),window={from:day,to:day};
   const generation=randomUUID(),operationId=randomUUID(),hash=()=>randomBytes(32).toString("hex");

@@ -284,8 +284,9 @@ function syntheticResponse(endpoint,owner,day) {
 
 /** Run within the existing F01 localhost rollback transaction. */
 export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,environment=process.env,mode="report",retentionVariant}) {
-  assert.ok(["report","wall","detailed","retention","retention-wall"].includes(mode));
-  const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall";
+  assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
+  const reportBoundary=mode==="retention-boundary";
+  const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
   const detailed=mode==="detailed",reportOnly=mode==="report",measureReport=detailed||reportOnly;
   if(retentionOnly||retentionWall) assert.ok(["current","cached"].includes(retentionVariant));
   assert.equal(environment.GITHUB_ACTIONS,"true");assert.ok(environment.RUNNER_TEMP);
@@ -334,7 +335,7 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
       writerPhaseCounts[writer[1]]=(writerPhaseCounts[writer[1]]??0)+1;
     }
   };
-  let failed,phase="start",requests=0,claimId,reportReceipt;
+  let failed,phase="start",requests=0,claimId,reportReceipt,reportWriteMs;
   const durations={queueEnqueue:0,queueAndAdmission:0,providerCollection:0,providerFixture:0,rawStore:0,handoff:0,reportFlow:0};
   async function timedQuery(bucket,sql,args) {
     if (!detailed&&(!reportOnly||!["reportStage","reportPublish"].includes(bucket))) return client.query(sql,args);
@@ -352,10 +353,12 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
       return timedQuery(bucket,sql,args);
     },
     async transaction(run) {
+      const reportStart=reportBoundary?performance.now():null;
       await timedQuery("reportStage","savepoint daily_timing_report");
       try {
         reportReceipt=await run(reportDatabase);
         await timedQuery("reportPublish","release savepoint daily_timing_report");
+        if(reportBoundary) reportWriteMs=performance.now()-reportStart;
         return reportReceipt;
       } catch(error) {
         failed??=error;
@@ -469,7 +472,11 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
       return {...summary,variant:retentionVariant,calls,retentionPackagesMs,
         retentionMs:retentionPackagesMs.reduce((sum,ms)=>sum+ms,0)};
     }
-    if(retentionWall) return {...summary,variant:retentionVariant,totalMs:ended-start,detailsMeasured:false};
+    if(retentionWall) {
+      const totalMs=ended-start;
+      if(reportBoundary) assert.ok(reportWriteMs>0&&reportWriteMs<totalMs);
+      return {...summary,variant:retentionVariant,totalMs,reportWriteMs,detailsMeasured:false};
+    }
     if (!measureReport) {
       console.log("EO05_KLAVIYO_WALL_TIME_PASS "+JSON.stringify({...summary,totalMs:ended-start,detailsMeasured:false}));
       return;

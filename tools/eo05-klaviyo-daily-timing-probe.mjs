@@ -13,6 +13,42 @@ const productEvents=1000;
 const pageSize=100;
 const storageLimits={maxRows:1000,maxBytes:1048576};
 
+async function measurePlainSalesInserts(client,installationId) {
+  // Keep WAL, indexes and declarative constraints on a disposable logged table.
+  // LIKE does not copy foreign keys or AdsTable's application triggers.
+  await client.query(`create table analytics.eo05_sales_insert_probe
+    (like analytics.cpd_product_sales_facts including all)`);
+  const {rows:[{foreignKeys,columns}]}=await client.query(`select
+    (select array_agg(pg_get_constraintdef(oid) order by conname) from pg_constraint
+     where conrelid='analytics.cpd_product_sales_facts'::regclass and contype='f') "foreignKeys",
+    (select string_agg(quote_ident(attname),',' order by attnum) from pg_attribute
+     where attrelid='analytics.cpd_product_sales_facts'::regclass and attnum>0
+       and not attisdropped and attidentity='' and attgenerated='' and attname<>'id') columns`);
+  assert.ok(foreignKeys.length>0&&columns);
+  for (const constraint of foreignKeys) {
+    await client.query(`alter table analytics.eo05_sales_insert_probe add ${constraint}`);
+  }
+  await client.query(`create temp table eo05_prepared_insert_rows on commit drop as
+    select row_number() over (order by id) ordinal,${columns}
+    from analytics.cpd_product_sales_facts where installation_id=$1`,[installationId]);
+  await client.query("create unique index on eo05_prepared_insert_rows(ordinal)");
+  await client.query("analyze eo05_prepared_insert_rows");
+  const packageMs=[];
+  for(let offset=0;offset<productEvents;offset+=200) {
+    const result=await client.query(`explain (analyze,buffers,wal,timing off,format json)
+      insert into analytics.eo05_sales_insert_probe(${columns})
+      select ${columns} from pg_temp.eo05_prepared_insert_rows
+      where ordinal>$1 and ordinal<=$2 order by ordinal`,[offset,offset+200]);
+    const plan=result.rows[0]["QUERY PLAN"][0];
+    const executionMs=plan["Execution Time"];
+    assert.ok(Number.isFinite(executionMs)&&executionMs>=0);
+    packageMs.push(executionMs);
+  }
+  const {rows:[{count}]}=await client.query("select count(*)::int from analytics.eo05_sales_insert_probe");
+  assert.equal(count,productEvents);
+  return {rows:count,packageMs,executionMs:packageMs.reduce((total,ms)=>total+ms,0)};
+}
+
 async function installPublishTimers(client) {
   const args="jsonb,jsonb,timestamptz,uuid,jsonb,jsonb";
   const anchors={
@@ -226,11 +262,13 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
       [JSON.stringify(owner),claimId])).rows[0].n;
     assert.equal(receipts,1);
     const postgresqlMs=Object.values(databaseTimings).reduce((sum,ms)=>sum+ms,0),totalMs=ended-start;
+    phase="plain_insert";
+    const plainInsert=await measurePlainSalesInserts(client,owner.installationId);
     console.log("EO05_KLAVIYO_DAILY_TIMING_PASS "+JSON.stringify({
       provider:"klaviyo",synthetic:true,rollbackOnly:true,queueMode:"isolated_no_backlog",productEvents,reportRows:reportReceipt.rowCount,
       rawPackages:batches.length,reportPackages:reportReceipt.packages.length,receipts,requests,
       durationsMs:durations,postgresqlMsByPhase:databaseTimings,publishPhasesMs,totalMs,postgresqlMs,
-      adsTableAndFixtureOverheadMs:totalMs-postgresqlMs-durations.providerFixture,
+      adsTableAndFixtureOverheadMs:totalMs-postgresqlMs-durations.providerFixture,plainInsert,
     }));
   } catch(error) {
     console.error("EO05_KLAVIYO_DAILY_TIMING_STOP "+JSON.stringify({

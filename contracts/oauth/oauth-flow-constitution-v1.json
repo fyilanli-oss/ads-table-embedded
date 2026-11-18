@@ -1771,7 +1771,7 @@
       "tools/eo05-google-source-role-probe.mjs": "fba96de648dd50a099dae4cdfd1e17807e5eb250cbc139d967a3f6e96b8ad19a",
       "tools/eo05-identity-authority-snapshot-probe.mjs": "0136e8dc5a5720b78d1cb4dca081f19e8b473812b6d66129b94f64fd5edf672c",
       "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
-      "tools/eo05-klaviyo-daily-timing-probe.mjs": "fdd81d01c768c26d6ce1d1a9db36d4f14ec4995978484ec055a0aa05cf9a141c",
+      "tools/eo05-klaviyo-daily-timing-probe.mjs": "747e6e3aa6ef80078d1c35db2595f82c425aea0b915e1cfb3515f9570c8cdfe8",
       "tools/eo05-klaviyo-raw-datasets-probe.mjs": "e7d504cd848ad8380575fa8a9dd6755fc95354d9a208db4d7f1a40693cc50888",
       "tools/eo05-klaviyo-source-capture-probe.mjs": "c9b9f604a72611fb0f39a8e6a178dadd72fcc6ee2f340a4396d0d6058bbaf5ab",
       "tools/eo05-merchant-quota-context-probe.mjs": "699aae3f090c490ca59abba882ea3e36fbe25e817d7ce697a55a0cb294269deb",
@@ -4486,6 +4486,44 @@
         "tools/eo05-klaviyo-raw-datasets-probe.mjs",
         "tools/eo05b-dataset-storage-probe.mjs",
         "tools/eo05d-reconciliation-probe.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_no_UI_change",
+      "native_acceptance": false
+    },
+    {
+      "id": "eo05-klaviyo-isolated-insert-measurement-2026-11-18",
+      "date": "2026-11-18",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat 2026-11-18: 'Tamam başlayalım onaylıyorum' after the precise proposal to measure five direct INSERTs for the same 1,000 synthetic rows on an isolated GitHub Actions PostgreSQL table copy, and compare them with the normal flow."
+      },
+      "rationale": "Extend only the existing rollback-only Klaviyo timing probe. Time five 200-row inserts on a disposable logged copy with indexes and foreign keys preserved and AdsTable trigger logic absent from the copy. The normal path is measured independently with its guards and triggers enabled. No OAuth behavior or product runtime changes.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "changed_paths": [
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "tools/eo05-klaviyo-daily-timing-probe.mjs"
+      ],
+      "artifact_paths": [
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "tools/eo05-klaviyo-daily-timing-probe.mjs"
+      ],
+      "tests": [
+        "tools/eo05-klaviyo-daily-timing-probe.mjs",
+        "tools/eo05b-dataset-storage-probe.mjs"
       ],
       "acceptance_required": [
         "required_CI",

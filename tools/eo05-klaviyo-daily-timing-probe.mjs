@@ -246,6 +246,95 @@ async function installReportWriteCleanup(client) {
   ]);
 }
 
+async function installOrderedCanonicalJson(client) {
+  const {rows:[{definition}]}=await client.query(
+    "select pg_get_functiondef('analytics.dataset_json(jsonb,integer)'::regprocedure) definition");
+  const start=definition.indexOf("declare result text;");
+  const end=definition.indexOf(" if octet_length(result)>1048576",start);
+  const keyCheck=definition.slice(start,end).match(/if (length\(k\)[^\n]+)\n   then raise exception 'DATASET_PRIVATE_FIELD'/)?.[1];
+  assert.ok(start>=0&&end>start&&keyCheck);
+  const candidate=definition.slice(0,start)+`declare result text;
+begin
+ if depth>32 then raise exception 'DATASET_JSON_BOUNDS';end if;
+ if jsonb_typeof(p)='object' then
+  if exists(select 1 from jsonb_object_keys(p) as keys(k) where ${keyCheck})
+  then raise exception 'DATASET_PRIVATE_FIELD';end if;
+  select '{'||coalesce(string_agg(to_jsonb(k)::text||':'||analytics.dataset_json(v,depth+1),',' order by k collate "C"),'')||'}'
+   into result from jsonb_each(p) as entries(k,v);
+ elsif jsonb_typeof(p)='array' then
+  select '['||coalesce(string_agg(analytics.dataset_json(v,depth+1),',' order by ordinal),'')||']'
+   into result from jsonb_array_elements(p) with ordinality as entries(v,ordinal);
+ else result:=p::text;end if;
+`+definition.slice(end);
+  const select="select analytics.dataset_json($1::jsonb) as canonical, analytics.dataset_digest($1::jsonb) as digest";
+  const corpus=["{}", "[]", "null", JSON.stringify({z:[],a:{z:[true,null,"é\n\""],a:{}}}),
+    '{"number":9007199254740993,"decimal":1.2300}'];
+  const baseline=[];
+  for(const payload of corpus) baseline.push((await client.query(select,[payload])).rows[0]);
+  await client.query(candidate);
+  for(const [index,payload] of corpus.entries()) {
+    assert.deepEqual((await client.query(select,[payload])).rows[0],baseline[index]);
+  }
+  for(const [payload,expected] of [
+    ['{"outer":[{"Secret":"blocked"}]}',"DATASET_PRIVATE_FIELD"],
+    [JSON.stringify({["x".repeat(513)]:true}),"DATASET_PRIVATE_FIELD"],
+    ["[".repeat(33)+"0"+"]".repeat(33),"DATASET_JSON_BOUNDS"],
+    [JSON.stringify("x".repeat(1048576)),"DATASET_JSON_BOUNDS"],
+  ]) {
+    await client.query("savepoint ordered_json_reject");
+    let message;
+    try {await client.query(select,[payload]);}
+    catch(error) {
+      if(error.code!=="P0001") throw error;
+      message=error.message;
+    } finally {
+      await client.query("rollback to savepoint ordered_json_reject");
+      await client.query("release savepoint ordered_json_reject");
+    }
+    assert.equal(message,expected);
+  }
+}
+
+async function installTriggerSourceReuse(client) {
+  async function definition(signature) {
+    return (await client.query("select pg_get_functiondef($1::regprocedure) definition",[signature])).rows[0].definition;
+  }
+  function change(sql,anchor,replacement) {
+    assert.equal(sql.split(anchor).length,2,`trigger source reuse anchor: ${anchor}`);
+    return sql.replace(anchor,()=>replacement);
+  }
+  let helper=await definition("analytics.assert_dataset_source(jsonb,jsonb)");
+  helper=change(helper,"analytics.assert_dataset_source(", "analytics.eo05_read_verified_source_batch(");
+  helper=change(helper,"RETURNS void","RETURNS evidence.source_batches");
+  helper=change(helper," SECURITY DEFINER"," SECURITY INVOKER");
+  helper=change(helper,"\nend","\n return b;\nend");
+  await client.query(helper);
+  await client.query(`revoke all on function analytics.eo05_read_verified_source_batch(jsonb,jsonb)
+    from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner`);
+
+  let trigger=await definition("analytics.validate_dataset_fact()");
+  trigger=change(trigger,"source_state_for_ref text; retention_for_ref timestamptz;",
+    "verified_batch evidence.source_batches%rowtype;");
+  const start=trigger.indexOf("  for ref in select value from jsonb_array_elements(new.provenance->'sources') loop");
+  const end=trigger.indexOf("\n  end loop;",start);
+  assert.ok(start>=0&&end>start);
+  const contextLoop=trigger.slice(start,end+"\n  end loop;".length);
+  assert.ok(contextLoop.includes("DATASET_CONTEXT_SOURCE_MISMATCH"));
+  trigger=change(trigger,contextLoop,"");
+  const lookupStart=trigger.indexOf("  perform analytics.assert_dataset_source(o,ref);");
+  const lookupEnd=trigger.indexOf("\n end loop;",lookupStart);
+  assert.ok(lookupStart>=0&&lookupEnd>lookupStart);
+  trigger=change(trigger,trigger.slice(lookupStart,lookupEnd),`  verified_batch:=analytics.eo05_read_verified_source_batch(o,ref);
+  if context is not null then
+   native_read:=verified_batch.manifest->(case new.platform when 'google_ads' then 'googleDatasetRead' when 'meta' then 'metaDatasetRead' else 'klaviyoDatasetRead' end);
+   if native_read is null or native_read->>'jobId' is distinct from context->>'job_id' or native_read->>'fence' is distinct from context->>'fence'
+   or native_read->'window' is distinct from context->'window' then raise exception 'DATASET_CONTEXT_SOURCE_MISMATCH';end if;
+  end if;
+  if verified_batch.source_state<>'complete' then all_complete:=false;end if;
+  if verified_batch.retain_until<new.retain_until then raise exception 'DATASET_SOURCE_POLICY_INVALID';end if;`);
+  await client.query(trigger);
+}
+
 const writerPhases=["lookupLock","packageValidation","packageHash","sourceRetention","rowValidation","rowHash","rowPreparation","bulkStatement","packageReceipt"];
 
 async function installWriterTimers(client,{capturePlans,reportWriteCleanup=false,measureBulkPreparation=false}) {
@@ -476,14 +565,14 @@ export async function klaviyoDailyTimingProbe(client,options) {
   return runKlaviyoDailyTimingProbe(client,options);
 }
 
-export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false}) {
+export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate}) {
   assert.equal(connection.host,"aws-1-eu-central-1.pooler.supabase.com");
   assert.equal(connection.port,5432);
   assert.equal(connection.database,"postgres");
   assert.equal(connection.user,"adstable_benchmark_session.lxphenczjmueblnonklm");
   const {rows:[identity]}=await client.query("select session_user as login,current_user as role");
   assert.deepEqual(identity,{login:"adstable_benchmark_session",role:"adstable_owner"});
-  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup});
+  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup,phaseCandidate});
 }
 
 async function installHostedReportClocks(client) {
@@ -506,7 +595,7 @@ async function installHostedReportClocks(client) {
     end $clock$;`);
 }
 
-async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false}) {
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
@@ -537,6 +626,14 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   if(reportWriteCleanup) {
     assert.ok(reduceReportRepeats);
     await installReportWriteCleanup(client);
+  }
+  if(phaseCandidate) {
+    assert.ok(hostedDetail&&reportWriteCleanup);
+    if(phaseCandidate==="ordered-json") await installOrderedCanonicalJson(client);
+    else {
+      assert.equal(phaseCandidate,"trigger-source");
+      await installTriggerSourceReuse(client);
+    }
   }
   if(hostedDetail) {
     assert.ok(hosted&&reduceReportRepeats);

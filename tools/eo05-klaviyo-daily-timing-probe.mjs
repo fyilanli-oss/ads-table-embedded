@@ -336,30 +336,36 @@ async function measurePlainSalesInserts(client,installationId) {
   return {rows:count,packageMs,executionMs:packageMs.reduce((total,ms)=>total+ms,0)};
 }
 
-async function installPublishTimers(client,{reportOnly}) {
+async function installPublishTimers(client,{reportOnly,optimized=false}) {
   const args="jsonb,jsonb,timestamptz,uuid,jsonb,jsonb";
+  const privateSuffix=optimized?"_verified":"";
   const anchors={
     publish_klaviyo_staged_report_day:[
       ["  perform 1 from operations.refresh_control",null],
+      ...(optimized?[["  if not found then raise exception 'SCHEDULED_DATASET_CLAIM_REQUIRED'","publishLockAcquire"]]:[]),
       ...(reportOnly?[
-        ["  perform analytics.verify_klaviyo_daily_report_stage", "publishLockAuthority"],
+        [optimized?"  verified_summary:=analytics.verify_klaviyo_daily_report_stage":"  perform analytics.verify_klaviyo_daily_report_stage",
+          optimized?"publishAuthority":"publishLockAuthority"],
         ["  perform analytics.assert_report_source_context", "publishPackageValidation"],
       ]:[]),
       ["  revision:=(c->>'expectedRevision')","sharedSourceChecks"],
       ["  receipt:=jsonb_build_object('version','klaviyo-daily-receipt-v1'","writerAndVerification"],
       ["  return receipt;","receiptPersist"],
     ],
-    write_klaviyo_staged_first_report_day:[
-      ["  for s in select body from pg_temp.adstable_klaviyo_daily_report_stage",null],
+    [`write_klaviyo_staged_first_report_day${privateSuffix}`]:[
+      [optimized?"  perform 1 from operations.refresh_control":"  for s in select body from pg_temp.adstable_klaviyo_daily_report_stage",null],
+      ...(optimized?[["  for s in select body from pg_temp.adstable_klaviyo_daily_report_stage","beforeWriter"]]:[]),
       ["  return analytics.check_klaviyo_daily_report_facts","physicalWrite"],
     ],
-    check_klaviyo_daily_report_facts:[
-      ["  summary:=analytics.verify_klaviyo_daily_report_stage",null],
+    [`check_klaviyo_daily_report_facts${privateSuffix}`]:[
+      [optimized?"  perform 1 from operations.refresh_control":"  summary:=analytics.verify_klaviyo_daily_report_stage",null],
+      ...(optimized?[["  summary:=verified_summary","readbackAuthority"]]:[]),
       ["  return summary||jsonb_build_object('digest'","physicalVerification"],
     ],
   };
   for(const [name,points] of Object.entries(anchors)) {
-    const {rows:[{definition}]}=await client.query("select pg_get_functiondef($1::regprocedure) definition",[`analytics.${name}(${args})`]);
+    const signature=name.endsWith("_verified")?`${args},jsonb`:args;
+    const {rows:[{definition}]}=await client.query("select pg_get_functiondef($1::regprocedure) definition",[`analytics.${name}(${signature})`]);
     let sql=definition.replace("declare\n","declare\n  probe_time timestamptz;\n");
     assert.notEqual(sql,definition);
     for(const [anchor,label] of points) {
@@ -407,14 +413,14 @@ export async function klaviyoDailyTimingProbe(client,options) {
   return runKlaviyoDailyTimingProbe(client,options);
 }
 
-export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false}) {
+export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false}) {
   assert.equal(connection.host,"aws-1-eu-central-1.pooler.supabase.com");
   assert.equal(connection.port,5432);
   assert.equal(connection.database,"postgres");
   assert.equal(connection.user,"adstable_benchmark_session.lxphenczjmueblnonklm");
   const {rows:[identity]}=await client.query("select session_user as login,current_user as role");
   assert.deepEqual(identity,{login:"adstable_benchmark_session",role:"adstable_owner"});
-  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true});
+  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail});
 }
 
 async function installHostedReportClocks(client) {
@@ -437,7 +443,7 @@ async function installHostedReportClocks(client) {
     end $clock$;`);
 }
 
-async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false}) {
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
@@ -464,6 +470,11 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   if(reduceReportRepeats) {
     assert.ok(combinedVerification);
     await installReportRepeatReduction(client);
+  }
+  if(hostedDetail) {
+    assert.ok(hosted&&reduceReportRepeats);
+    await installPublishTimers(client,{reportOnly:true,optimized:true});
+    await installWriterTimers(client,{capturePlans:false});
   }
   if(hosted) await installHostedReportClocks(client);
   await client.query("update integrations.provider_connections set connected_at=clock_timestamp()-interval '3 days' where id=$1",[owner.connectionId]);
@@ -541,7 +552,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     },
   };
   const start=reportOnly||retentionOnly?null:performance.now();
-  if (measureReport||retentionOnly) client.on("notice",onNotice);
+  if (measureReport||retentionOnly||hostedDetail) client.on("notice",onNotice);
   try {
     await store.checkQueueFromAuthority({expectedRevision:(await store.readQueueCheck()).revision});
     if (detailed) durations.queueEnqueue=performance.now()-start;
@@ -650,7 +661,19 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
       if(hosted) {
         assert.equal(hostedReportMs.length,6);
         assert.ok(hostedReportMs.every(value=>Number.isFinite(value)&&value>0));
-        return {...summary,reportWriteMs:hostedReportMs.reduce((sum,ms)=>sum+ms,0)};
+        const reportWriteMs=hostedReportMs.reduce((sum,ms)=>sum+ms,0);
+        if(!hostedDetail) return {...summary,reportWriteMs};
+        for(const name of ["publishLockAcquire","publishAuthority","publishPackageValidation","sharedSourceChecks",
+          "beforeWriter","physicalWrite","readbackAuthority","physicalVerification","writerAndVerification","receiptPersist"]) {
+          assert.ok(Number.isFinite(publishPhasesMs[name]),`missing SQL timing ${name}`);
+        }
+        for(const name of [...writerPhases,"packageJsonSize"]) {
+          assert.equal(writerPhaseCounts[name],5,`expected five package timings for ${name}`);
+        }
+        const {rows:[{triggerMs}]}=await client.query("select current_setting('eo05.sales_trigger_ms')::double precision \"triggerMs\"");
+        assert.ok(triggerMs>0&&triggerMs<=writerPhasesMs.bulkStatement);
+        return {...summary,reportWriteMs,stageMs:hostedReportMs.slice(0,5).reduce((sum,ms)=>sum+ms,0),
+          publishMs:hostedReportMs[5],publishPhasesMs,writerPhasesMs,triggerMs,detailsMeasured:true};
       }
       return {...summary,variant:retentionVariant,totalMs,reportWriteMs,combinedVerification,reduceReportRepeats,detailsMeasured:false};
     }
@@ -692,6 +715,6 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     }));
     throw error;
   } finally {
-    if (measureReport||retentionOnly) client.off("notice",onNotice);
+    if (measureReport||retentionOnly||hostedDetail) client.off("notice",onNotice);
   }
 }

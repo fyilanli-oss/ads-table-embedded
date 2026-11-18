@@ -6,10 +6,11 @@ import {klaviyoHostedReportProbe} from "./eo05-klaviyo-daily-timing-probe.mjs";
 
 const host="aws-1-eu-central-1.pooler.supabase.com";
 const flags=process.argv.slice(2);
-if(flags.length>1 || flags.some(flag=>!["--reduce-report-repeats","--details"].includes(flag))) {
-  throw new Error("Expected no arguments, --reduce-report-repeats, or --details");
+if(flags.length>1 || flags.some(flag=>!["--reduce-report-repeats","--details","--cleanup"].includes(flag))) {
+  throw new Error("Expected no arguments, --reduce-report-repeats, --details, or --cleanup");
 }
 const hostedDetail=flags[0]==="--details";
+const reportWriteCleanup=flags[0]==="--cleanup";
 const reduceReportRepeats=flags.length===1;
 const password=readFileSync(0,"utf8").replace(/^\uFEFF/,"").trim();
 if(!/^[a-zA-Z0-9_-]{40,64}$/.test(password)) throw new Error("Temporary benchmark database password required on stdin");
@@ -23,8 +24,8 @@ try {
     await client.query("begin");
     try {
       await client.query("set local role adstable_owner");
-      const result=await klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats,hostedDetail});
-      console.log("EO05_KLAVIYO_HOSTED_REPORT_PASS "+JSON.stringify({run:index+1,reduceReportRepeats,...result}));
+      const result=await klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats,hostedDetail,reportWriteCleanup});
+      console.log("EO05_KLAVIYO_HOSTED_REPORT_PASS "+JSON.stringify({run:index+1,reduceReportRepeats,reportWriteCleanup,...result}));
     } finally {
       await client.query("rollback");
     }

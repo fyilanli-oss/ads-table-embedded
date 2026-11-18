@@ -191,6 +191,61 @@ begin
   await client.query(writer);
 }
 
+async function installReportWriteCleanup(client) {
+  async function rewrite(signature,changes) {
+    const {rows:[{definition}]}=await client.query("select pg_get_functiondef($1::regprocedure) definition",[signature]);
+    let sql=definition;
+    for(const [before,after] of changes) {
+      assert.equal(sql.split(before).length,2,`report write cleanup anchor: ${signature}: ${before}`);
+      sql=sql.replace(before,()=>after);
+    }
+    await client.query(sql);
+  }
+  const digest=expression=>`encode(sha256(convert_to(${expression},'UTF8')),'hex')`;
+  await rewrite("analytics.stage_klaviyo_daily_report_package(jsonb,jsonb,jsonb,timestamptz,integer,integer)",[
+    ["  package_digest text;","  package_digest text;\n  canonical_package text;"],
+    ["  if row_count not between 1 and 200\n    or octet_length(analytics.dataset_json(jsonb_build_object('write',p,'context',c)))>1048576 then",
+      `  if row_count between 1 and 200 then
+    canonical_package:=analytics.dataset_json(jsonb_build_object('write',p,'context',c));
+  end if;
+  if row_count not between 1 and 200 or octet_length(canonical_package)>1048576 then`],
+    ["package_digest:=analytics.dataset_digest(jsonb_build_object('write',p,'context',c));",
+      `package_digest:=${digest("canonical_package")};`],
+  ]);
+  await rewrite("analytics.commit_dataset_storage(jsonb,jsonb)",[
+    [" bulk_rows jsonb:='{}'; bulk_ids",` canonical_package text;
+ bulk_table_names text[]:='{}'; bulk_row_values jsonb[]:='{}'; bulk_ids`],
+    [" or octet_length(analytics.dataset_json(p))>1048576 then raise exception 'DATASET_INPUT_INVALID';end if;",
+      ` then raise exception 'DATASET_INPUT_INVALID';end if;
+ canonical_package:=analytics.dataset_json(p);
+ if octet_length(canonical_package)>1048576 then raise exception 'DATASET_INPUT_INVALID';end if;`],
+    [" h:=analytics.dataset_digest(p);",` h:=${digest("canonical_package")};`],
+    ["   bulk_rows:=jsonb_set(bulk_rows,array[name],coalesce(bulk_rows->name,'[]')||jsonb_build_array(injected));",
+      "   bulk_table_names:=array_append(bulk_table_names,name);\n   bulk_row_values:=array_append(bulk_row_values,injected);"],
+    ["  for name in select jsonb_object_keys(bulk_rows) order by 1 loop\n   select string_agg(quote_ident(key),',' order by key) into cols from jsonb_object_keys(bulk_rows->name->0) key;",
+      `  for grouped in
+   select target_name,jsonb_agg(body order by ordinal) as payload
+   from unnest(bulk_table_names,bulk_row_values) with ordinality as input(target_name,body,ordinal)
+   group by target_name order by target_name
+  loop
+   name:=grouped.target_name;
+   select string_agg(quote_ident(key),',' order by key) into cols from jsonb_object_keys(grouped.payload->0) key;`],
+    ["using bulk_rows->name,p->'policy'","using grouped.payload,p->'policy'"],
+  ]);
+  await rewrite("analytics.validate_dataset_fact()",[
+    [" permit jsonb;"," permit jsonb; expected_canonical text; source_state_for_ref text; retention_for_ref timestamptz;"],
+    [`  if exists(select 1 from evidence.source_batches x where x.id=(ref->>'batch_id')::bigint and x.source_state<>'complete') then all_complete:=false;end if;
+  if exists(select 1 from evidence.source_batches x where x.id=(ref->>'batch_id')::bigint and x.retain_until<new.retain_until) then raise exception 'DATASET_SOURCE_POLICY_INVALID';end if;`,
+      `  select x.source_state,x.retain_until into strict source_state_for_ref,retention_for_ref
+  from evidence.source_batches x where x.id=(ref->>'batch_id')::bigint;
+  if source_state_for_ref<>'complete' then all_complete:=false;end if;
+  if retention_for_ref<new.retain_until then raise exception 'DATASET_SOURCE_POLICY_INVALID';end if;`],
+    [" if new.native_key_canonical is distinct from analytics.dataset_json(expected) or new.native_key_hash is distinct from analytics.dataset_digest(expected)",
+      ` expected_canonical:=analytics.dataset_json(expected);
+ if new.native_key_canonical is distinct from expected_canonical or new.native_key_hash is distinct from ${digest("expected_canonical")}`],
+  ]);
+}
+
 const writerPhases=["lookupLock","packageValidation","packageHash","sourceRetention","rowValidation","rowHash","rowPreparation","bulkStatement","packageReceipt"];
 
 async function installWriterTimers(client,{capturePlans}) {
@@ -413,14 +468,14 @@ export async function klaviyoDailyTimingProbe(client,options) {
   return runKlaviyoDailyTimingProbe(client,options);
 }
 
-export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false}) {
+export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false}) {
   assert.equal(connection.host,"aws-1-eu-central-1.pooler.supabase.com");
   assert.equal(connection.port,5432);
   assert.equal(connection.database,"postgres");
   assert.equal(connection.user,"adstable_benchmark_session.lxphenczjmueblnonklm");
   const {rows:[identity]}=await client.query("select session_user as login,current_user as role");
   assert.deepEqual(identity,{login:"adstable_benchmark_session",role:"adstable_owner"});
-  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail});
+  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup});
 }
 
 async function installHostedReportClocks(client) {
@@ -443,7 +498,7 @@ async function installHostedReportClocks(client) {
     end $clock$;`);
 }
 
-async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false}) {
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
@@ -475,6 +530,10 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     assert.ok(hosted&&reduceReportRepeats);
     await installPublishTimers(client,{reportOnly:true,optimized:true});
     await installWriterTimers(client,{capturePlans:false});
+  }
+  if(reportWriteCleanup) {
+    assert.ok(reduceReportRepeats&&!hostedDetail);
+    await installReportWriteCleanup(client);
   }
   if(hosted) await installHostedReportClocks(client);
   await client.query("update integrations.provider_connections set connected_at=clock_timestamp()-interval '3 days' where id=$1",[owner.connectionId]);

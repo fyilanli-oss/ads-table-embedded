@@ -128,6 +128,69 @@ async function installCombinedFactVerification(client) {
   await client.query(publish);
 }
 
+async function installReportRepeatReduction(client) {
+  const signature="jsonb,jsonb,timestamptz,uuid,jsonb,jsonb";
+  async function definition(name,args=signature) {
+    const {rows:[{sql}]}=await client.query("select pg_get_functiondef($1::regprocedure) sql",[`analytics.${name}(${args})`]);
+    return sql;
+  }
+  function change(sql,from,to) {
+    assert.equal(sql.split(from).length,2,`report repeat reduction anchor: ${from}`);
+    return sql.replace(from,()=>to);
+  }
+  async function installPrivateVariant(name,edit) {
+    const variant=`${name}_verified`;
+    let sql=change(await definition(name),`analytics.${name}(o jsonb, c jsonb, d timestamp with time zone, operation uuid, policy jsonb, digests jsonb)`,
+      `analytics.${variant}(o jsonb, c jsonb, d timestamp with time zone, operation uuid, policy jsonb, digests jsonb, verified_summary jsonb)`);
+    sql=change(sql," SECURITY DEFINER"," SECURITY INVOKER");
+    await client.query(edit(sql));
+    await client.query(`revoke all on function analytics.${variant}(${signature},jsonb)
+      from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner`);
+  }
+  const stageCall="analytics.verify_klaviyo_daily_report_stage(o,c,d,operation,policy,digests)";
+  await installPrivateVariant("check_klaviyo_daily_report_facts",sql=>
+    change(sql,`summary:=${stageCall};`,"summary:=verified_summary;"));
+  await installPrivateVariant("write_klaviyo_staged_first_report_day",sql=>{
+    sql=change(sql,`  perform ${stageCall};\n`,"");
+    return change(sql,"return analytics.check_klaviyo_daily_report_facts(o,c,d,operation,policy,digests);",
+      "return analytics.check_klaviyo_daily_report_facts_verified(o,c,d,operation,policy,digests,verified_summary);");
+  });
+  let publish=change(await definition("publish_klaviyo_staged_report_day"),"  proof jsonb;","  proof jsonb;\n  verified_summary jsonb;");
+  publish=change(publish,`perform ${stageCall};`,`verified_summary:=${stageCall};`);
+  publish=change(publish,"proof:=analytics.write_klaviyo_staged_first_report_day(o,c,d,operation,policy,digests);",
+    "proof:=analytics.write_klaviyo_staged_first_report_day_verified(o,c,d,operation,policy,digests,verified_summary);");
+  await client.query(publish);
+
+  let writer=change(await definition("commit_dataset_storage","jsonb,jsonb"),"\nbegin\n",`
+  column_metadata jsonb:='{}';
+  numeric_columns text[];
+  table_metadata jsonb;
+begin
+`);
+  const [catalogStart,catalogEnd]=["  select array_agg(attname::text order by attnum)","   if r->k<>'null'::jsonb"];
+  const start=writer.indexOf(catalogStart),end=writer.indexOf(catalogEnd,start);
+  assert.ok(start>=0&&end>start);
+  const catalog=writer.slice(start,end);
+  const exclusions=catalog.match(/and attname not in \([^)]+\)/)?.[0];
+  assert.ok(exclusions);
+  writer=change(writer,catalog,`  table_metadata:=column_metadata->name;
+  if table_metadata is null then
+   select coalesce(array_agg(attname::text order by attnum) filter (where true ${exclusions}),'{}'),
+     coalesce(array_agg(attname::text order by attnum) filter (where atttypid='numeric'::regtype),'{}')
+   into allowed,numeric_columns
+   from pg_catalog.pg_attribute
+   where attrelid=('analytics.'||name)::regclass and attnum>0 and not attisdropped;
+   column_metadata:=column_metadata||jsonb_build_object(name,jsonb_build_object('allowed',allowed,'numeric',numeric_columns));
+  else
+   allowed:=array(select jsonb_array_elements_text(table_metadata->'allowed'));
+   numeric_columns:=array(select jsonb_array_elements_text(table_metadata->'numeric'));
+  end if;
+  if (select count(*) from jsonb_object_keys(r))<>cardinality(allowed) or not r ?& allowed then raise exception 'DATASET_ROW_SHAPE_INVALID';end if;
+  foreach k in array numeric_columns loop
+`);
+  await client.query(writer);
+}
+
 const writerPhases=["lookupLock","packageValidation","packageHash","sourceRetention","rowValidation","rowHash","rowPreparation","bulkStatement","packageReceipt"];
 
 async function installWriterTimers(client,{capturePlans}) {
@@ -344,14 +407,14 @@ export async function klaviyoDailyTimingProbe(client,options) {
   return runKlaviyoDailyTimingProbe(client,options);
 }
 
-export async function klaviyoHostedReportProbe(client,{ownerFixture,connection}) {
+export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false}) {
   assert.equal(connection.host,"aws-1-eu-central-1.pooler.supabase.com");
   assert.equal(connection.port,5432);
   assert.equal(connection.database,"postgres");
   assert.equal(connection.user,"adstable_benchmark_session.lxphenczjmueblnonklm");
   const {rows:[identity]}=await client.query("select session_user as login,current_user as role");
   assert.deepEqual(identity,{login:"adstable_benchmark_session",role:"adstable_owner"});
-  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,hosted:true});
+  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true});
 }
 
 async function installHostedReportClocks(client) {
@@ -374,7 +437,7 @@ async function installHostedReportClocks(client) {
     end $clock$;`);
 }
 
-async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,hosted=false}) {
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
@@ -397,6 +460,10 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   if(combinedVerification) {
     assert.ok(reportBoundary&&retentionVariant==="cached");
     await installCombinedFactVerification(client);
+  }
+  if(reduceReportRepeats) {
+    assert.ok(combinedVerification);
+    await installReportRepeatReduction(client);
   }
   if(hosted) await installHostedReportClocks(client);
   await client.query("update integrations.provider_connections set connected_at=clock_timestamp()-interval '3 days' where id=$1",[owner.connectionId]);
@@ -585,7 +652,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
         assert.ok(hostedReportMs.every(value=>Number.isFinite(value)&&value>0));
         return {...summary,reportWriteMs:hostedReportMs.reduce((sum,ms)=>sum+ms,0)};
       }
-      return {...summary,variant:retentionVariant,totalMs,reportWriteMs,combinedVerification,detailsMeasured:false};
+      return {...summary,variant:retentionVariant,totalMs,reportWriteMs,combinedVerification,reduceReportRepeats,detailsMeasured:false};
     }
     if (!measureReport) {
       console.log("EO05_KLAVIYO_WALL_TIME_PASS "+JSON.stringify({...summary,totalMs:ended-start,detailsMeasured:false}));

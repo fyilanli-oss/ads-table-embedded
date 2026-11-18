@@ -71,11 +71,11 @@ export async function datasetStorageProbe(client, connection, environment = proc
     }
     await client.query("set local role adstable_owner");
     const verificationComparison=[];
-    for(const combinedVerification of [false,true]) {
+    for(const variant of [{}, {combinedVerification:true}, {combinedVerification:true,reduceReportRepeats:true}]) {
       await client.query("savepoint klaviyo_daily_timing");
       try {
         verificationComparison.push(await klaviyoDailyTimingProbe(client,{
-          ownerFixture,connection,environment,mode:"retention-boundary",retentionVariant:"cached",combinedVerification,
+          ownerFixture,connection,environment,mode:"retention-boundary",retentionVariant:"cached",...variant,
         }));
       } finally {
         await client.query("rollback to savepoint klaviyo_daily_timing");

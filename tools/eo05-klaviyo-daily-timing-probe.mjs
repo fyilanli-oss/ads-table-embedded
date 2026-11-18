@@ -74,6 +74,60 @@ async function installRetentionComparison(client,variant,{measure}) {
   await client.query(sql);
 }
 
+async function installCombinedFactVerification(client) {
+  const args="jsonb,jsonb,timestamptz,uuid,jsonb,jsonb";
+  async function definition(name) {
+    const {rows:[{sql}]}=await client.query("select pg_get_functiondef($1::regprocedure) sql",[`analytics.${name}(${args})`]);
+    return sql;
+  }
+  let check=await definition("check_klaviyo_daily_report_facts");
+  const declaration="  item jsonb;\n  fact jsonb;";
+  assert.equal(check.split(declaration).length,2);
+  check=check.replace(declaration,`  all_matched boolean;
+  table_leaves text[];
+  leaves text[]:='{}';
+  tz text:=c->'sourceContext'->'snapshot'->>'timezone';`);
+  const from=check.indexOf("  foreach table_name in array "),to=check.indexOf("  if d<=clock_timestamp()",from);
+  assert.ok(from>=0&&to>from);
+  check=check.slice(0,from)+`  foreach table_name in array array['pd_facts','cpd_product_performance_facts','cpd_product_sales_facts'] loop
+    execute format($verify$
+      with expected as materialized (
+        select item->'row' payload from pg_temp.adstable_klaviyo_daily_report_stage s
+        cross join lateral jsonb_array_elements(s.body->'rows') item where item->>'table'=$6
+      ), actual as materialized (
+        select x.grain_version,x.native_key_hash,to_jsonb(x) fact from analytics.%I x
+        where x.workspace_id=$1 and x.installation_id=$2 and x.installation_generation=$3
+          and x.platform='klaviyo' and x.platform_account_id=$4 and x.business_date=$5
+        limit 4001 for share of x
+      )
+      select count(*)::integer,coalesce(bool_and(
+        payload is not null and fact is not null and fact->>'provider_connection_id' is not distinct from $7
+        and fact->>'source_timezone' is not distinct from $8 and (fact->>'retain_until')::timestamptz>clock_timestamp()
+        and fact->>'native_key_canonical' is not distinct from payload->>'native_key_canonical'
+        and fact->>'payload_digest' is not distinct from payload->>'payload_digest'
+        and analytics.klaviyo_report_fact_matches($6,fact,payload) is true
+      ),true),coalesce(array_agg(analytics.dataset_digest(jsonb_build_array($6,native_key_hash,fact->>'payload_digest'))
+        order by native_key_hash collate "C") filter (where fact is not null),'{}')
+      from actual full join expected on grain_version=payload->>'grain_version' and native_key_hash=payload->>'native_key_hash'
+    $verify$,table_name) into n,all_matched,table_leaves using w,i,g,a,day,table_name,o->>'connectionId',tz;
+    if not all_matched then raise exception 'KLAVIYO_REPORT_FACT_READBACK_MISMATCH'; end if;
+    total:=total+n;
+    if total>(summary->>'rowCount')::integer then raise exception 'KLAVIYO_REPORT_FACT_READBACK_MISMATCH'; end if;
+    leaves:=leaves||table_leaves;
+  end loop;
+  if total<>(summary->>'rowCount')::integer then raise exception 'KLAVIYO_REPORT_FACT_READBACK_MISMATCH'; end if;
+`+check.slice(to);
+  const proof="return summary||jsonb_build_object('digest',analytics.dataset_digest(summary));";
+  assert.equal(check.split(proof).length,2);
+  check=check.replace(proof,"return summary||jsonb_build_object('digest',analytics.dataset_digest(summary),'factsDigest',analytics.dataset_digest(to_jsonb(leaves)));");
+  await client.query(check);
+  let publish=await definition("publish_klaviyo_staged_report_day");
+  const fingerprint="analytics.klaviyo_daily_report_fingerprint(o,day,tz,(proof->>'rowCount')::integer,true)";
+  assert.equal(publish.split(fingerprint).length,2);
+  publish=publish.replace(fingerprint,"proof->>'factsDigest'");
+  await client.query(publish);
+}
+
 const writerPhases=["lookupLock","packageValidation","packageHash","sourceRetention","rowValidation","rowHash","rowPreparation","bulkStatement","packageReceipt"];
 
 async function installWriterTimers(client,{capturePlans}) {
@@ -283,7 +337,7 @@ function syntheticResponse(endpoint,owner,day) {
 }
 
 /** Run within the existing F01 localhost rollback transaction. */
-export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,environment=process.env,mode="report",retentionVariant}) {
+export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,environment=process.env,mode="report",retentionVariant,combinedVerification=false}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
@@ -305,6 +359,10 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
     await installWriterTimers(client,{capturePlans:detailed});
   }
   if(retentionOnly||retentionWall) await installRetentionComparison(client,retentionVariant,{measure:retentionOnly});
+  if(combinedVerification) {
+    assert.ok(reportBoundary&&retentionVariant==="cached");
+    await installCombinedFactVerification(client);
+  }
   await client.query("update integrations.provider_connections set connected_at=clock_timestamp()-interval '3 days' where id=$1",[owner.connectionId]);
   await client.query(`insert into operations.refresh_quota_contexts
     (workspace_id,install_generation,provider,installation_id,connection_id,connection_version,account_id,client_scope_key,connection_scope_key,connection_epoch,api_version,enabled)
@@ -475,7 +533,7 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
     if(retentionWall) {
       const totalMs=ended-start;
       if(reportBoundary) assert.ok(reportWriteMs>0&&reportWriteMs<totalMs);
-      return {...summary,variant:retentionVariant,totalMs,reportWriteMs,detailsMeasured:false};
+      return {...summary,variant:retentionVariant,totalMs,reportWriteMs,combinedVerification,detailsMeasured:false};
     }
     if (!measureReport) {
       console.log("EO05_KLAVIYO_WALL_TIME_PASS "+JSON.stringify({...summary,totalMs:ended-start,detailsMeasured:false}));

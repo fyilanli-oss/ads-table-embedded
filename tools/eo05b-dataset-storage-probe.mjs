@@ -70,16 +70,19 @@ export async function datasetStorageProbe(client, connection, environment = proc
       }
     }
     await client.query("set local role adstable_owner");
-    await client.query("savepoint klaviyo_daily_timing");
-    try {
-      const result=await klaviyoDailyTimingProbe(client,{
-        ownerFixture,connection,environment,mode:"retention-boundary",retentionVariant:"cached",
-      });
-      console.log("EO05_KLAVIYO_RETENTION_BOUNDARY_PASS "+JSON.stringify(result));
-    } finally {
-      await client.query("rollback to savepoint klaviyo_daily_timing");
-      await client.query("release savepoint klaviyo_daily_timing");
+    const verificationComparison=[];
+    for(const combinedVerification of [false,true]) {
+      await client.query("savepoint klaviyo_daily_timing");
+      try {
+        verificationComparison.push(await klaviyoDailyTimingProbe(client,{
+          ownerFixture,connection,environment,mode:"retention-boundary",retentionVariant:"cached",combinedVerification,
+        }));
+      } finally {
+        await client.query("rollback to savepoint klaviyo_daily_timing");
+        await client.query("release savepoint klaviyo_daily_timing");
+      }
     }
+    console.log("EO05_KLAVIYO_FACT_VERIFICATION_COMPARISON_PASS "+JSON.stringify(verificationComparison));
     await sourceDatasetBindingProbe(client, {ownerFixture});
     await reportRetentionProbe(client, {ownerFixture, sourceFixture});
     await fxReportingCurrencyProbe(client, {ownerFixture});

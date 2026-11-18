@@ -24,6 +24,54 @@ async function installExactBulkWriter(client) {
   await client.query("set local role adstable_owner");
 }
 
+async function installRetentionComparison(client,variant) {
+  await client.query(`set local eo05.retention_calls='0';
+    create function analytics.eo05_count_report_retention(d date,tz text) returns timestamptz
+      language plpgsql set search_path='' as $measure$
+      begin
+        perform set_config('eo05.retention_calls',(current_setting('eo05.retention_calls')::integer+1)::text,true);
+        return analytics.report_retention_until(d,tz);
+      end $measure$`);
+  const {rows:[{definition}]}=await client.query(
+    "select pg_get_functiondef('analytics.commit_dataset_storage(jsonb,jsonb)'::regprocedure) definition");
+  let sql=definition;
+  function replace(anchor,value) {
+    assert.equal(sql.split(anchor).length,2,`retention timing anchor: ${anchor}`);
+    sql=sql.replace(anchor,()=>value);
+  }
+  const policyBlock="\n if p->'policy'->>'version'='report-source-3y-v1' then";
+  const originalCall="analytics.report_retention_until((r->>'business_date')::date,r->>'source_timezone')";
+  replace("\nbegin\n",`\n eo05_retention_started timestamptz;\n${variant==="cached"?
+    " eo05_day date; eo05_timezone text; eo05_until timestamptz;\n":""}\nbegin\n`);
+  replace(policyBlock,"\n eo05_retention_started:=clock_timestamp();"+policyBlock);
+  if(variant==="cached") {
+    await client.query(`create temp table eo05_report_retention_cache (
+      business_day date, source_timezone text, retain_until timestamptz not null,
+      primary key (business_day,source_timezone)
+    ) on commit drop`);
+    const rowLoop="\n  for item in select value from jsonb_array_elements(p->'rows') loop";
+    replace(rowLoop,`
+  if staged_klaviyo and verified_day_sources then
+   eo05_day:=(p->'rows'->0->'row'->>'business_date')::date;
+   eo05_timezone:=p->'rows'->0->'row'->>'source_timezone';
+   select retain_until into eo05_until from pg_temp.eo05_report_retention_cache
+    where business_day=eo05_day and source_timezone=eo05_timezone;
+   if not found then
+    eo05_until:=analytics.eo05_count_report_retention(eo05_day,eo05_timezone);
+    insert into pg_temp.eo05_report_retention_cache values(eo05_day,eo05_timezone,eo05_until);
+   end if;
+  end if;${rowLoop}`);
+    // Preserve verification for every row and retain the original computation
+    // for other days, timezones, and unverified or non-staged callers.
+    replace(originalCall,`(case when staged_klaviyo and verified_day_sources
+      and (r->>'business_date')::date=eo05_day and r->>'source_timezone'=eo05_timezone then eo05_until
+      else analytics.eo05_count_report_retention((r->>'business_date')::date,r->>'source_timezone') end)`);
+  } else replace(originalCall,originalCall.replace("report_retention_until","eo05_count_report_retention"));
+  const afterBlock="\n if (select count(*) from jsonb_array_elements(p->'rows'))";
+  replace(afterBlock,`\n raise notice 'EO05_RETENTION_COMPARISON %',1000*extract(epoch from clock_timestamp()-eo05_retention_started);${afterBlock}`);
+  await client.query(sql);
+}
+
 const writerPhases=["lookupLock","packageValidation","packageHash","sourceRetention","rowValidation","rowHash","rowPreparation","bulkStatement","packageReceipt"];
 
 async function installWriterTimers(client,{capturePlans}) {
@@ -233,9 +281,10 @@ function syntheticResponse(endpoint,owner,day) {
 }
 
 /** Run within the existing F01 localhost rollback transaction. */
-export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,environment=process.env,mode="report"}) {
-  assert.ok(["report","wall","detailed"].includes(mode));
-  const detailed=mode==="detailed",reportOnly=mode==="report",measureReport=mode!=="wall";
+export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,environment=process.env,mode="report",retentionVariant}) {
+  assert.ok(["report","wall","detailed","retention"].includes(mode));
+  const retentionOnly=mode==="retention",detailed=mode==="detailed",reportOnly=mode==="report",measureReport=detailed||reportOnly;
+  if(retentionOnly) assert.ok(["current","cached"].includes(retentionVariant));
   assert.equal(environment.GITHUB_ACTIONS,"true");assert.ok(environment.RUNNER_TEMP);
   assert.equal(connection.host,"127.0.0.1");assert.equal(connection.port,54322);
   await installExactBulkWriter(client);
@@ -251,6 +300,7 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
     await installPublishTimers(client,{reportOnly});
     await installWriterTimers(client,{capturePlans:detailed});
   }
+  if(retentionOnly) await installRetentionComparison(client,retentionVariant);
   await client.query("update integrations.provider_connections set connected_at=clock_timestamp()-interval '3 days' where id=$1",[owner.connectionId]);
   await client.query(`insert into operations.refresh_quota_contexts
     (workspace_id,install_generation,provider,installation_id,connection_id,connection_version,account_id,client_scope_key,connection_scope_key,connection_epoch,api_version,enabled)
@@ -268,8 +318,11 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
 
   const databaseTimings={queue:0,rawWrite:0,rawReadback:0,reportSourceRead:0,reportStage:0,reportPublish:0,reportReadback:0,jobClose:0};
   const publishPhasesMs={},writerPhasesMs={},writerPhaseCounts={};
+  const retentionPackagesMs=[];
   let bulkPlans;
   const onNotice=({message})=>{
+    const retention=/^EO05_RETENTION_COMPARISON ([\d.eE+-]+)$/.exec(message);
+    if(retention) retentionPackagesMs.push(Number(retention[1]));
     const match=/^EO05_DAILY_PUBLISH_PHASE ([a-zA-Z]+) ([0-9.]+)$/.exec(message);
     if(match)publishPhasesMs[match[1]]=Number(match[2]);
     const writer=/^EO05_WRITER_TIMING ([a-zA-Z]+) ([\d.eE+-]+)$/.exec(message);
@@ -309,8 +362,8 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
       }
     },
   };
-  const start=reportOnly?null:performance.now();
-  if (measureReport) client.on("notice",onNotice);
+  const start=reportOnly||retentionOnly?null:performance.now();
+  if (measureReport||retentionOnly) client.on("notice",onNotice);
   try {
     await store.checkQueueFromAuthority({expectedRevision:(await store.readQueueCheck()).revision});
     if (detailed) durations.queueEnqueue=performance.now()-start;
@@ -387,7 +440,7 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
       },
     }});
     if (failed) throw failed;
-    const ended=reportOnly?null:performance.now();
+    const ended=reportOnly||retentionOnly?null:performance.now();
     if (detailed) durations.reportFlow=ended-reportAt;
     assert.equal(run.work?.status,"completed",JSON.stringify(run));
     assert.equal(reportReceipt?.rowCount,productEvents);
@@ -406,6 +459,13 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
     const summary={provider:"klaviyo",synthetic:true,rollbackOnly:true,writerCommit:bulkWriterCommit,
       queueMode:"isolated_no_backlog",productEvents,reportRows:reportReceipt.rowCount,rawPackages:batches.length,
       reportPackages:reportReceipt.packages.length,receipts,requests};
+    if(retentionOnly) {
+      const {rows:[{calls}]}=await client.query("select current_setting('eo05.retention_calls')::int calls");
+      assert.equal(calls,retentionVariant==="cached"?1:productEvents);
+      assert.equal(retentionPackagesMs.length,5);
+      return {...summary,variant:retentionVariant,calls,retentionPackagesMs,
+        retentionMs:retentionPackagesMs.reduce((sum,ms)=>sum+ms,0)};
+    }
     if (!measureReport) {
       console.log("EO05_KLAVIYO_WALL_TIME_PASS "+JSON.stringify({...summary,totalMs:ended-start,detailsMeasured:false}));
       return;
@@ -440,10 +500,10 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
   } catch(error) {
     console.error("EO05_KLAVIYO_DAILY_TIMING_STOP "+JSON.stringify({
       phase,code:error.code,message:error.message,where:error.where,requests,
-      elapsedBeforeStopMs:reportOnly?undefined:performance.now()-start,durationsMs:durations,postgresqlMsByPhase:databaseTimings,publishPhasesMs,writerPhasesMs,bulkPlans,
+      elapsedBeforeStopMs:start===null?undefined:performance.now()-start,durationsMs:durations,postgresqlMsByPhase:databaseTimings,publishPhasesMs,writerPhasesMs,bulkPlans,
     }));
     throw error;
   } finally {
-    if (measureReport) client.off("notice",onNotice);
+    if (measureReport||retentionOnly) client.off("notice",onNotice);
   }
 }

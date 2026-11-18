@@ -335,6 +335,83 @@ async function installTriggerSourceReuse(client) {
   await client.query(trigger);
 }
 
+async function installStagedCanonicalReuse(client) {
+  async function rewrite(signature,changes) {
+    const {rows:[{definition}]}=await client.query("select pg_get_functiondef($1::regprocedure) definition",[signature]);
+    let sql=definition;
+    for(const [before,after] of changes) {
+      assert.equal(sql.split(before).length,2,`staged canonical reuse anchor: ${before}`);
+      sql=sql.replace(before,()=>after);
+    }
+    await client.query(sql);
+  }
+  await rewrite("analytics.stage_klaviyo_daily_report_package(jsonb,jsonb,jsonb,timestamptz,integer,integer)",[
+    ["      body jsonb not null,","      body jsonb not null,\n      canonical_payload text not null,"],
+    ["(package_ordinal,day_binding,body,digest)","(package_ordinal,day_binding,body,canonical_payload,digest)"],
+    ["values (ordinal,binding,p,package_digest);","values (ordinal,binding,p,canonical_package,package_digest);"],
+  ]);
+  await rewrite("analytics.verify_klaviyo_daily_report_stage(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)",[
+    ["or s.digest is distinct from analytics.dataset_digest(jsonb_build_object('write',s.body,'context',c))",
+      `or s.digest is distinct from encode(sha256(convert_to(s.canonical_payload,'UTF8')),'hex')
+        or jsonb_send(s.canonical_payload::jsonb) is distinct from jsonb_send(jsonb_build_object('write',s.body,'context',c))`],
+  ]);
+}
+
+async function verifyStageTamperRejection(client,args) {
+  const mutations=[
+    "body=jsonb_set(body,'{operationId}',to_jsonb(gen_random_uuid()::text))",
+    "digest=repeat('0',64)",
+    "canonical_payload='{}'",
+  ];
+  for(const mutation of mutations) {
+    await client.query("savepoint stage_tamper_probe");
+    let failure;
+    try {
+      const changed=await client.query(`update pg_temp.adstable_klaviyo_daily_report_stage set ${mutation} where package_ordinal=0`);
+      assert.equal(changed.rowCount,1);
+      await client.query("select analytics.verify_klaviyo_daily_report_stage($1,$2,$3,$4,$5,$6)",args);
+    } catch(error) {
+      if(error.code!=="P0001") throw error;
+      failure=error.message;
+    } finally {
+      await client.query("rollback to savepoint stage_tamper_probe");
+      await client.query("release savepoint stage_tamper_probe");
+    }
+    assert.equal(failure,"KLAVIYO_REPORT_PACKAGE_VERIFICATION_FAILED");
+  }
+}
+
+const triggerPhases=["authority","rowJson","sourceContext","rowIdentity","mappingAndFx"];
+
+async function installTriggerPhaseTimers(client) {
+  const {rows:[{definition}]}=await client.query(
+    "select pg_get_functiondef('analytics.validate_dataset_fact()'::regprocedure) definition");
+  let sql=definition;
+  function before(anchor,instrumentation) {
+    assert.equal(sql.split(anchor).length,2,`trigger timing anchor: ${anchor}`);
+    sql=sql.replace(anchor,()=>instrumentation+"\n"+anchor);
+  }
+  before("\nbegin\n",`\n eo05_phase_start timestamptz; eo05_phase_stop timestamptz;
+  eo05_phase_totals double precision[];${triggerPhases.map(phase=>` eo05_${phase} double precision;`).join("")}`);
+  before(" select * into strict b from evidence.source_batches"," eo05_phase_start:=clock_timestamp();");
+  const checkpoints=[
+    " if octet_length(analytics.dataset_json(j))",
+    " if new.provenance ? 'source_context' then",
+    " -- Registry changes replace this validator",
+    " foreach k in array array['product_mapping_id'",
+    " perform set_config('eo05.sales_trigger_ms'",
+  ];
+  for(const [index,anchor] of checkpoints.entries()) {
+    before(anchor,` eo05_phase_stop:=clock_timestamp();
+ eo05_${triggerPhases[index]}:=1000*extract(epoch from eo05_phase_stop-eo05_phase_start);
+ eo05_phase_start:=eo05_phase_stop;`);
+  }
+  before(" return new;",` eo05_phase_totals:=string_to_array(current_setting('eo05.trigger_phase_ms'),',')::double precision[];
+ perform set_config('eo05.trigger_phase_ms',array_to_string(array[${triggerPhases.map((phase,index)=>`eo05_phase_totals[${index+1}]+eo05_${phase}`).join(",")}],','),true);`);
+  await client.query("set local eo05.trigger_phase_ms='0,0,0,0,0'");
+  await client.query(sql);
+}
+
 const writerPhases=["lookupLock","packageValidation","packageHash","sourceRetention","rowValidation","rowHash","rowPreparation","bulkStatement","packageReceipt"];
 
 async function installWriterTimers(client,{capturePlans,reportWriteCleanup=false,measureBulkPreparation=false}) {
@@ -565,14 +642,14 @@ export async function klaviyoDailyTimingProbe(client,options) {
   return runKlaviyoDailyTimingProbe(client,options);
 }
 
-export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate}) {
+export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false}) {
   assert.equal(connection.host,"aws-1-eu-central-1.pooler.supabase.com");
   assert.equal(connection.port,5432);
   assert.equal(connection.database,"postgres");
   assert.equal(connection.user,"adstable_benchmark_session.lxphenczjmueblnonklm");
   const {rows:[identity]}=await client.query("select session_user as login,current_user as role");
   assert.deepEqual(identity,{login:"adstable_benchmark_session",role:"adstable_owner"});
-  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup,phaseCandidate});
+  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup,phaseCandidate,reuseStagedCanonical,triggerPhaseDetail});
 }
 
 async function installHostedReportClocks(client) {
@@ -595,7 +672,7 @@ async function installHostedReportClocks(client) {
     end $clock$;`);
 }
 
-async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate}) {
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
@@ -635,10 +712,15 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
       await installTriggerSourceReuse(client);
     }
   }
+  if(reuseStagedCanonical) {
+    assert.equal(phaseCandidate,"ordered-json");
+    await installStagedCanonicalReuse(client);
+  }
   if(hostedDetail) {
     assert.ok(hosted&&reduceReportRepeats);
     await installPublishTimers(client,{reportOnly:true,optimized:true});
     await installWriterTimers(client,{capturePlans:false,reportWriteCleanup,measureBulkPreparation:true});
+    if(triggerPhaseDetail) await installTriggerPhaseTimers(client);
   }
   if(hosted) await installHostedReportClocks(client);
   await client.query("update integrations.provider_connections set connected_at=clock_timestamp()-interval '3 days' where id=$1",[owner.connectionId]);
@@ -690,6 +772,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
           ?"select * from pg_temp.eo05_time_stage($1,$2,$3,$4,$5,$6)"
           :"select * from pg_temp.eo05_time_publish($1,$2,$3,$4,$5,$6)";
         try {
+          if(reuseStagedCanonical&&sql===KLAVIYO_DAILY_PUBLISH_SQL) await verifyStageTamperRejection(client,args);
           const result=await client.query(timedSql,args);
           hostedReportMs.push(result.rows[0].elapsed_ms);
           return result;
@@ -836,8 +919,15 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
         }
         const {rows:[{triggerMs}]}=await client.query("select current_setting('eo05.sales_trigger_ms')::double precision \"triggerMs\"");
         assert.ok(triggerMs>0&&triggerMs<=writerPhasesMs.bulkStatement);
+        let triggerDetailMs;
+        if(triggerPhaseDetail) {
+          const {rows:[{timings}]}=await client.query("select string_to_array(current_setting('eo05.trigger_phase_ms'),',')::float8[] as timings");
+          assert.equal(timings.length,triggerPhases.length);
+          assert.ok(timings.every(value=>Number.isFinite(value)&&value>=0));
+          triggerDetailMs=Object.fromEntries(triggerPhases.map((phase,index)=>[phase,timings[index]]));
+        }
         return {...summary,reportWriteMs,stageMs:hostedReportMs.slice(0,5).reduce((sum,ms)=>sum+ms,0),
-          publishMs:hostedReportMs[5],publishPhasesMs,writerPhasesMs,triggerMs,detailsMeasured:true};
+          publishMs:hostedReportMs[5],publishPhasesMs,writerPhasesMs,triggerMs,triggerDetailMs,detailsMeasured:true};
       }
       return {...summary,variant:retentionVariant,totalMs,reportWriteMs,combinedVerification,reduceReportRepeats,detailsMeasured:false};
     }

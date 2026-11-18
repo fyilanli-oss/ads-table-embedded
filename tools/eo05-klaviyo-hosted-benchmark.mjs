@@ -6,13 +6,16 @@ import {klaviyoHostedReportProbe} from "./eo05-klaviyo-daily-timing-probe.mjs";
 
 const host="aws-1-eu-central-1.pooler.supabase.com";
 const flags=process.argv.slice(2);
-if(flags.length>1 || flags.some(flag=>!["--reduce-report-repeats","--details","--cleanup","--compare-details","--compare-phases"].includes(flag))) {
+if(flags.length>1 || flags.some(flag=>!["--reduce-report-repeats","--details","--cleanup","--compare-details","--compare-phases","--compare-staged-json"].includes(flag))) {
   throw new Error("Invalid benchmark mode");
 }
 const compareDetails=flags[0]==="--compare-details";
 const comparePhases=flags[0]==="--compare-phases";
-const hostedDetail=flags[0]==="--details"||compareDetails||comparePhases;
-const variants=comparePhases?[{},{phaseCandidate:"ordered-json"},{phaseCandidate:"trigger-source"}]
+const compareStagedJson=flags[0]==="--compare-staged-json";
+const hostedDetail=flags[0]==="--details"||compareDetails||comparePhases||compareStagedJson;
+const variants=compareStagedJson?[false,true].map(reuseStagedCanonical=>({
+  reportWriteCleanup:true,phaseCandidate:"ordered-json",reuseStagedCanonical,triggerPhaseDetail:true,
+})):comparePhases?[{},{phaseCandidate:"ordered-json"},{phaseCandidate:"trigger-source"}]
   .map(variant=>({reportWriteCleanup:true,...variant}))
   :(compareDetails?[false,true]:Array(hostedDetail?1:3).fill(flags[0]==="--cleanup"))
     .map(reportWriteCleanup=>({reportWriteCleanup}));

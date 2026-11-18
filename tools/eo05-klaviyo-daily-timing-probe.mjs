@@ -360,6 +360,41 @@ ${loop}`);
   const digest="analytics.reconciliation_fact_digest(table_name,fact)";
   assert.equal(fingerprint.split(digest).length,2);
   fingerprint=fingerprint.replace(digest,"analytics.eo05_fact_digest_with_columns(table_name,fact,numeric_columns)");
+  const originalSignature="analytics.klaviyo_daily_report_fingerprint(o jsonb, d date, tz text, expected integer, verified_in_tx boolean DEFAULT false)";
+  assert.equal(sql.split(originalSignature).length,2);
+  await client.query(sql.replace(originalSignature,
+    "analytics.eo05_original_report_fingerprint(o jsonb, d date, tz text, expected integer, verified_in_tx boolean DEFAULT false)"));
+  await client.query(`revoke all on function analytics.eo05_original_report_fingerprint(jsonb,date,text,integer,boolean)
+    from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner`);
+  fingerprint=fingerprint.replace("  fact jsonb; numeric_columns text[];",
+    "  fact jsonb; numeric_columns text[]; table_count integer; matched boolean; table_leaves text[];");
+  const scanStart=fingerprint.indexOf("    for fact in execute format(");
+  const scanEnd=fingerprint.indexOf("\n    end loop;",scanStart);
+  assert.ok(scanStart>=0&&scanEnd>scanStart);
+  fingerprint=fingerprint.slice(0,scanStart)+`    execute format($verify$
+      with actual as materialized (
+        select to_jsonb(x) fact from analytics.%I x
+        where x.workspace_id=$1 and x.installation_id=$2 and x.installation_generation=$3
+          and x.platform='klaviyo' and x.platform_account_id=$4 and x.business_date=$5
+        order by x.native_key_hash collate "C" limit 4001
+      ), digested as materialized (
+        select fact,case when $8 then fact->>'payload_digest'
+          else analytics.eo05_fact_digest_with_columns($6,fact,$9) end as payload from actual
+      )
+      select count(*)::int,coalesce(bool_and(
+        fact->>'source_timezone' is not distinct from $7
+        and fact->>'provider_connection_id' is not distinct from $10
+        and (fact->>'retain_until')::timestamptz>clock_timestamp()
+        and fact->>'payload_digest' is not distinct from payload),true),
+        coalesce(array_agg(analytics.dataset_digest(jsonb_build_array($6,fact->>'native_key_hash',payload))
+          order by fact->>'native_key_hash' collate "C"),'{}')
+      from digested
+    $verify$,table_name) into table_count,matched,table_leaves
+      using w,i,g,o->>'accountId',d,table_name,tz,verified_in_tx,numeric_columns,o->>'connectionId';
+    if matched is not true or cardinality(leaves)+table_count>expected then
+      raise exception 'KLAVIYO_REPORT_FACT_READBACK_MISMATCH';
+    end if;
+    leaves:=leaves||table_leaves;`+fingerprint.slice(scanEnd+"\n    end loop;".length);
   await client.query(fingerprint);
 }
 
@@ -876,7 +911,8 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
       writerPhaseCounts[writer[1]]=(writerPhaseCounts[writer[1]]??0)+1;
     }
   };
-  let failed,phase="start",requests=0,claimId,reportReceipt,reportWriteMs;
+  let failed,phase="start",requests=0,claimId,reportReceipt,reportWriteMs,reportCpuStart;
+  let reportQueueCallsMs=0;
   const hostedReportMs=[];
   const durations={queueEnqueue:0,queueAndAdmission:0,providerCollection:0,providerFixture:0,rawStore:0,handoff:0,reportFlow:0};
   async function timedQuery(bucket,sql,args) {
@@ -884,7 +920,11 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     const start=performance.now();
     try {return await client.query(sql,args);}
     catch(error) {failed??=error;throw error;}
-    finally {databaseTimings[bucket]+=performance.now()-start;}
+    finally {
+      const elapsed=performance.now()-start;
+      databaseTimings[bucket]+=elapsed;
+      if(endToEnd&&phase==="report"&&bucket==="queue") reportQueueCallsMs+=elapsed;
+    }
   }
   const store=createRefreshWorkRepository({query:(sql,args)=>timedQuery("queue",sql,args)});
   const rawDatabase={query:(sql,args)=>timedQuery(sql.includes("commit_klaviyo_dataset_source(")?"rawWrite":"rawReadback",sql,args)};
@@ -995,6 +1035,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
         phase="report";
         if (detailed||endToEnd) {
           reportAt=performance.now();
+          if(endToEnd) reportCpuStart=process.cpuUsage();
           durations.handoff=reportAt-collectedAt;
         }
         return {owner,batches,cipher,expectedRevision:0,database:reportDatabase};
@@ -1002,6 +1043,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     }});
     if (failed) throw failed;
     const ended=reportOnly||retentionOnly?null:performance.now();
+    const reportCpu=endToEnd?process.cpuUsage(reportCpuStart):null;
     if(optimizeReadback) {
       const {rows:[{count,matches}]}=await client.query(`with columns as (
         select array_agg(attname::text order by attnum) as names from pg_catalog.pg_attribute
@@ -1014,6 +1056,10 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
       ) as matches from analytics.cpd_product_sales_facts x cross join columns where installation_id=$1`,[owner.installationId]);
       assert.equal(count,productEvents);
       assert.equal(matches,true);
+      const {rows:[proof]}=await client.query(`select
+        analytics.eo05_original_report_fingerprint($1,$2,'UTC',1000,false) as original,
+        analytics.klaviyo_daily_report_fingerprint($1,$2,'UTC',1000,false) as candidate`,[owner,day]);
+      assert.equal(proof.candidate,proof.original);
     }
     if (detailed||endToEnd) durations.reportFlow=ended-reportAt;
     assert.equal(run.work?.status,"completed",JSON.stringify(run));
@@ -1048,7 +1094,8 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
         assert.ok(hostedReportMs.every(value=>Number.isFinite(value)&&value>0));
         const reportWriteMs=hostedReportMs.reduce((sum,ms)=>sum+ms,0);
         if(endToEnd) return {...summary,totalMs:ended-start,reportWriteMs,durationsMs:durations,
-          databaseCallsMs:databaseTimings,detailsMeasured:false,providerNetworkMeasured:false};
+          databaseCallsMs:databaseTimings,reportQueueCallsMs,
+          reportCpuMs:(reportCpu.user+reportCpu.system)/1000,detailsMeasured:false,providerNetworkMeasured:false};
         if(!hostedDetail) return {...summary,reportWriteMs};
         for(const name of ["publishLockAcquire","publishAuthority","publishPackageValidation","sharedSourceChecks",
           "beforeWriter","physicalWrite","readbackAuthority","physicalVerification","writerAndVerification","receiptPersist"]) {

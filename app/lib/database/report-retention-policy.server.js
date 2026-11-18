@@ -27,7 +27,17 @@ export function resolveReportWritePolicy(policy, rows) {
   const marker = Object.hasOwn(policy, "calendarYears");
   if (marker) readReportRetentionPolicy(policy); else if (!exact(policy, ["version", "until"])) fail();
   if (!Array.isArray(rows) || !rows.length) fail();
-  const resolved = rows.map(item => resolveReportRetentionPolicy({businessDate: item.row?.business_date, timeZone: item.row?.source_timezone}));
+  const dates = new Map();
+  const resolved = rows.map(item => {
+    const businessDate = item.row?.business_date, timeZone = item.row?.source_timezone;
+    let zones = dates.get(businessDate);
+    if (!zones) {
+      zones = new Map();
+      dates.set(businessDate, zones);
+    }
+    if (!zones.has(timeZone)) zones.set(timeZone, resolveReportRetentionPolicy({businessDate, timeZone}));
+    return zones.get(timeZone);
+  });
   if (resolved.some(p => p.until !== resolved[0].until) || !marker && policy.until !== resolved[0].until) fail();
   return resolved[0];
 }

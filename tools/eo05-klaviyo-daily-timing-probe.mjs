@@ -248,26 +248,26 @@ async function installReportWriteCleanup(client) {
 
 const writerPhases=["lookupLock","packageValidation","packageHash","sourceRetention","rowValidation","rowHash","rowPreparation","bulkStatement","packageReceipt"];
 
-async function installWriterTimers(client,{capturePlans}) {
+async function installWriterTimers(client,{capturePlans,reportWriteCleanup=false,measureBulkPreparation=false}) {
   if(capturePlans) await client.query(`create temp table eo05_bulk_plan_inputs (
     ordinal bigint generated always as identity, fact_table text, columns text,
     payload jsonb, check_retention boolean
   ) on commit drop`);
   else await installSalesTriggerTimer(client);
-  await client.query(`create function analytics.eo05_timed_json_size(p jsonb) returns integer
+  await client.query(`create function analytics.eo05_timed_package_json(p jsonb) returns text
     language plpgsql set search_path='' as $measure$
-    declare started timestamptz:=clock_timestamp(); bytes integer;
+    declare started timestamptz:=clock_timestamp(); canonical text;
     begin
-      bytes:=octet_length(analytics.dataset_json(p));
+      canonical:=analytics.dataset_json(p);
       raise notice 'EO05_WRITER_TIMING packageJsonSize %',1000*extract(epoch from clock_timestamp()-started);
-      return bytes;
+      return canonical;
     end $measure$`);
   const {rows:[{definition}]}=await client.query(
     "select pg_get_functiondef('analytics.commit_dataset_storage(jsonb,jsonb)'::regprocedure) definition");
   let sql=definition;
-  const packageSize="octet_length(analytics.dataset_json(p))";
+  const packageSize=reportWriteCleanup?"canonical_package:=analytics.dataset_json(p)":"octet_length(analytics.dataset_json(p))";
   assert.equal(sql.split(packageSize).length,2);
-  sql=sql.replace(packageSize,"analytics.eo05_timed_json_size(p)");
+  sql=sql.replace(packageSize,packageSize.replace("analytics.dataset_json","analytics.eo05_timed_package_json"));
   function before(anchor,instrumentation) {
     assert.equal(sql.split(anchor).length,2,`writer timing anchor: ${anchor}`);
     sql=sql.replace(anchor,()=>instrumentation+"\n"+anchor);
@@ -275,12 +275,12 @@ async function installWriterTimers(client,{capturePlans}) {
   function finish(phase) {
     return ` eo05_timing_${phase}:=eo05_timing_${phase}+1000*extract(epoch from clock_timestamp()-eo05_started);\n eo05_started:=clock_timestamp();`;
   }
-  before("\nbegin\n",`\n eo05_started timestamptz; eo05_bulk_measured boolean;\n${writerPhases.map(phase=>` eo05_timing_${phase} double precision:=0;`).join("\n")}`);
+  before("\nbegin\n",`\n eo05_started timestamptz; eo05_bulk_measured boolean;${measureBulkPreparation?" eo05_bulk_preparation_start timestamptz;":""}\n${writerPhases.map(phase=>` eo05_timing_${phase} double precision:=0;`).join("\n")}`);
   before(" perform 1 from operations.refresh_control", " eo05_started:=clock_timestamp();");
   before(" perform evidence.assert_source_owner", finish("lookupLock"));
   before(" select * into strict b from evidence.source_batches", finish("packageValidation"));
   before(" if b.authority is distinct", finish("lookupLock"));
-  before(" h:=analytics.dataset_digest(p)", finish("packageValidation"));
+  before(reportWriteCleanup?" h:=encode(sha256(convert_to(canonical_package":" h:=analytics.dataset_digest(p)", finish("packageValidation"));
   before(" if prior is not null then", finish("packageHash"));
   before(" if p->'policy'->>'version'='report-source-3y-v1' then",finish("packageValidation"));
   before(" if (select count(*) from jsonb_array_elements(p->'rows'))",finish("sourceRetention"));
@@ -289,11 +289,19 @@ async function installWriterTimers(client,{capturePlans}) {
   before("  row_input:=r-array",finish("rowValidation"));
   before("  injected:=r||jsonb_build_object",finish("rowHash"));
   before("   continue;",finish("rowPreparation"));
+  if(measureBulkPreparation) {
+    before("\n if staged_klaviyo then\n  -- Table names", " eo05_bulk_preparation_start:=clock_timestamp();");
+  }
   const capture=capturePlans?`   insert into pg_temp.eo05_bulk_plan_inputs(fact_table,columns,payload,check_retention)
      values(name,cols,bulk_rows->name,p->'policy'->>'version'='report-source-3y-v1');\n`:"";
   before("   for stored in execute format($bulk$",`${capture}   eo05_bulk_measured:=false; eo05_started:=clock_timestamp();`);
   before("    if stored.native_conflict",`    if not eo05_bulk_measured then\n${finish("bulkStatement")}\n     eo05_bulk_measured:=true;\n    end if;`);
-  before(" result:=jsonb_build_object('status','stored'", " eo05_started:=clock_timestamp();");
+  before(" result:=jsonb_build_object('status','stored'", `${measureBulkPreparation?`
+ if staged_klaviyo then
+   eo05_timing_rowPreparation:=eo05_timing_rowPreparation+
+     1000*extract(epoch from clock_timestamp()-eo05_bulk_preparation_start)-eo05_timing_bulkStatement;
+ end if;`:""}
+ eo05_started:=clock_timestamp();`);
   before(" return result;",`${finish("packageReceipt")}\n${writerPhases.map(phase=>` raise notice 'EO05_WRITER_TIMING ${phase} %',eo05_timing_${phase};`).join("\n")}`);
   await client.query(sql);
 }
@@ -526,14 +534,14 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     assert.ok(combinedVerification);
     await installReportRepeatReduction(client);
   }
+  if(reportWriteCleanup) {
+    assert.ok(reduceReportRepeats);
+    await installReportWriteCleanup(client);
+  }
   if(hostedDetail) {
     assert.ok(hosted&&reduceReportRepeats);
     await installPublishTimers(client,{reportOnly:true,optimized:true});
-    await installWriterTimers(client,{capturePlans:false});
-  }
-  if(reportWriteCleanup) {
-    assert.ok(reduceReportRepeats&&!hostedDetail);
-    await installReportWriteCleanup(client);
+    await installWriterTimers(client,{capturePlans:false,reportWriteCleanup,measureBulkPreparation:true});
   }
   if(hosted) await installHostedReportClocks(client);
   await client.query("update integrations.provider_connections set connected_at=clock_timestamp()-interval '3 days' where id=$1",[owner.connectionId]);

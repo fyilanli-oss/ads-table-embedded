@@ -33,6 +33,7 @@ on:
       - "tests/dataset-storage.test.js"
       - "tests/fixtures/dataset-storage-fixture.js"
       - "tools/eo05b-dataset-storage-probe.mjs"
+      - "tools/eo05-klaviyo-daily-timing-probe.mjs"
       - "app/lib/refresh/meta-*"
       - "app/lib/database/meta-*"
       - "app/lib/providers/meta-raw-projection.server.js"

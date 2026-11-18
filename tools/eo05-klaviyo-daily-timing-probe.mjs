@@ -357,11 +357,80 @@ async function installStagedCanonicalReuse(client) {
   ]);
 }
 
-async function verifyStageTamperRejection(client,args) {
+async function installCanonicalRowsReuse(client) {
+  await client.query(`create function analytics.eo05_package_from_rows(p jsonb, canonical_rows text, depth integer) returns text
+    language sql immutable strict set search_path='' as $fn$
+      select '{"operationId":'||analytics.dataset_json(p->'operationId',depth+1)||
+        ',"policy":'||analytics.dataset_json(p->'policy',depth+1)||
+        ',"rows":'||canonical_rows||
+        ',"version":'||analytics.dataset_json(p->'version',depth+1)||'}'
+    $fn$;
+    revoke all on function analytics.eo05_package_from_rows(jsonb,text,integer)
+      from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner`);
+  async function rewrite(signature,changes) {
+    const {rows:[{definition}]}=await client.query("select pg_get_functiondef($1::regprocedure) definition",[signature]);
+    let sql=definition;
+    for(const [before,after] of changes) {
+      assert.equal(sql.split(before).length,2,`canonical row reuse anchor: ${before}`);
+      sql=sql.replace(before,()=>after);
+    }
+    await client.query(sql);
+  }
+  const stagedEnvelope=(p,rows)=>`'{"context":'||analytics.dataset_json(c,1)||',"write":'||analytics.eo05_package_from_rows(${p},${rows},1)||'}'`;
+  await rewrite("analytics.stage_klaviyo_daily_report_package(jsonb,jsonb,jsonb,timestamptz,integer,integer)",[
+    ["  canonical_package text;","  canonical_package text;\n  canonical_rows text;"],
+    ["    canonical_package:=analytics.dataset_json(jsonb_build_object('write',p,'context',c));",
+      `    if p ?& array['operationId','policy','rows','version']
+      and (select count(*) from jsonb_object_keys(p))=4 then
+      canonical_rows:=analytics.dataset_json(p->'rows',2);
+      canonical_package:=${stagedEnvelope("p","canonical_rows")};
+      if octet_length(canonical_package)>1048576 then raise exception 'DATASET_JSON_BOUNDS';end if;
+    else
+      canonical_package:=analytics.dataset_json(jsonb_build_object('write',p,'context',c));
+    end if;`],
+    ["      canonical_payload text not null,","      canonical_payload text not null,\n      canonical_rows text,"],
+    ["body,canonical_payload,digest)","body,canonical_payload,canonical_rows,digest)"],
+    ["p,canonical_package,package_digest);","p,canonical_package,canonical_rows,package_digest);"],
+  ]);
+  await rewrite("analytics.verify_klaviyo_daily_report_stage(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)",[
+    ["or jsonb_send(s.canonical_payload::jsonb) is distinct from jsonb_send(jsonb_build_object('write',s.body,'context',c)))",
+      `or jsonb_send(s.canonical_payload::jsonb) is distinct from jsonb_send(jsonb_build_object('write',s.body,'context',c))
+        or (s.canonical_rows is not null and s.canonical_payload collate "C" is distinct from
+          (${stagedEnvelope("s.body","s.canonical_rows")}) collate "C"))`],
+  ]);
+  await rewrite("analytics.commit_dataset_storage(jsonb,jsonb)",[
+    [" canonical_package text;"," canonical_package text; canonical_rows text;"],
+    [" canonical_package:=analytics.dataset_json(p);",
+      ` if o->>'provider'='klaviyo' and exists(select 1 from pg_catalog.pg_class
+   where oid=pg_catalog.to_regclass('pg_temp.adstable_klaviyo_daily_report_stage')
+     and relnamespace=pg_catalog.pg_my_temp_schema() and relowner=current_user::regrole
+     and relpersistence='t' and relkind='r') then
+   select s.canonical_rows into canonical_rows from pg_temp.adstable_klaviyo_daily_report_stage s
+     where s.daily_sources_verified
+       and jsonb_send(s.body-'operationId')=jsonb_send(p-'operationId')
+     order by s.package_ordinal limit 1;
+ end if;
+ canonical_package:=case when canonical_rows is null then analytics.dataset_json(p)
+   else analytics.eo05_package_from_rows(p,canonical_rows,0) end;
+ if octet_length(canonical_package)>1048576 then raise exception 'DATASET_JSON_BOUNDS';end if;`],
+  ]);
+}
+
+async function verifyStageTamperRejection(client,args,reuseCanonicalRows) {
+  if(reuseCanonicalRows) {
+    const {rows:[{verified}]}=await client.query(`with writer_packages as materialized (
+      select body||jsonb_build_object('operationId',gen_random_uuid()) as body,canonical_rows
+      from pg_temp.adstable_klaviyo_daily_report_stage
+    )
+    select count(*) filter(where analytics.eo05_package_from_rows(body,canonical_rows,0) collate "C"
+      =analytics.dataset_json(body) collate "C")::int as verified from writer_packages`);
+    assert.equal(verified,5);
+  }
   const mutations=[
     "body=jsonb_set(body,'{operationId}',to_jsonb(gen_random_uuid()::text))",
     "digest=repeat('0',64)",
     "canonical_payload='{}'",
+    ...(reuseCanonicalRows?["canonical_rows=' '||canonical_rows"]:[]),
   ];
   for(const mutation of mutations) {
     await client.query("savepoint stage_tamper_probe");
@@ -414,7 +483,7 @@ async function installTriggerPhaseTimers(client) {
 
 const writerPhases=["lookupLock","packageValidation","packageHash","sourceRetention","rowValidation","rowHash","rowPreparation","bulkStatement","packageReceipt"];
 
-async function installWriterTimers(client,{capturePlans,reportWriteCleanup=false,measureBulkPreparation=false}) {
+async function installWriterTimers(client,{capturePlans,reportWriteCleanup=false,measureBulkPreparation=false,reuseCanonicalRows=false}) {
   if(capturePlans) await client.query(`create temp table eo05_bulk_plan_inputs (
     ordinal bigint generated always as identity, fact_table text, columns text,
     payload jsonb, check_retention boolean
@@ -432,8 +501,26 @@ async function installWriterTimers(client,{capturePlans,reportWriteCleanup=false
     "select pg_get_functiondef('analytics.commit_dataset_storage(jsonb,jsonb)'::regprocedure) definition");
   let sql=definition;
   const packageSize=reportWriteCleanup?"canonical_package:=analytics.dataset_json(p)":"octet_length(analytics.dataset_json(p))";
-  assert.equal(sql.split(packageSize).length,2);
-  sql=sql.replace(packageSize,packageSize.replace("analytics.dataset_json","analytics.eo05_timed_package_json"));
+  if(reuseCanonicalRows) {
+    const fallback="case when canonical_rows is null then analytics.dataset_json(p)";
+    assert.equal(sql.split(fallback).length,2);
+    sql=sql.replace(fallback,fallback.replace("analytics.dataset_json","analytics.eo05_timed_package_json"));
+    const reused="else analytics.eo05_package_from_rows(p,canonical_rows,0) end;";
+    assert.equal(sql.split(reused).length,2);
+    await client.query(`create function analytics.eo05_timed_reused_package(p jsonb, canonical_rows text) returns text
+      language plpgsql set search_path='' as $measure$
+      declare started timestamptz:=clock_timestamp(); canonical text;
+      begin
+        canonical:=analytics.eo05_package_from_rows(p,canonical_rows,0);
+        raise notice 'EO05_WRITER_TIMING packageJsonSize %',1000*extract(epoch from clock_timestamp()-started);
+        raise notice 'EO05_WRITER_TIMING reusedPackage 1';
+        return canonical;
+      end $measure$`);
+    sql=sql.replace(reused,"else analytics.eo05_timed_reused_package(p,canonical_rows) end;");
+  } else {
+    assert.equal(sql.split(packageSize).length,2);
+    sql=sql.replace(packageSize,packageSize.replace("analytics.dataset_json","analytics.eo05_timed_package_json"));
+  }
   function before(anchor,instrumentation) {
     assert.equal(sql.split(anchor).length,2,`writer timing anchor: ${anchor}`);
     sql=sql.replace(anchor,()=>instrumentation+"\n"+anchor);
@@ -642,14 +729,14 @@ export async function klaviyoDailyTimingProbe(client,options) {
   return runKlaviyoDailyTimingProbe(client,options);
 }
 
-export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false}) {
+export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false}) {
   assert.equal(connection.host,"aws-1-eu-central-1.pooler.supabase.com");
   assert.equal(connection.port,5432);
   assert.equal(connection.database,"postgres");
   assert.equal(connection.user,"adstable_benchmark_session.lxphenczjmueblnonklm");
   const {rows:[identity]}=await client.query("select session_user as login,current_user as role");
   assert.deepEqual(identity,{login:"adstable_benchmark_session",role:"adstable_owner"});
-  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup,phaseCandidate,reuseStagedCanonical,triggerPhaseDetail});
+  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup,phaseCandidate,reuseStagedCanonical,triggerPhaseDetail,reuseCanonicalRows});
 }
 
 async function installHostedReportClocks(client) {
@@ -672,7 +759,7 @@ async function installHostedReportClocks(client) {
     end $clock$;`);
 }
 
-async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false}) {
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
@@ -716,10 +803,14 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     assert.equal(phaseCandidate,"ordered-json");
     await installStagedCanonicalReuse(client);
   }
+  if(reuseCanonicalRows) {
+    assert.ok(reuseStagedCanonical&&hostedDetail);
+    await installCanonicalRowsReuse(client);
+  }
   if(hostedDetail) {
     assert.ok(hosted&&reduceReportRepeats);
     await installPublishTimers(client,{reportOnly:true,optimized:true});
-    await installWriterTimers(client,{capturePlans:false,reportWriteCleanup,measureBulkPreparation:true});
+    await installWriterTimers(client,{capturePlans:false,reportWriteCleanup,measureBulkPreparation:true,reuseCanonicalRows});
     if(triggerPhaseDetail) await installTriggerPhaseTimers(client);
   }
   if(hosted) await installHostedReportClocks(client);
@@ -772,7 +863,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
           ?"select * from pg_temp.eo05_time_stage($1,$2,$3,$4,$5,$6)"
           :"select * from pg_temp.eo05_time_publish($1,$2,$3,$4,$5,$6)";
         try {
-          if(reuseStagedCanonical&&sql===KLAVIYO_DAILY_PUBLISH_SQL) await verifyStageTamperRejection(client,args);
+          if(reuseStagedCanonical&&sql===KLAVIYO_DAILY_PUBLISH_SQL) await verifyStageTamperRejection(client,args,reuseCanonicalRows);
           const result=await client.query(timedSql,args);
           hostedReportMs.push(result.rows[0].elapsed_ms);
           return result;
@@ -917,6 +1008,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
         for(const name of [...writerPhases,"packageJsonSize"]) {
           assert.equal(writerPhaseCounts[name],5,`expected five package timings for ${name}`);
         }
+        if(reuseCanonicalRows) assert.equal(writerPhaseCounts.reusedPackage,5);
         const {rows:[{triggerMs}]}=await client.query("select current_setting('eo05.sales_trigger_ms')::double precision \"triggerMs\"");
         assert.ok(triggerMs>0&&triggerMs<=writerPhasesMs.bulkStatement);
         let triggerDetailMs;

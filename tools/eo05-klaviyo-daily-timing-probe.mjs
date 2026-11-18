@@ -24,8 +24,9 @@ async function installExactBulkWriter(client) {
   await client.query("set local role adstable_owner");
 }
 
-async function installRetentionComparison(client,variant) {
-  await client.query(`set local eo05.retention_calls='0';
+async function installRetentionComparison(client,variant,{measure}) {
+  if(!measure&&variant==="current") return;
+  if(measure) await client.query(`set local eo05.retention_calls='0';
     create function analytics.eo05_count_report_retention(d date,tz text) returns timestamptz
       language plpgsql set search_path='' as $measure$
       begin
@@ -41,9 +42,10 @@ async function installRetentionComparison(client,variant) {
   }
   const policyBlock="\n if p->'policy'->>'version'='report-source-3y-v1' then";
   const originalCall="analytics.report_retention_until((r->>'business_date')::date,r->>'source_timezone')";
-  replace("\nbegin\n",`\n eo05_retention_started timestamptz;\n${variant==="cached"?
+  const retentionFn=measure?"analytics.eo05_count_report_retention":"analytics.report_retention_until";
+  replace("\nbegin\n",`\n${measure?" eo05_retention_started timestamptz;\n":""}${variant==="cached"?
     " eo05_day date; eo05_timezone text; eo05_until timestamptz;\n":""}\nbegin\n`);
-  replace(policyBlock,"\n eo05_retention_started:=clock_timestamp();"+policyBlock);
+  if(measure) replace(policyBlock,"\n eo05_retention_started:=clock_timestamp();"+policyBlock);
   if(variant==="cached") {
     await client.query(`create temp table eo05_report_retention_cache (
       business_day date, source_timezone text, retain_until timestamptz not null,
@@ -57,7 +59,7 @@ async function installRetentionComparison(client,variant) {
    select retain_until into eo05_until from pg_temp.eo05_report_retention_cache
     where business_day=eo05_day and source_timezone=eo05_timezone;
    if not found then
-    eo05_until:=analytics.eo05_count_report_retention(eo05_day,eo05_timezone);
+    eo05_until:=${retentionFn}(eo05_day,eo05_timezone);
     insert into pg_temp.eo05_report_retention_cache values(eo05_day,eo05_timezone,eo05_until);
    end if;
   end if;${rowLoop}`);
@@ -65,10 +67,10 @@ async function installRetentionComparison(client,variant) {
     // for other days, timezones, and unverified or non-staged callers.
     replace(originalCall,`(case when staged_klaviyo and verified_day_sources
       and (r->>'business_date')::date=eo05_day and r->>'source_timezone'=eo05_timezone then eo05_until
-      else analytics.eo05_count_report_retention((r->>'business_date')::date,r->>'source_timezone') end)`);
+      else ${retentionFn}((r->>'business_date')::date,r->>'source_timezone') end)`);
   } else replace(originalCall,originalCall.replace("report_retention_until","eo05_count_report_retention"));
   const afterBlock="\n if (select count(*) from jsonb_array_elements(p->'rows'))";
-  replace(afterBlock,`\n raise notice 'EO05_RETENTION_COMPARISON %',1000*extract(epoch from clock_timestamp()-eo05_retention_started);${afterBlock}`);
+  if(measure) replace(afterBlock,`\n raise notice 'EO05_RETENTION_COMPARISON %',1000*extract(epoch from clock_timestamp()-eo05_retention_started);${afterBlock}`);
   await client.query(sql);
 }
 
@@ -282,9 +284,10 @@ function syntheticResponse(endpoint,owner,day) {
 
 /** Run within the existing F01 localhost rollback transaction. */
 export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,environment=process.env,mode="report",retentionVariant}) {
-  assert.ok(["report","wall","detailed","retention"].includes(mode));
-  const retentionOnly=mode==="retention",detailed=mode==="detailed",reportOnly=mode==="report",measureReport=detailed||reportOnly;
-  if(retentionOnly) assert.ok(["current","cached"].includes(retentionVariant));
+  assert.ok(["report","wall","detailed","retention","retention-wall"].includes(mode));
+  const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall";
+  const detailed=mode==="detailed",reportOnly=mode==="report",measureReport=detailed||reportOnly;
+  if(retentionOnly||retentionWall) assert.ok(["current","cached"].includes(retentionVariant));
   assert.equal(environment.GITHUB_ACTIONS,"true");assert.ok(environment.RUNNER_TEMP);
   assert.equal(connection.host,"127.0.0.1");assert.equal(connection.port,54322);
   await installExactBulkWriter(client);
@@ -300,7 +303,7 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
     await installPublishTimers(client,{reportOnly});
     await installWriterTimers(client,{capturePlans:detailed});
   }
-  if(retentionOnly) await installRetentionComparison(client,retentionVariant);
+  if(retentionOnly||retentionWall) await installRetentionComparison(client,retentionVariant,{measure:retentionOnly});
   await client.query("update integrations.provider_connections set connected_at=clock_timestamp()-interval '3 days' where id=$1",[owner.connectionId]);
   await client.query(`insert into operations.refresh_quota_contexts
     (workspace_id,install_generation,provider,installation_id,connection_id,connection_version,account_id,client_scope_key,connection_scope_key,connection_epoch,api_version,enabled)
@@ -466,6 +469,7 @@ export async function klaviyoDailyTimingProbe(client,{ownerFixture,connection,en
       return {...summary,variant:retentionVariant,calls,retentionPackagesMs,
         retentionMs:retentionPackagesMs.reduce((sum,ms)=>sum+ms,0)};
     }
+    if(retentionWall) return {...summary,variant:retentionVariant,totalMs:ended-start,detailsMeasured:false};
     if (!measureReport) {
       console.log("EO05_KLAVIYO_WALL_TIME_PASS "+JSON.stringify({...summary,totalMs:ended-start,detailsMeasured:false}));
       return;

@@ -75,14 +75,14 @@ export async function datasetStorageProbe(client, connection, environment = proc
       await client.query("savepoint klaviyo_daily_timing");
       try {
         retentionComparison.push(await klaviyoDailyTimingProbe(client,{
-          ownerFixture,connection,environment,mode:"retention",retentionVariant,
+          ownerFixture,connection,environment,mode:"retention-wall",retentionVariant,
         }));
       } finally {
         await client.query("rollback to savepoint klaviyo_daily_timing");
         await client.query("release savepoint klaviyo_daily_timing");
       }
     }
-    console.log("EO05_KLAVIYO_RETENTION_COMPARISON_PASS "+JSON.stringify(retentionComparison));
+    console.log("EO05_KLAVIYO_RETENTION_WALL_COMPARISON_PASS "+JSON.stringify(retentionComparison));
     await sourceDatasetBindingProbe(client, {ownerFixture});
     await reportRetentionProbe(client, {ownerFixture, sourceFixture});
     await fxReportingCurrencyProbe(client, {ownerFixture});

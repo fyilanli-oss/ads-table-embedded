@@ -335,6 +335,34 @@ async function installTriggerSourceReuse(client) {
   await client.query(trigger);
 }
 
+async function installReadbackMetadataReuse(client) {
+  const {rows:[{definition}]}=await client.query(
+    "select pg_get_functiondef('analytics.reconciliation_fact_digest(text,jsonb)'::regprocedure) definition");
+  let helper=definition.replace("analytics.reconciliation_fact_digest(t text, j jsonb)",
+    "analytics.eo05_fact_digest_with_columns(t text, j jsonb, numeric_columns text[])");
+  assert.notEqual(helper,definition);
+  const catalog="for k in select attname::text from pg_catalog.pg_attribute where attrelid=('analytics.'||t)::regclass and atttypid in ('numeric'::regtype,'bigint'::regtype) and attnum>0 and not attisdropped loop";
+  assert.equal(helper.split(catalog).length,2);
+  helper=helper.replace(catalog,"foreach k in array numeric_columns loop");
+  await client.query(helper);
+  await client.query(`revoke all on function analytics.eo05_fact_digest_with_columns(text,jsonb,text[])
+    from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner`);
+  const {rows:[{sql}]}=await client.query(
+    "select pg_get_functiondef('analytics.klaviyo_daily_report_fingerprint(jsonb,date,text,integer,boolean)'::regprocedure) sql");
+  const loop="    for fact in execute format(";
+  assert.equal(sql.split(loop).length,2);
+  let fingerprint=sql.replace("  fact jsonb;","  fact jsonb; numeric_columns text[];");
+  assert.notEqual(fingerprint,sql);
+  fingerprint=fingerprint.replace(loop,`    select coalesce(array_agg(attname::text order by attnum),'{}') into numeric_columns
+      from pg_catalog.pg_attribute where attrelid=('analytics.'||table_name)::regclass
+      and atttypid in ('numeric'::regtype,'bigint'::regtype) and attnum>0 and not attisdropped;
+${loop}`);
+  const digest="analytics.reconciliation_fact_digest(table_name,fact)";
+  assert.equal(fingerprint.split(digest).length,2);
+  fingerprint=fingerprint.replace(digest,"analytics.eo05_fact_digest_with_columns(table_name,fact,numeric_columns)");
+  await client.query(fingerprint);
+}
+
 async function installStagedCanonicalReuse(client) {
   async function rewrite(signature,changes) {
     const {rows:[{definition}]}=await client.query("select pg_get_functiondef($1::regprocedure) definition",[signature]);
@@ -729,14 +757,14 @@ export async function klaviyoDailyTimingProbe(client,options) {
   return runKlaviyoDailyTimingProbe(client,options);
 }
 
-export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false}) {
+export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false}) {
   assert.equal(connection.host,"aws-1-eu-central-1.pooler.supabase.com");
   assert.equal(connection.port,5432);
   assert.equal(connection.database,"postgres");
   assert.equal(connection.user,"adstable_benchmark_session.lxphenczjmueblnonklm");
   const {rows:[identity]}=await client.query("select session_user as login,current_user as role");
   assert.deepEqual(identity,{login:"adstable_benchmark_session",role:"adstable_owner"});
-  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup,phaseCandidate,reuseStagedCanonical,triggerPhaseDetail,reuseCanonicalRows});
+  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup,phaseCandidate,reuseStagedCanonical,triggerPhaseDetail,reuseCanonicalRows,endToEnd,optimizeReadback});
 }
 
 async function installHostedReportClocks(client) {
@@ -759,7 +787,7 @@ async function installHostedReportClocks(client) {
     end $clock$;`);
 }
 
-async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false}) {
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
@@ -792,7 +820,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     await installReportWriteCleanup(client);
   }
   if(phaseCandidate) {
-    assert.ok(hostedDetail&&reportWriteCleanup);
+    assert.ok((hostedDetail||endToEnd)&&reportWriteCleanup);
     if(phaseCandidate==="ordered-json") await installOrderedCanonicalJson(client);
     else {
       assert.equal(phaseCandidate,"trigger-source");
@@ -804,8 +832,12 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     await installStagedCanonicalReuse(client);
   }
   if(reuseCanonicalRows) {
-    assert.ok(reuseStagedCanonical&&hostedDetail);
+    assert.ok(reuseStagedCanonical&&(hostedDetail||endToEnd));
     await installCanonicalRowsReuse(client);
+  }
+  if(optimizeReadback) {
+    assert.ok(endToEnd&&reuseCanonicalRows);
+    await installReadbackMetadataReuse(client);
   }
   if(hostedDetail) {
     assert.ok(hosted&&reduceReportRepeats);
@@ -848,7 +880,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   const hostedReportMs=[];
   const durations={queueEnqueue:0,queueAndAdmission:0,providerCollection:0,providerFixture:0,rawStore:0,handoff:0,reportFlow:0};
   async function timedQuery(bucket,sql,args) {
-    if (!detailed&&(!reportOnly||!["reportStage","reportPublish"].includes(bucket))) return client.query(sql,args);
+    if (!endToEnd&&!detailed&&(!reportOnly||!["reportStage","reportPublish"].includes(bucket))) return client.query(sql,args);
     const start=performance.now();
     try {return await client.query(sql,args);}
     catch(error) {failed??=error;throw error;}
@@ -863,8 +895,10 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
           ?"select * from pg_temp.eo05_time_stage($1,$2,$3,$4,$5,$6)"
           :"select * from pg_temp.eo05_time_publish($1,$2,$3,$4,$5,$6)";
         try {
-          if(reuseStagedCanonical&&sql===KLAVIYO_DAILY_PUBLISH_SQL) await verifyStageTamperRejection(client,args,reuseCanonicalRows);
+          if(!endToEnd&&reuseStagedCanonical&&sql===KLAVIYO_DAILY_PUBLISH_SQL) await verifyStageTamperRejection(client,args,reuseCanonicalRows);
+          const callStart=performance.now();
           const result=await client.query(timedSql,args);
+          if(endToEnd) databaseTimings[sql===KLAVIYO_DAILY_STAGE_SQL?"reportStage":"reportPublish"]+=performance.now()-callStart;
           hostedReportMs.push(result.rows[0].elapsed_ms);
           return result;
         } catch(error) {failed??=error;throw error;}
@@ -893,7 +927,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   if (measureReport||retentionOnly||hostedDetail) client.on("notice",onNotice);
   try {
     await store.checkQueueFromAuthority({expectedRevision:(await store.readQueueCheck()).revision});
-    if (detailed) durations.queueEnqueue=performance.now()-start;
+    if (detailed||endToEnd) durations.queueEnqueue=performance.now()-start;
     const limits={deadlineAt:now()+120000,requestTimeoutMs:100000,finishReserveMs:2000,maxRows:2000,maxBytes:4000000};
     const appId="gid://shopify/App/456";
     const entitlementVerifier=createRefreshEntitlementVerifier({store,appId,now,limits,authorizeRead:async()=>true,
@@ -916,8 +950,8 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
           claimId=claim.id;
           const quotaContext=await store.loadQuotaContext({claim,window,provider:"klaviyo",entitlementReceipt});
           assert.ok(quotaContext);
-          const beforeCollect=detailed?performance.now():0;
-          if (detailed) durations.queueAndAdmission=beforeCollect-start-durations.queueEnqueue;
+          const beforeCollect=detailed||endToEnd?performance.now():0;
+          if (detailed||endToEnd) durations.queueAndAdmission=beforeCollect-start-durations.queueEnqueue;
           phase="collection";
           const guard=async()=>assert.equal(await store.isClaimCurrent({claim}),true);
           await collectKlaviyoRawDatasets({
@@ -925,14 +959,14 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
             window,limits:{...limits,maxPages:10,maxBytes:1048576},signal,now,guard,pacerFactory:()=>async()=>{},
             async transport(endpoint) {
               requests++;
-              if (!detailed) return syntheticResponse(endpoint,owner,day);
+              if (!detailed&&!endToEnd) return syntheticResponse(endpoint,owner,day);
               const before=performance.now();
               try {return syntheticResponse(endpoint,owner,day);}
               finally {durations.providerFixture+=performance.now()-before;}
             },
             async onDataset({dataset,pages,complete,coverage}) {
               assert.equal(complete,true);
-              const begin=detailed?performance.now():0,attemptId=randomUUID(),stamp=new Date(now()).toISOString();
+              const begin=detailed||endToEnd?performance.now():0,attemptId=randomUUID(),stamp=new Date(now()).toISOString();
               const read={jobId:claim.id,fence:String(claim.fence),window,operationId,quotaContext,
                 observedAt:entitlementReceipt.observedAt,completedAt:stamp,deadlineAt:new Date(limits.deadlineAt).toISOString(),coverage};
               if (dataset==="product_performance") {
@@ -945,10 +979,10 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
                 assert.equal(stored.contentVerified,true);
                 batches.push({attemptId,ordinal:0});
               }
-              if (detailed) durations.rawStore+=performance.now()-begin;
+              if (detailed||endToEnd) durations.rawStore+=performance.now()-begin;
             },
           });
-          if (detailed) {
+          if (detailed||endToEnd) {
             collectedAt=performance.now();
             durations.providerCollection=collectedAt-beforeCollect-durations.rawStore;
           }
@@ -959,7 +993,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
       async loadDatasetInputs({claim}) {
         assert.equal(claim.id,claimId);
         phase="report";
-        if (detailed) {
+        if (detailed||endToEnd) {
           reportAt=performance.now();
           durations.handoff=reportAt-collectedAt;
         }
@@ -968,7 +1002,20 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     }});
     if (failed) throw failed;
     const ended=reportOnly||retentionOnly?null:performance.now();
-    if (detailed) durations.reportFlow=ended-reportAt;
+    if(optimizeReadback) {
+      const {rows:[{count,matches}]}=await client.query(`with columns as (
+        select array_agg(attname::text order by attnum) as names from pg_catalog.pg_attribute
+        where attrelid='analytics.cpd_product_sales_facts'::regclass
+        and atttypid in ('numeric'::regtype,'bigint'::regtype) and attnum>0 and not attisdropped
+      )
+      select count(*)::int as count,bool_and(
+        analytics.reconciliation_fact_digest('cpd_product_sales_facts',to_jsonb(x))=
+        analytics.eo05_fact_digest_with_columns('cpd_product_sales_facts',to_jsonb(x),columns.names)
+      ) as matches from analytics.cpd_product_sales_facts x cross join columns where installation_id=$1`,[owner.installationId]);
+      assert.equal(count,productEvents);
+      assert.equal(matches,true);
+    }
+    if (detailed||endToEnd) durations.reportFlow=ended-reportAt;
     assert.equal(run.work?.status,"completed",JSON.stringify(run));
     assert.equal(reportReceipt?.rowCount,productEvents);
     assert.deepEqual(reportReceipt.packages.map(part=>part.rowCount),[200,200,200,200,200]);
@@ -1000,6 +1047,8 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
         assert.equal(hostedReportMs.length,6);
         assert.ok(hostedReportMs.every(value=>Number.isFinite(value)&&value>0));
         const reportWriteMs=hostedReportMs.reduce((sum,ms)=>sum+ms,0);
+        if(endToEnd) return {...summary,totalMs:ended-start,reportWriteMs,durationsMs:durations,
+          databaseCallsMs:databaseTimings,detailsMeasured:false,providerNetworkMeasured:false};
         if(!hostedDetail) return {...summary,reportWriteMs};
         for(const name of ["publishLockAcquire","publishAuthority","publishPackageValidation","sharedSourceChecks",
           "beforeWriter","physicalWrite","readbackAuthority","physicalVerification","writerAndVerification","receiptPersist"]) {

@@ -11,7 +11,7 @@ import {runScheduledRefreshCheck} from "../app/lib/refresh/scheduled-queue-check
 import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
 
 const productEvents=1000;
-const pageSize=100;
+const pageSize=200;
 const storageLimits={maxRows:1000,maxBytes:1048576};
 const bulkWriterCommit="e591f130a19d43db796b23901f1fe36680c3b541";
 
@@ -1113,7 +1113,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     assert.equal(run.work?.status,"completed",JSON.stringify(run));
     assert.equal(reportReceipt?.rowCount,productEvents);
     assert.deepEqual(reportReceipt.packages.map(part=>part.rowCount),[200,200,200,200,200]);
-    assert.equal(requests,20);
+    assert.equal(requests,15);
     const status=(await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",
       [owner.workspaceId,claimId])).rows[0]?.status;
     assert.equal(status,"completed");

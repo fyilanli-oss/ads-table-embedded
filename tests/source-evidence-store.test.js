@@ -35,6 +35,40 @@ test("source keys are copied, versioned and cannot reuse session/token or other-
   assert.deepEqual(cipher.open({owner: write.owner, attemptId: write.attemptId, ordinal: 0, page: write.body.pages[0]}), input.pages[0].payload);
 });
 
+test("large sealed pages keep byte budgets and plaintext string bounds independent", () => {
+  const {input}=sourceStoreFixture();
+  for(const key of Object.keys(input.records)) input.records[key]=[];
+  input.pages[0].payload={records:Array.from({length:200},(_,i)=>({id:"event-"+i,value:"x".repeat(200)}))};
+  input.limits={maxRows:1000,maxBytes:400000};
+  const write=prepareSourceWrite(input),page=write.body.pages[0];
+  assert.ok(page.ciphertext.length>65536);
+  assert.equal(page.ciphertext.length,page.plainBytes*2);
+  assert.deepEqual(input.cipher.open({owner:write.owner,attemptId:write.attemptId,ordinal:0,page}),input.pages[0].payload);
+  assert.throws(()=>canonicalSourceJson({ciphertext:page.ciphertext}),/JSON_BOUNDS/);
+  assert.throws(()=>canonicalSourceJson({value:"x".repeat(65537)}),/JSON_BOUNDS/);
+  const budget=Buffer.byteLength(JSON.stringify(write.body));
+  input.limits.maxBytes=budget-1;
+  assert.throws(()=>prepareSourceWrite(input),/BOUNDS/);
+  input.limits.maxBytes=400000;
+  input.pages[0].payload={records:[{value:"x".repeat(65537)}]};
+  assert.throws(()=>prepareSourceWrite(input),/JSON_BOUNDS/);
+});
+
+test("caller ciphertext and mutated or cloned sealed values cannot obtain the large-page allowance", () => {
+  const {input}=sourceStoreFixture();
+  for(const key of Object.keys(input.records)) input.records[key]=[];
+  input.pages[0].payload={records:Array.from({length:200},()=>({value:"x".repeat(200)}))};
+  input.limits={maxRows:1000,maxBytes:400000};
+  const native=input.cipher;
+  for(const seal of [
+    args=>({...native.seal(args)}),
+    args=>{const page=native.seal(args);page.ciphertext="a".repeat(70000);return page;},
+  ]) {
+    input.cipher={seal,open:args=>native.open(args)};
+    assert.throws(()=>prepareSourceWrite(input),/JSON_BOUNDS/);
+  }
+});
+
 test("source canonicalization preserves identity text, rejects private fields, lossy numbers and non-JSON authority", () => {
   assert.equal(canonicalSourceJson({b: "9223372036854775807", a: null}), '{"a":null,"b":"9223372036854775807"}');
   for (const input of [{token: "hidden"}, {records: [{email: "hidden"}]}, {x: 1.2}, {x: Infinity}, {x: BigInt(1)}, {x: undefined}, new Date()]) {

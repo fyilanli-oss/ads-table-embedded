@@ -6,6 +6,7 @@ const hash = /^[a-f0-9]{64}$/;
 const classes = ["metadata", "raw", "identity", "order", "claim"];
 const groups = ["pages", "references", "rules", "mappings", "orders", "lines", "journeys", "claims", "links"];
 const prepared = new WeakMap();
+const sealedCiphertexts = new WeakMap();
 const fail = code => {throw new Error("SOURCE_STORE_" + code);};
 const object = v => v !== null && typeof v === "object" && !Array.isArray(v)
   && Object.getPrototypeOf(v) === Object.prototype;
@@ -17,13 +18,17 @@ const freeze = v => {if (v && typeof v === "object") {Object.values(v).forEach(f
 
 // Canonical application bytes, not a claim about original HTTP wire bytes.
 export function canonicalSourceJson(value) {
+  return canonicalJson(value);
+}
+
+function canonicalJson(value, encryptedPages) {
   let nodes = 0, characters = 0;
   const take = s => {characters += s.length; if (characters > 16777216) fail("JSON_BOUNDS"); return s;};
-  function visit(v, depth) {
+  function visit(v, depth, encrypted = false) {
     if (++nodes > 100000 || depth > 32) fail("JSON_BOUNDS");
     if (v === null || typeof v === "boolean") return take(JSON.stringify(v));
     if (typeof v === "string") {
-      if (v.length > 65536 || v.includes("\0")) fail("JSON_BOUNDS");
+      if (v.length > (encrypted ? 16777216 : 65536) || v.includes("\0")) fail("JSON_BOUNDS");
       return take(JSON.stringify(v));
     }
     if (typeof v === "number") {
@@ -36,7 +41,9 @@ export function canonicalSourceJson(value) {
       if (/^(?:__proto__|constructor|prototype)$/i.test(k)
         || /token|secret|password|authorization|cookie|email|phone|address|customer|profile/i.test(k)) fail("PRIVATE_FIELD");
       if (k.length > 512) fail("JSON_BOUNDS");
-      return take(JSON.stringify(k)) + ":" + visit(v[k], depth + 1);
+      const child = v[k];
+      const encrypted = k === "ciphertext" && encryptedPages?.get(v) === child;
+      return take(JSON.stringify(k)) + ":" + visit(child, depth + 1, encrypted);
     }).join(",") + "}";
   }
   return visit(value, 0);
@@ -85,8 +92,10 @@ export function createSourceEvidenceCipher({keys, activeVersion, forbiddenKeys})
       const nonce = randomBytes(12), cipher = createCipheriv("aes-256-gcm", local.get(activeVersion), nonce);
       cipher.setAAD(Buffer.from(binding(owner, attemptId, ordinal, metadata)));
       try {
-        return {...metadata, ciphertext: Buffer.concat([cipher.update(bytes), cipher.final()]).toString("hex"),
+        const sealed = {...metadata, ciphertext: Buffer.concat([cipher.update(bytes), cipher.final()]).toString("hex"),
           nonce: nonce.toString("hex"), authTag: cipher.getAuthTag().toString("hex")};
+        sealedCiphertexts.set(sealed, sealed.ciphertext);
+        return sealed;
       } finally {bytes.fill(0);}
     },
     open({owner, attemptId, ordinal, page}) {
@@ -152,7 +161,7 @@ export function prepareSourceWrite({owner, attemptId, ordinal, sourceState, poli
   exact(records, groups.filter(k => k !== "pages"));
   const payloads = new Map(), body = {sourceState, policy: structuredClone(policy), pages: []};
   let preparedBytes = 0, preparedRows = pages.length;
-  const charge = value => {preparedBytes += Buffer.byteLength(canonicalSourceJson(value)); if (preparedBytes > limits.maxBytes) fail("BOUNDS");};
+  const charge = value => {preparedBytes += Buffer.byteLength(canonicalJson(value, sealedCiphertexts)); if (preparedBytes > limits.maxBytes) fail("BOUNDS");};
   for (const page of pages) {
     exact(page, ["key", "family", "ordinal", "origin", "captureLayer", "numericFidelity", "fieldCoverage", "schemaVersion", "sanitizerVersion", "payload"]);
     if (!text(page.key, 128) || payloads.has(page.key) || !/^[a-z][a-z0-9_:.-]{0,127}$/.test(page.family)
@@ -205,7 +214,7 @@ export function prepareSourceWrite({owner, attemptId, ordinal, sourceState, poli
   for (const [kind, group] of [["rule", "rules"], ["mapping", "mappings"], ["journey", "journeys"]]) for (const row of body[group]) {
     if (!body.links.some(link => link.targetType === kind && link.target === row.key)) fail("EVIDENCE_LINK_REQUIRED");
   }
-  const encoded = canonicalSourceJson(body);
+  const encoded = canonicalJson(body, sealedCiphertexts);
   if (Buffer.byteLength(encoded) > limits.maxBytes) fail("BOUNDS");
   const result = freeze({owner: bound, attemptId, ordinal, body: JSON.parse(encoded)});
   prepared.set(result, {used: false});

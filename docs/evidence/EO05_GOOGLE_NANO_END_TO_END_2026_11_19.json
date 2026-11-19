@@ -97,5 +97,17 @@
     "date": "2026-11-19",
     "node_modules": "https://nodejs.org/api/module.html",
     "supabase_roles": "https://supabase.com/docs/guides/database/postgres/roles"
-  }
+  },
+  "failed_correctness_attempts": [
+    {
+      "commit": "2ce097d0abbd1ce2d70958e79c68eee351f8b560",
+      "run": 44545158096,
+      "job": 135633670606,
+      "stage": "first isolated replay",
+      "prior_google_daily_cases": "passed: 501/empty/1000",
+      "error": "REFRESH_WORK_REPOSITORY_UNAVAILABLE",
+      "hosted_mutations": false,
+      "action": "Preserve failure; expose retained test-only SQL/profile cause without modifying production error handling or permissions."
+    }
+  ]
 }

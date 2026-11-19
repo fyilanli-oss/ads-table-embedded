@@ -214,5 +214,8 @@ export async function googleDailyTimingProbe(client,{ownerFixture}){
   assert.ok(Math.abs(Object.values(measured.durationsMs).reduce((a,b)=>a+b,0)-measured.totalMs)<0.01);
   return {provider:"google_ads",synthetic:true,rollbackOnly:true,reportRows:1000,nativeRows:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,
    adstableWallMs:measured.totalMs-measured.postgresCallWallMs,providerNetworkMeasured:false,sqlInnerTimers:false,durableCommitMeasured:false};
+ }catch(error){
+  if(failed)throw Object.assign(Error("GOOGLE_TIMING_SQL_STOP "+failed.operation+": "+failed.message),{code:failed.code??"GOOGLE_TIMING_SQL_STOP"});
+  throw error;
  }finally{try{await reader?.close();}finally{delete globalThis[observationKey];}}
 }

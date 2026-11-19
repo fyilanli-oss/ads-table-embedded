@@ -28,4 +28,4 @@ try{
  const result=await googleDailyTimingProbe(client,{ownerFixture});
  console.log("EO05_GOOGLE_NANO_END_TO_END_PASS "+JSON.stringify(result));
 }catch(error){console.error("EO05_GOOGLE_NANO_END_TO_END_STOP",JSON.stringify({code:error.code??null,message:error.message}));process.exitCode=1;}
-finally{if(open)await client.query("rollback");await client.end();}
+finally{try{if(open)await client.query("rollback");}finally{await client.end();}}

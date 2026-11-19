@@ -96,6 +96,7 @@ async function installRoleAdapter(client){
   execute format('set local role %I',previous);
   return payload;
  end $fn$`);
+ await client.query("revoke all on function pg_temp.eo05_google_role_query(text,text,jsonb) from public,anon,authenticated,service_role");
 }
 
 export async function googleDailyTimingProbe(client,{ownerFixture}){
@@ -175,7 +176,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture}){
   await client.query("update operations.refresh_queue_control set max_workspaces=8,max_accounts=8,max_snapshot_bytes=100000,max_snapshot_age_ms=60000 where singleton");
   const verified=await loadGoogleBackgroundOwner({database:runtime,owner:{workspaceId:owner.workspaceId,installGeneration:Number(owner.generation),shopId:owner.shopId,shopDomain:owner.shopDomain}});
   const tokenVault=createTokenVault({database:runtime,environment}),cipher=createConfiguredSourceEvidenceCipher(environment);
-  const limits={deadlineAt:now()+120000,requestTimeoutMs:100000,finishReserveMs:2000,maxRows:2000,maxBytes:16000000};
+  const limits={deadlineAt:now()+120000,requestTimeoutMs:100000,finishReserveMs:2000,maxRows:2000,maxBytes:cost.bytes};
   const appId="gid://shopify/App/456",entitlementVerifier=createRefreshEntitlementVerifier({store,appId,now,limits,authorizeRead:async()=>true,
    partnerApi:{appId,activeSubscription:async()=>({data:{activeSubscription:{shop:{id:owner.shopId,myshopifyDomain:owner.shopDomain},billingPeriod:"EVERY_30_DAYS",cancelAtEndOfCycle:false,trialEndsAt:null,
     currentBillingCycle:{startTime:new Date(now()-86400000).toISOString(),endTime:new Date(now()+86400000).toISOString()},items:[{handle:"monthly",price:{active:true}}]}}})}});

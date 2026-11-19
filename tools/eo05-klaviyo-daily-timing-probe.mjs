@@ -456,6 +456,106 @@ async function installSharedDaySources(client) {
   await client.query(trigger);
 }
 
+// Isolated protocol correction: never turn an individual partial batch into a
+// complete one. Only the exact private, verified staged day may revise its rows.
+async function installMultipartRevisionPermit(client,{verify=false}={}) {
+  await client.query([
+    "create function analytics.eo05_multipart_revision_allowed(o jsonb,p jsonb,j jsonb,t text) returns boolean",
+    "language plpgsql security invoker set search_path='' as $fn$ declare b evidence.source_batches%rowtype;begin",
+    "if o->>'provider' is distinct from 'klaviyo' or t is distinct from 'cpd_product_sales_facts'",
+    "or j->>'platform' is distinct from 'klaviyo' or p->>'transactionId' is distinct from pg_catalog.txid_current()::text",
+    "or p->>'table' is distinct from t or p->>'id' is distinct from j->>'id'",
+    "or p->>'toRevision' is distinct from j->>'revision' or p->>'after' is distinct from j->>'payload_digest'",
+    "or p->>'dailyOperation' is null or p->>'dailyBinding' is null",
+    "or j->>'workspace_id' is distinct from o->>'workspaceId' or j->>'installation_id' is distinct from o->>'installationId'",
+    "or j->>'installation_generation' is distinct from o->>'generation'",
+    "or j->>'provider_connection_id' is distinct from o->>'connectionId'",
+    "or j->>'platform_account_id' is distinct from o->>'accountId'",
+    "or (j->>'retain_until')::timestamptz<=clock_timestamp() then return false;end if;",
+    "if not exists(select 1 from pg_catalog.pg_class where oid=pg_catalog.to_regclass('pg_temp.adstable_klaviyo_daily_report_stage')",
+    "and relnamespace=pg_catalog.pg_my_temp_schema() and relowner=current_user::regrole and relpersistence='t' and relkind='r')",
+    "then return false;end if;",
+    "select * into b from evidence.source_batches where id=(j->>'source_batch_id')::bigint and authority=o",
+    "and storage_state='committed' and source_state='partial' and handoff_state='pending'",
+    "and retain_until>clock_timestamp() and manifest->'privacyRedacted' is distinct from 'true'::jsonb;",
+    "if not found or b.manifest->'klaviyoDatasetRead'->>'dataset' is distinct from 'product_performance'",
+    "or jsonb_typeof(b.manifest->'klaviyoDatasetRead'->'packageCount') is distinct from 'number'",
+    "or (b.manifest->'klaviyoDatasetRead'->>'packageCount')::int not between 2 and 20",
+    "or b.manifest->'klaviyoDatasetRead'->>'jobId' is distinct from j->'provenance'->'source_context'->>'job_id'",
+    "or b.manifest->'klaviyoDatasetRead'->>'fence' is distinct from j->'provenance'->'source_context'->>'fence'",
+    "or b.manifest->'klaviyoDatasetRead'->'window' is distinct from j->'provenance'->'source_context'->'window'",
+    "then return false;end if;",
+    "return exists(select 1 from pg_temp.adstable_klaviyo_daily_report_stage s",
+    "cross join lateral jsonb_array_elements(s.body->'rows') e",
+    "where s.daily_sources_verified and s.day_binding=p->>'dailyBinding'",
+    "and s.body->>'operationId'=p->>'dailyOperation' and e->>'table'=t",
+    "and e->'row'->>'native_key_hash'=j->>'native_key_hash' and e->'row'->>'payload_digest'=p->>'after'",
+    "and e->'row'->'provenance'->'source_context'=j->'provenance'->'source_context'",
+    "and analytics.klaviyo_report_fact_matches(t,j,e->'row'));end $fn$;",
+    "revoke all on function analytics.eo05_multipart_revision_allowed(jsonb,jsonb,jsonb,text)",
+    "from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner;",
+  ].join("\n"));
+  const get=async signature=>(await client.query("select pg_get_functiondef($1::regprocedure) definition",[signature])).rows[0].definition;
+  const change=(sql,a,b)=>{assert.equal(sql.split(a).length,2,"multipart revision anchor: "+a);return sql.replace(a,()=>b);};
+  let replacement=await get("analytics.replace_klaviyo_staged_report_day(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)");
+  replacement=change(replacement,"for s in select body from pg_temp.adstable_klaviyo_daily_report_stage",
+    "for s in select body,day_binding from pg_temp.adstable_klaviyo_daily_report_stage");
+  replacement=change(replacement,"'transactionId',pg_catalog.txid_current()::text,'table',table_name,'id',old_fact->>'id',",
+    "'transactionId',pg_catalog.txid_current()::text,'dailyOperation',operation::text,'dailyBinding',s.day_binding,'table',table_name,'id',old_fact->>'id',");
+  await client.query(replacement);
+  let validator=await get("analytics.validate_dataset_fact()");
+  validator=change(validator,"and storage_state='committed' and source_state='complete' and handoff_state='pending';",
+    "and storage_state='committed' and (source_state='complete' or (source_state='partial' and analytics.eo05_multipart_revision_allowed(authority,manifest->'datasetRevisionPermit',to_jsonb(new),tg_table_name))) and handoff_state='pending';");
+  await client.query(validator);
+  if(verify) await installMultipartRevisionChecks(client);
+}
+
+async function installMultipartRevisionChecks(client) {
+  await client.query([
+    "create temp table eo05_revision_checks(n integer not null) on commit drop;insert into eo05_revision_checks values(0);",
+    "alter function analytics.eo05_multipart_revision_allowed(jsonb,jsonb,jsonb,text) rename to eo05_multipart_revision_unmetered;",
+    "create function analytics.eo05_multipart_revision_allowed(o jsonb,p jsonb,j jsonb,t text) returns boolean",
+    "language plpgsql security invoker set search_path='' as $fn$",
+    "declare accepted boolean;v jsonb;ids jsonb;begin",
+    "accepted:=analytics.eo05_multipart_revision_unmetered(o,p,j,t);",
+    "if accepted and (select n=0 from pg_temp.eo05_revision_checks) then",
+    "update pg_temp.eo05_revision_checks set n=1;",
+    "for v in select value from jsonb_array_elements(jsonb_build_array(",
+    "p-'dailyOperation',p-'dailyBinding',jsonb_set(p,'{transactionId}','\"stale\"'),",
+    "jsonb_set(p,'{dailyOperation}','\"foreign\"'),jsonb_set(p,'{dailyBinding}','\"foreign\"'),",
+    "jsonb_set(p,'{after}','\"foreign\"'),jsonb_set(p,'{toRevision}','\"999999\"'))) loop",
+    "if analytics.eo05_multipart_revision_unmetered(o,v,j,t) then raise exception 'EO05_REVISION_NEGATIVE_FAILED';end if;",
+    "update pg_temp.eo05_revision_checks set n=n+1;end loop;",
+    "for v in select value from jsonb_array_elements(jsonb_build_array(",
+    "jsonb_set(j,'{workspace_id}','\"00000000-0000-4000-8000-000000000000\"'),",
+    "jsonb_set(j,'{native_key_hash}','\"foreign\"'),jsonb_set(j,'{sales_quantity}','999'),",
+    "jsonb_set(j,'{provenance,source_context,fence}','\"999999\"'),",
+    "jsonb_set(j,'{retain_until}',to_jsonb((clock_timestamp()-interval '1 day')::text)))) loop",
+    "if analytics.eo05_multipart_revision_unmetered(o,p,v,t) then raise exception 'EO05_REVISION_NEGATIVE_FAILED';end if;",
+    "update pg_temp.eo05_revision_checks set n=n+1;end loop;",
+    "update pg_temp.adstable_klaviyo_daily_report_stage set daily_sources_verified=false;",
+    "if analytics.eo05_multipart_revision_unmetered(o,p,j,t) then raise exception 'EO05_REVISION_NEGATIVE_FAILED';end if;",
+    "update pg_temp.adstable_klaviyo_daily_report_stage set daily_sources_verified=true;",
+    "update pg_temp.eo05_revision_checks set n=n+1;",
+    "select jsonb_agg(id::text order by batch_ordinal) into ids from evidence.source_batches",
+    "where authority=o and source_state='partial' and handoff_state='pending'",
+    "and manifest->'klaviyoDatasetRead'->>'jobId'=j->'provenance'->'source_context'->>'job_id'",
+    "and manifest->'klaviyoDatasetRead'->>'dataset'='product_performance';",
+    "perform evidence.assert_klaviyo_daily_product_packages(o,j->'provenance'->'source_context'->>'job_id',",
+    "(j->'provenance'->'source_context'->>'fence')::bigint,(j->>'business_date')::date,ids);",
+    "begin",
+    "perform evidence.assert_klaviyo_daily_product_packages(o,j->'provenance'->'source_context'->>'job_id',",
+    "(j->'provenance'->'source_context'->>'fence')::bigint,(j->>'business_date')::date,ids-0);",
+    "raise exception 'EO05_REVISION_NEGATIVE_FAILED';",
+    "exception when raise_exception then",
+    "if SQLERRM not like 'KLAVIYO_DAILY_SOURCE_%' then raise;end if;end;",
+    "update pg_temp.eo05_revision_checks set n=n+1;",
+    "end if;return accepted;end $fn$;",
+    "revoke all on function analytics.eo05_multipart_revision_allowed(jsonb,jsonb,jsonb,text)",
+    "from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner;",
+  ].join("\n"));
+}
+
 async function verifySharedDaySources(client,args) {
   const owner=JSON.parse(args[0]),context=JSON.parse(args[1]);
   const active="select analytics.eo05_active_day($1::jsonb,$2::jsonb) as result";
@@ -1017,14 +1117,14 @@ export async function klaviyoDailyTimingProbe(client,options) {
   return runKlaviyoDailyTimingProbe(client,options);
 }
 
-export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,reread}) {
+export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,reread,revisionPermit=false,verifyRevisionPermit=false}) {
   assert.equal(connection.host,"aws-1-eu-central-1.pooler.supabase.com");
   assert.equal(connection.port,5432);
   assert.equal(connection.database,"postgres");
   assert.equal(connection.user,"adstable_benchmark_session.lxphenczjmueblnonklm");
   const {rows:[identity]}=await client.query("select session_user as login,current_user as role");
   assert.deepEqual(identity,{login:"adstable_benchmark_session",role:"adstable_owner"});
-  const options={ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup,phaseCandidate,reuseStagedCanonical,triggerPhaseDetail,reuseCanonicalRows,endToEnd,optimizeReadback,sharedDaySources,verifyDaySources,callBreakdown};
+  const options={ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup,phaseCandidate,reuseStagedCanonical,triggerPhaseDetail,reuseCanonicalRows,endToEnd,optimizeReadback,sharedDaySources,verifyDaySources,callBreakdown,revisionPermit,verifyRevisionPermit};
   if(reread===undefined) return runKlaviyoDailyTimingProbe(client,options);
   assert.ok(["unchanged","five-changed"].includes(reread));
   assert.ok(endToEnd&&sharedDaySources&&optimizeReadback&&!hostedDetail&&!verifyDaySources&&!callBreakdown);
@@ -1065,8 +1165,14 @@ export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,r
   assert.equal(rebound,productEvents);
   assert.equal(revised,productEvents);
   assert.equal((await client.query(KLAVIYO_DAILY_INSPECT_SQL,[owner,receipt.operationId])).rows[0].result.status,"superseded");
+  let revisionPermitChecks;
+  if(verifyRevisionPermit) {
+    revisionPermitChecks=(await client.query("select n from pg_temp.eo05_revision_checks")).rows[0].n;
+    assert.equal(revisionPermitChecks,15);
+  }
   return {...result,reread,businessRowsChanged:changed,rowsRebound:rebound,rowsRevisionAdvanced:revised,
-    seed:{reportRows:seed.reportRows,requests:seed.requests,completed:true,excludedFromTiming:true}};
+    seed:{reportRows:seed.reportRows,requests:seed.requests,completed:true,excludedFromTiming:true},
+    ...verifyRevisionPermit?{revisionPermitChecks,correctnessOnly:true}: {}};
 }
 
 async function installHostedReportClocks(client) {
@@ -1089,7 +1195,7 @@ async function installHostedReportClocks(client) {
     end $clock$;`);
 }
 
-async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,repeat}) {
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,repeat,revisionPermit=false,verifyRevisionPermit=false}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
@@ -1146,6 +1252,10 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   if(optimizeReadback) {
     assert.ok(endToEnd&&reuseCanonicalRows);
     await installReadbackMetadataReuse(client);
+  }
+  if(revisionPermit) {
+    assert.ok(endToEnd&&sharedDaySources);
+    await installMultipartRevisionPermit(client,{verify:verifyRevisionPermit});
   }
   if(hostedDetail) {
     assert.ok(hosted&&reduceReportRepeats);

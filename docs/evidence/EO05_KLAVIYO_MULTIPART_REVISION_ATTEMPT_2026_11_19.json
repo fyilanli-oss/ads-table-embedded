@@ -1,0 +1,81 @@
+{
+  "version": "eo05-klaviyo-multipart-revision-attempt-v1",
+  "checked_at": "2026-11-19",
+  "base_commit": "ecc9d8b4a7e5835cac568564e964393ab60dbe34",
+  "status": "blocked_by_repeated_source_retention_updates",
+  "scope": "Opt-in isolated rollback-only multipart UPDATE permit correction; no runtime migration installation.",
+  "environment": {
+    "compute": "Supabase Frankfurt Nano",
+    "provider_http": "synthetic",
+    "outer_transaction": "rollback",
+    "statement_timeout_ms": 60000
+  },
+  "workload": {
+    "rows": 1000,
+    "responses": 15,
+    "event_pages": 5,
+    "rows_per_page": 200,
+    "report_packages": 5
+  },
+  "attempt": {
+    "mode": "--verify-daily-reread",
+    "scenario": "unchanged",
+    "correctness_only": true,
+    "completed": false,
+    "queue_to_close_ms": null,
+    "report_write_ms": null,
+    "elapsed_before_stop_ms": 67650.05279999999,
+    "error_code": "57014",
+    "error": "canceling statement due to statement timeout",
+    "failed_function": "analytics.hold_report_source_batch",
+    "failed_statement": "update evidence.source_references r set retain_until=greatest(r.retain_until,floor_time) from evidence.source_pages p where r.workspace_id=w and r.installation_id=i and r.installation_generation=g and r.page_id=p.id and p.batch_id=bid",
+    "call_chain": [
+      "analytics.publish_klaviyo_staged_report_day",
+      "analytics.replace_klaviyo_staged_report_day",
+      "analytics.hold_report_source_batch"
+    ],
+    "checks_passed": null,
+    "checks_expected": 15,
+    "checks_status": "Not confirmed: outer transaction rolled back before successful report publication and final assertion."
+  },
+  "performance_scenarios": {
+    "unchanged": "not_run",
+    "five_changed": "not_run",
+    "reason": "Correctness fixture did not finish; do not label failure elapsed as completed refresh performance."
+  },
+  "static_findings": [
+    {
+      "path": "supabase/migrations/20261117183725_eo05_klaviyo_report_package_staging.sql",
+      "symbol": "replace_klaviyo_staged_report_day",
+      "finding": "For every existing fact row, iterate distinct provenance source IDs and invoke hold_report_source_batch before UPDATE. Distinct is per row, not per day."
+    },
+    {
+      "path": "supabase/migrations/20261108133633_eo05b_synchronized_report_retention.sql",
+      "symbol": "hold_report_source_batch",
+      "finding": "Each invocation rechecks batch/pages/references/links and issues UPDATEs of batch, pages, references and links even when greatest(current, floor_time) leaves retention unchanged."
+    }
+  ],
+  "conclusion": "Narrow revision candidate is prepared but not accepted. No successful reread timing or complete correctness proof is available. Timeout location establishes repeated retention writes as the next concrete target; it does not quantify their individual contribution.",
+  "next_scope": "Deduplicate retention holds by exact owner, source batch and retention policy within the already verified staged day replacement, preserving source locks, live privacy/expiry checks, exact row revision authorization and all rollback/readback checks. Requires separate concrete approval before implementation.",
+  "protections": {
+    "source_states_relabelled": false,
+    "triggers_disabled": false,
+    "timeout_increased": false,
+    "automatic_retry": false,
+    "production_sql_installed": false,
+    "merge": false,
+    "deploy": false
+  },
+  "cleanup": {
+    "temporary_roles": 0,
+    "installations": 0,
+    "source_batches": 0,
+    "product_sales_facts": 0,
+    "work_bindings": 0,
+    "active_benchmark_sessions": 0
+  },
+  "local_checks": {
+    "governance_tests_passed": 19,
+    "sql_correctness": "incomplete"
+  }
+}

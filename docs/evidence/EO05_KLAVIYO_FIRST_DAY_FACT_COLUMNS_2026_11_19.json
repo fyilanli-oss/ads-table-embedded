@@ -377,10 +377,11 @@
   },
   "decision": {
     "adopt_as_default": false,
-    "candidate_retained_as_opt_in": true,
+    "candidate_retained_as_opt_in": false,
     "reason": "Only the first of three pairs improved. Candidate mean total was 235.7117 ms slower; report-call mean was 220.8461 ms slower. No demonstrated speedup. Do not treat environmental variation as a proven causal regression.",
     "existing_first_day_chain_preserved": true,
-    "additional_optimizations_started": false
+    "additional_optimizations_started": false,
+    "candidate_removed_after_owner_decision": true
   },
   "timing_boundaries": {
     "report": "databaseCallsMs.reportStage + databaseCallsMs.reportPublish includes call/response overhead; reportWriteMs is nested and not additive.",
@@ -399,5 +400,17 @@
     "Single session and three pairs; not a production capacity or durable COMMIT test.",
     "All row equality, ownership, source/hash/retention and receipt/closure checks retained.",
     "No migration installation, merge or deploy."
-  ]
+  ],
+  "owner_disposition": {
+    "date": "2026-11-19",
+    "source": "Yok bu da fayda etmedi bundan önceki kod ile yola devam edelim ve stabil sayalım bu son geliştirmeden önceki kodu. Artık daha fazla zorlamanın bize faydası yok.",
+    "normal_first_day_status": "owner_accepted_stable_reference",
+    "restored_tools_commit": "2175a458470cb990382c0b40c451218dcae0374b",
+    "historical_first_day_chain_commit": "07185a5c251396b62a4c4b71b51062e874dfde9b",
+    "candidate_removed_from_tools": true,
+    "measurements_preserved": true,
+    "further_optimization_or_timing_runs": false,
+    "same_day_reread": "parked_separate_work",
+    "production_deploy_or_merge_authorized": false
+  }
 }

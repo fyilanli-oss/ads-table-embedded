@@ -6,7 +6,7 @@ import {klaviyoHostedReportProbe} from "./eo05-klaviyo-daily-timing-probe.mjs";
 
 const host="aws-1-eu-central-1.pooler.supabase.com";
 const flags=process.argv.slice(2);
-if(flags.length>1 || flags.some(flag=>!["--reduce-report-repeats","--details","--cleanup","--compare-details","--compare-phases","--compare-staged-json","--compare-package-rows","--end-to-end","--end-to-end-optimized","--end-to-end-breakdown","--compare-readback","--compare-day-sources","--verify-day-sources","--daily-reread","--daily-reread-fixed","--verify-daily-reread","--compare-fact-columns"].includes(flag))) {
+if(flags.length>1 || flags.some(flag=>!["--reduce-report-repeats","--details","--cleanup","--compare-details","--compare-phases","--compare-staged-json","--compare-package-rows","--end-to-end","--end-to-end-optimized","--end-to-end-breakdown","--compare-readback","--compare-day-sources","--verify-day-sources","--daily-reread","--daily-reread-fixed","--verify-daily-reread"].includes(flag))) {
   throw new Error("Invalid benchmark mode");
 }
 const compareDetails=flags[0]==="--compare-details";
@@ -17,10 +17,7 @@ const hostedDetail=flags[0]==="--details"||compareDetails||comparePhases||compar
 const readbackComparison=flags[0]==="--compare-readback";
 const dayComparison=flags[0]==="--compare-day-sources";
 const rereadMode=["--daily-reread","--daily-reread-fixed","--verify-daily-reread"].includes(flags[0]);
-const variants=flags[0]==="--compare-fact-columns"?Array.from({length:3},()=>[false,true]).flat().map(factColumns=>({
-  reportWriteCleanup:true,phaseCandidate:"ordered-json",reuseStagedCanonical:true,reuseCanonicalRows:true,
-  endToEnd:true,optimizeReadback:true,sharedDaySources:true,factColumns,
-})):rereadMode?(flags[0]==="--verify-daily-reread"?["unchanged"]:["unchanged","five-changed"]).map(reread=>({
+const variants=rereadMode?(flags[0]==="--verify-daily-reread"?["unchanged"]:["unchanged","five-changed"]).map(reread=>({
   reportWriteCleanup:true,phaseCandidate:"ordered-json",reuseStagedCanonical:true,reuseCanonicalRows:true,
   endToEnd:true,optimizeReadback:true,sharedDaySources:true,reread,
   revisionPermit:flags[0]!=="--daily-reread",verifyRevisionPermit:flags[0]==="--verify-daily-reread",

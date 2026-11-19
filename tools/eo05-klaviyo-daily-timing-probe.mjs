@@ -128,56 +128,6 @@ async function installCombinedFactVerification(client) {
   await client.query(publish);
 }
 
-// First-day physical comparison only: retain exact normalization/equality,
-// but load immutable column names once per table in the enclosing check.
-async function installFactComparisonColumns(client) {
-  const get=async sig=>(await client.query("select pg_get_functiondef($1::regprocedure) sql",[sig])).rows[0].sql;
-  const change=(sql,a,b)=>{assert.equal(sql.split(a).length,2,"fact columns anchor: "+a);return sql.replace(a,()=>b);};
-  let helper=await get("analytics.klaviyo_report_fact_matches(text,jsonb,jsonb)");
-  helper=change(helper,"analytics.klaviyo_report_fact_matches(t text, actual jsonb, expected jsonb)",
-    "analytics.eo05_fact_matches_columns(t text, actual jsonb, expected jsonb, numeric_columns text[])");
-  helper=change(helper,"for field_name in select attname::text from pg_catalog.pg_attribute where attrelid=('analytics.'||t)::regclass\n    and atttypid in ('numeric'::regtype,'bigint'::regtype) and attnum>0 and not attisdropped loop",
-    "foreach field_name in array numeric_columns loop");
-  await client.query(helper);
-  await client.query("revoke all on function analytics.eo05_fact_matches_columns(text,jsonb,jsonb,text[]) from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner");
-  let check=await get("analytics.check_klaviyo_daily_report_facts_verified(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb,jsonb)");
-  check=change(check,"  all_matched boolean;","  all_matched boolean; numeric_columns text[];");
-  check=change(check,"    execute format($verify$",[
-    "    select coalesce(array_agg(attname::text order by attnum),'{}') into numeric_columns",
-    "    from pg_catalog.pg_attribute where attrelid=('analytics.'||table_name)::regclass",
-    "    and atttypid in ('numeric'::regtype,'bigint'::regtype) and attnum>0 and not attisdropped;",
-    "    execute format($verify$"].join("\n"));
-  check=change(check,"analytics.klaviyo_report_fact_matches($6,fact,payload)","analytics.eo05_fact_matches_columns($6,fact,payload,$9)");
-  check=change(check,"day,table_name,o->>'connectionId',tz;","day,table_name,o->>'connectionId',tz,numeric_columns;");
-  await client.query(check);
-}
-
-async function verifyFactComparisonColumns(client) {
-  // Outside all elapsed clocks. Compare both functions on every physical row,
-  // and reject independently altered fields without changing any stored fact.
-  const {rows:[result]}=await client.query(`with cols as materialized (
-    select coalesce(array_agg(attname::text order by attnum),'{}') names from pg_catalog.pg_attribute
-    where attrelid='analytics.cpd_product_sales_facts'::regclass and atttypid in ('numeric'::regtype,'bigint'::regtype)
-      and attnum>0 and not attisdropped
-  ), pairs as materialized (
-    select to_jsonb(x) actual,item->'row' expected from pg_temp.adstable_klaviyo_daily_report_stage s
-    cross join lateral jsonb_array_elements(s.body->'rows') item
-    join analytics.cpd_product_sales_facts x on x.native_key_hash=item->'row'->>'native_key_hash'
-    where item->>'table'='cpd_product_sales_facts'
-  ) select count(*)::int n,bool_and(
-    analytics.klaviyo_report_fact_matches('cpd_product_sales_facts',actual,expected) is true
-    and analytics.eo05_fact_matches_columns('cpd_product_sales_facts',actual,expected,cols.names) is true
-    and not exists(select 1 from (values
-      ('sales_quantity','"999"'::jsonb),('sales_value','"999"'::jsonb),
-      ('source_currency','"EUR"'::jsonb),('provider_event_id','"foreign"'::jsonb),
-      ('provenance','{}'::jsonb),('occurred_at','"1900-01-01T00:00:00Z"'::jsonb)
-    ) v(k,j) where analytics.klaviyo_report_fact_matches('cpd_product_sales_facts',jsonb_set(actual,array[k],j),expected)
-      or analytics.eo05_fact_matches_columns('cpd_product_sales_facts',jsonb_set(actual,array[k],j),expected,cols.names))
-  ) valid from pairs cross join cols`);
-  assert.deepEqual(result,{n:productEvents,valid:true});
-  return {rowsCompared:result.n,alteredFieldsPerRow:6,checksPassed:result.n*7};
-}
-
 async function installReportRepeatReduction(client) {
   const signature="jsonb,jsonb,timestamptz,uuid,jsonb,jsonb";
   async function definition(name,args=signature) {
@@ -1186,19 +1136,15 @@ export async function klaviyoDailyTimingProbe(client,options) {
   return runKlaviyoDailyTimingProbe(client,options);
 }
 
-export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,reread,revisionPermit=false,verifyRevisionPermit=false,factColumns=false}) {
+export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,reread,revisionPermit=false,verifyRevisionPermit=false}) {
   assert.equal(connection.host,"aws-1-eu-central-1.pooler.supabase.com");
   assert.equal(connection.port,5432);
   assert.equal(connection.database,"postgres");
   assert.equal(connection.user,"adstable_benchmark_session.lxphenczjmueblnonklm");
   const {rows:[identity]}=await client.query("select session_user as login,current_user as role");
   assert.deepEqual(identity,{login:"adstable_benchmark_session",role:"adstable_owner"});
-  const options={ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup,phaseCandidate,reuseStagedCanonical,triggerPhaseDetail,reuseCanonicalRows,endToEnd,optimizeReadback,sharedDaySources,verifyDaySources,callBreakdown,revisionPermit,verifyRevisionPermit,factColumns};
-  if(reread===undefined) {
-    const result=await runKlaviyoDailyTimingProbe(client,options);
-    return {...result,...factColumns?{factComparisonChecks:await verifyFactComparisonColumns(client)}:{}};
-  }
-  assert.equal(factColumns,false);
+  const options={ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup,phaseCandidate,reuseStagedCanonical,triggerPhaseDetail,reuseCanonicalRows,endToEnd,optimizeReadback,sharedDaySources,verifyDaySources,callBreakdown,revisionPermit,verifyRevisionPermit};
+  if(reread===undefined) return runKlaviyoDailyTimingProbe(client,options);
   assert.ok(["unchanged","five-changed"].includes(reread));
   assert.ok(endToEnd&&sharedDaySources&&optimizeReadback&&!hostedDetail&&!verifyDaySources&&!callBreakdown);
   const owner=await ownerFixture(client,"klaviyo");
@@ -1273,7 +1219,7 @@ async function installHostedReportClocks(client) {
     end $clock$;`);
 }
 
-async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,repeat,revisionPermit=false,verifyRevisionPermit=false,factColumns=false}) {
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,repeat,revisionPermit=false,verifyRevisionPermit=false}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
@@ -1334,10 +1280,6 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   if(revisionPermit) {
     assert.ok(endToEnd&&sharedDaySources);
     await installMultipartRevisionPermit(client,{verify:verifyRevisionPermit});
-  }
-  if(factColumns) {
-    assert.ok(endToEnd&&sharedDaySources&&!repeat&&!revisionPermit);
-    await installFactComparisonColumns(client);
   }
   if(hostedDetail) {
     assert.ok(hosted&&reduceReportRepeats);

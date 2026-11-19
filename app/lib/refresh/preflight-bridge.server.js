@@ -51,12 +51,12 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
 
     const {window,limits}=binding.plan;
     const inputs=await loadDatasetInputs({claim:structuredClone(claim),window:structuredClone(window),deadlineAt:limits.deadlineAt});
-    const {owner,database,cipher,batches,expectedRevision,fxResolver}=inputs;
+    const {owner,database,cipher,batches,expectedRevision,fxResolver,googleDailyPackages=false}=inputs;
     if (owner?.workspaceId!==claim.workspaceId || owner.generation!==claim.installGeneration || owner.provider!==claim.provider
       || owner.accountId!==claim.accountId || owner.connectionId!==binding.source.connectionId
       || owner.connectionVersion!==String(binding.source.connectionVersion) || owner.selectionEpoch!==(binding.source.selectionId ?? null)
       || await store.isClaimCurrent({claim})!==true) throw Error("REFRESH_DATASET_SCOPE_INVALID");
-    const receipt=await reconcileStoredDatasetSources({owner,database,cipher,batches,expectedRevision,fxResolver,now,
+    const receipt=await reconcileStoredDatasetSources({owner,database,cipher,batches,expectedRevision,fxResolver,googleDailyPackages,now,
       limits:{maxPages:300,maxRows:limits.maxRows,maxBytes:limits.maxBytes,deadlineAt:limits.deadlineAt},
       scheduled:true,admittedScope:{jobId:claim.id,fence:String(claim.fence),from:window.from,to:window.to}});
     return {status:receipt.jobCompleted===true?"completed":"awaiting_dataset",claim:structuredClone(claim),

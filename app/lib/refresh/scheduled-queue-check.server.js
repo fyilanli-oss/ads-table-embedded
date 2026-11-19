@@ -51,6 +51,7 @@ export async function runScheduledRefreshWithDataset({store, generation, work, e
       database = createScheduledDatasetPostgresClient({environment, deadlineAt: scope.deadlineAt, now: work.now, poolFactory, klaviyoDailyPackages,
         googleDailyPackages:inputs.owner?.provider==="google_ads" && inputs.googleDailyPackages===true});
       return {owner: inputs.owner, cipher: inputs.cipher, batches: inputs.batches, expectedRevision: inputs.expectedRevision,
+        googleDailyPackages:inputs.owner?.provider==="google_ads" && inputs.googleDailyPackages===true,
         database};
     }}});
   } finally {

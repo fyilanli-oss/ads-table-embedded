@@ -9,6 +9,7 @@ import {projectStoredKlaviyoDataset} from "../app/lib/providers/stored-klaviyo-d
 import {readDatasetWritePlan} from "../app/lib/refresh/dataset-server.server.js";
 import {runScheduledRefreshWithDataset} from "../app/lib/refresh/scheduled-queue-check.server.js";
 import {createScheduledDatasetPostgresClient} from "../app/lib/database/dataset-postgres.server.js";
+import {GOOGLE_DAILY_STAGE_SQL,GOOGLE_DAILY_PUBLISH_SQL,GOOGLE_DAILY_INSPECT_SQL,GOOGLE_DAILY_FINISH_SQL} from "../app/lib/database/dataset-rpc.server.js";
 
 async function fixture(provider = "google_ads", options = {}) {
   const f = await datasetSourceBindingFixture(provider, options); const key = provider === "google_ads" ? "googleDatasetRead" : provider === "meta" ? "metaDatasetRead" : "klaviyoDatasetRead";
@@ -134,8 +135,8 @@ test("unknown writes stop without any following readback or retry", async () => 
   await assert.rejects(reconcileStoredDatasetSources(f), /WRITE_UNCONFIRMED/); assert.equal(after, 0);
 });
 test("scheduled handoff consumes only its own admitted source and verifies readback", async () => {
-  for (const mode of ["verified", "wrong_fence", "lost_write", "lost_finish", "wrong_role"]) {
-    const input = await fixture();
+  for (const mode of ["verified", "wrong_fence", "lost_write", "lost_finish", "wrong_role", "google_daily"]) {
+    const input = await fixture("google_ads",mode==="google_daily"?{googleProducts:101}:{});
     const {owner} = input;
     const generation = randomUUID();
     const time = Date.parse("2026-11-02T00:02:00.000Z");
@@ -154,7 +155,20 @@ test("scheduled handoff consumes only its own admitted source and verifies readb
       advanceStage: async () => true, isClaimCurrent: async () => true, readAdmissionSnapshot: async () => snapshot,
       recordStop: async () => ({recorded: true})};
     const hook = input.hooks.query;
+    let dailyReceipt;
+    const dailyPackages=[];
     input.hooks.query = (sql, args) => {
+      if(mode==="google_daily"){
+        if(sql===GOOGLE_DAILY_STAGE_SQL){const write=JSON.parse(args[1]),context=JSON.parse(args[2]);
+          const part={ordinal:args[4],rowCount:write.rows.length,digest:sourcePayloadHash({write,context})};dailyPackages.push(part);
+          return {rows:[{result:{status:"staged",operationId:write.operationId,packageCount:args[5],...part}}]};}
+        if(sql===GOOGLE_DAILY_PUBLISH_SQL){const c=JSON.parse(args[1]);dailyReceipt={version:"google-daily-receipt-v1",status:"consumed",comparison:"matched",
+          operationId:args[3],rowCount:dailyPackages.reduce((n,p)=>n+p.rowCount,0),packages:dailyPackages,batchIds:c.batchIds,
+          consumerReceipt:true,checkpointAdvanced:true,revision:1,businessDate:c.businessDate,timeZone:c.timeZone,
+          jobId:c.sourceContext.job_id,fence:c.sourceContext.fence,digest:"a".repeat(64)};return {rows:[{result:dailyReceipt}]};}
+        if(sql===GOOGLE_DAILY_INSPECT_SQL)return {rows:[{result:structuredClone(dailyReceipt)}]};
+        if(sql===GOOGLE_DAILY_FINISH_SQL)return {rows:[{result:args[3]===dailyReceipt.operationId&&args[4]===dailyReceipt.digest}]};
+      }
       if (mode === "lost_write" && sql === SCHEDULED_DATASET_RECONCILE_SQL) throw Error("lost commit acknowledgement");
       if (mode === "lost_finish" && sql === SCHEDULED_DATASET_FINISH_SQL) throw Error("lost completion acknowledgement");
       return hook(sql, args);
@@ -167,7 +181,7 @@ test("scheduled handoff consumes only its own admitted source and verifies readb
         for (const envelope of input.envelopes.values()) {
           Object.assign(envelope.receipt.manifest.googleDatasetRead, {jobId: claim.id, fence: String(claim.fence + (mode === "wrong_fence" ? 1 : 0))});
         }
-        return input;
+        return {...input,...(mode==="google_daily"?{googleDailyPackages:true}:{})};
       }};
     let opens = 0, closes = 0;
     const environment = {ADSTABLE_REFRESH_DATASET_DATABASE_URL: "postgresql://adstable_refresh_dataset_runner.podpwkrpmjiksskxhwsu:" + "x".repeat(32) + "@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require",
@@ -183,6 +197,15 @@ test("scheduled handoff consumes only its own admitted source and verifies readb
     }});
     assert.deepEqual([opens,closes],[1,1]);
     assert.equal(result.status, "queue_checked");
+    if(mode==="google_daily"){
+      assert.equal(result.work.status,"completed");assert.equal(result.work.reservationRetained,false);
+      assert.equal(input.queries.filter(sql=>sql===SCHEDULED_DATASET_RECONCILE_SQL).length,0);
+      assert.deepEqual(dailyPackages.map(p=>p.rowCount),[200,3]);
+      assert.equal(input.queries.filter(q=>q===GOOGLE_DAILY_STAGE_SQL).length,2);
+      for(const sql of [GOOGLE_DAILY_PUBLISH_SQL,GOOGLE_DAILY_INSPECT_SQL,GOOGLE_DAILY_FINISH_SQL])
+        assert.equal(input.queries.filter(q=>q===sql).length,1);
+      continue;
+    }
     assert.equal(result.work.status, mode === "verified" ? "completed" : "needs_attention");
     assert.equal(input.queries.filter(sql => sql === DATASET_RECONCILE_SQL).length, 0);
     assert.equal(input.queries.filter(sql => sql === SCHEDULED_DATASET_RECONCILE_SQL).length, ["wrong_fence","wrong_role"].includes(mode) ? 0 : 1);

@@ -1,7 +1,7 @@
 {
   "version": "eo05-google-daily-packages-v1",
   "checked_at": "2026-11-19",
-  "status": "prepared_pending_final_ci",
+  "status": "functional_validation_passed_scheduler_followup_pending_ci",
   "scope": "Google normal first-day publication only; no reread, attribution change, native provider call, live migration, merge or deploy.",
   "implementation": {
     "native_pages_preserved": true,
@@ -26,7 +26,8 @@
     "application_tests": {
       "passed": 4499,
       "failed": 0,
-      "frozen_final_run": true
+      "frozen_final_run": true,
+      "commit": "ec940547c686eb96f10301bfe621fccccdd18326"
     },
     "owner_role_sql": {
       "environment": "isolated Frankfurt Nano; synthetic encrypted source fixtures; outer rollback",
@@ -53,9 +54,26 @@
     "dataset_runner_role_sql": {
       "hosted_status": "not_verified",
       "reason": "Temporary test login had only adstable_owner membership. SET ROLE adstable_refresh_dataset_runner was denied (42501). Stopped that session, did not add permission or retry through another hosted route.",
-      "ci_status": "initial_F01_failed_at_test_membership_SETUP_only_fix_prepared",
+      "ci_status": "passed_twice_on_corrected_fixture",
       "failed_ci_run": 44518994499,
-      "fixture_fix": "New probe is explicitly localhost:54322 only and uses the existing transactional postgres -> non-inheriting/set-only Dataset-runner membership pattern inside its savepoint. Each case rolls it back. No hosted retry/permission change or runtime change."
+      "fixture_fix": "New probe is explicitly localhost:54322 only and uses the existing transactional postgres -> non-inheriting/set-only Dataset-runner membership pattern inside its savepoint. Each case rolls it back. No hosted retry/permission change or runtime change.",
+      "accepted_commit": "a009ee92f60945b68a56de40a05c590c7aec1750",
+      "accepted_ci_run": 44519675403,
+      "accepted_ci_job": 135544781515,
+      "accepted_cases": [
+        {
+          "report_rows": 501,
+          "report_packages": 3,
+          "daily_receipt": true,
+          "job_closed": true
+        },
+        {
+          "report_rows": 0,
+          "report_packages": 1,
+          "daily_receipt": true,
+          "job_closed": true
+        }
+      ]
     },
     "failures_preserved": [
       "Initial generated SQL had a replacement-string syntax error; corrected before acceptance.",
@@ -67,7 +85,23 @@
     ],
     "typecheck": "passed",
     "constitution_guards": "passed",
-    "whitespace": "passed"
+    "whitespace": "passed",
+    "scheduler_flag_followup": {
+      "issue": "The database client received googleDailyPackages, but the scheduler return object and preflight bridge dropped it before reconciliation. Earlier SQL/helper validation did not cover this composition.",
+      "fix": "Forward the existing server-owned opt-in through both internal layers. Provider, owner and claim checks stay in place; no activation/default or query change.",
+      "regression": "Invoke runScheduledRefreshWithDataset using the actual bridge, database wrapper and encrypted synthetic source reader, with mocked SQL responses. Assert 203 report rows in packages of 200 and 3; one publication, independent receipt inspection and closure; no legacy reconcile RPC.",
+      "targeted_tests": {
+        "passed": 19,
+        "failed": 0
+      },
+      "timing_started": false,
+      "live_database_changed": false,
+      "protected_regression_tests": {
+        "passed": 38,
+        "failed": 0
+      },
+      "typecheck": "passed"
+    }
   },
   "cleanup": {
     "installations": 0,
@@ -79,6 +113,6 @@
   "limitations": [
     "This is functional synthetic validation, not a timing or capacity result.",
     "The 501-row SQL case contains 250 product performance rows, 250 product sale rows and one entity-performance row; it is not 501 orders or 501 stores.",
-    "Standard role/profile and full replay acceptance remain dependent on required CI."
+    "Standard role/profile and two isolated SQL replays passed on a009ee92; the scheduler propagation follow-up needs its own required CI. Scheduler regression uses mocked SQL results and is not a hosted queue-to-close timing measurement."
   ]
 }

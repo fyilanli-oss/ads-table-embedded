@@ -1,0 +1,93 @@
+{
+  "version": "eo05-klaviyo-daily-reread-evidence-v1",
+  "checked_at": "2026-11-19",
+  "base_commit": "07185a5c251396b62a4c4b71b51062e874dfde9b",
+  "environment": {
+    "project": "isolated Frankfurt Nano benchmark",
+    "provider_http": "synthetic",
+    "outer_transaction": "rollback",
+    "live_provider_calls": 0
+  },
+  "authorized_scope": "Measure two same-day rereads with unchanged writer; first-day seed excluded from elapsed timing.",
+  "workload": {
+    "rows": 1000,
+    "event_pages": 5,
+    "events_per_page": 200,
+    "responses": 15,
+    "raw_batches": 4,
+    "report_packages": 5,
+    "rows_per_report_package": 200
+  },
+  "seed": {
+    "status": "completed",
+    "rows": 1000,
+    "expected_day_revision": 1,
+    "excluded_from_timing": true
+  },
+  "scenarios": {
+    "unchanged": {
+      "status": "stopped_before_completion",
+      "expected_business_changes": 0,
+      "requests_before_stop": 15,
+      "phase": "report",
+      "error_code": "P0001",
+      "error": "DATASET_REVISION_PROTOCOL_REQUIRED",
+      "failed_operation": "UPDATE analytics.cpd_product_sales_facts via replace_klaviyo_staged_report_day",
+      "queue_to_close_ms": null,
+      "report_write_ms": null,
+      "elapsed_to_error_ms": 11058.515300000003,
+      "elapsed_to_error_is_not_successful_job_duration": true
+    },
+    "five_changed": {
+      "status": "not_run",
+      "expected_business_changes": 5,
+      "reason": "Same partial-source UPDATE gate applies before comparing sale values. Do not rerun or weaken the writer to obtain a timing."
+    }
+  },
+  "source_evidence": [
+    {
+      "path": "app/lib/database/klaviyo-dataset-source-store.server.js",
+      "symbol": "storeKlaviyoRawProductPackages",
+      "fact": "Multipart product packages are stored with complete:false, hence source_state=partial."
+    },
+    {
+      "path": "supabase/migrations/20261117183725_eo05_klaviyo_report_package_staging.sql",
+      "symbol": "publish_klaviyo_staged_report_day",
+      "fact": "The complete product package group is validated before replacement."
+    },
+    {
+      "path": "supabase/migrations/20261117183725_eo05_klaviyo_report_package_staging.sql",
+      "symbol": "replace_klaviyo_staged_report_day",
+      "fact": "Writes the exact per-row revision permit to the new primary source batch before UPDATE."
+    },
+    {
+      "path": "supabase/migrations/20261110191004_eo05d_dataset_reconciliation.sql",
+      "symbol": "validate_dataset_fact",
+      "fact": "UPDATE permit lookup requires source_state=complete, excluding the new partial multipart source batch."
+    }
+  ],
+  "conclusion": "First-day insertion success does not establish same-day multipart correction success. No completed reread duration is available.",
+  "protections": {
+    "writer_changed": false,
+    "triggers_disabled": false,
+    "source_state_falsified": false,
+    "automatic_retry": false
+  },
+  "proposed_next_scope": "Separately approve a narrow SQL/protocol correction allowing exact row revision permits for an independently verified complete daily multipart group; keep individual packages partial and deny incomplete/unverified groups. Preserve all existing owner/fence/context/hash/retention/privacy and rollback checks, then repeat the same two 1000-row scenarios.",
+  "cleanup": {
+    "workspaces": 0,
+    "facts": 0,
+    "bindings": 0,
+    "temporary_roles": 0
+  },
+  "local_checks": {
+    "syntax": "passed",
+    "constitution_guards": "passed",
+    "governance_tests_passed": 19
+  },
+  "limitations": [
+    "Synthetic HTTP and rollback transaction; no production latency/capacity result.",
+    "The five-changed scenario has not executed.",
+    "No SQL correction, migration installation, merge or deploy was authorized or performed."
+  ]
+}

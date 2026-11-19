@@ -981,7 +981,7 @@ async function installPublishTimers(client,{reportOnly,optimized=false}) {
   }
 }
 
-function syntheticResponse(endpoint,owner,day) {
+function syntheticResponse(endpoint,owner,day,changedEvents=0) {
   const url=new URL(endpoint);
   assert.equal(url.origin,"https://a.klaviyo.com");
   if (url.pathname.includes("/accounts")) return Response.json({data:[
@@ -1002,7 +1002,7 @@ function syntheticResponse(endpoint,owner,day) {
   return Response.json({
     data:Array.from({length:pageSize},(_,i)=>({
       type:"event",id:"e"+(offset+i),attributes:{datetime:day+"T12:00:00Z",
-        event_properties:{ProductID:"p"+(offset+i),Quantity:1,$value:"19.99"}},
+        event_properties:{ProductID:"p"+(offset+i),Quantity:offset+i<changedEvents?2:1,$value:offset+i<changedEvents?"39.98":"19.99"}},
       relationships:{metric:{data:{type:"metric",id:"m3"}}},
     })),
     links:{next:offset+pageSize<productEvents?url.origin+url.pathname+"?page%5Bcursor%5D="+(offset+pageSize):null},
@@ -1017,14 +1017,56 @@ export async function klaviyoDailyTimingProbe(client,options) {
   return runKlaviyoDailyTimingProbe(client,options);
 }
 
-export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false}) {
+export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,reread}) {
   assert.equal(connection.host,"aws-1-eu-central-1.pooler.supabase.com");
   assert.equal(connection.port,5432);
   assert.equal(connection.database,"postgres");
   assert.equal(connection.user,"adstable_benchmark_session.lxphenczjmueblnonklm");
   const {rows:[identity]}=await client.query("select session_user as login,current_user as role");
   assert.deepEqual(identity,{login:"adstable_benchmark_session",role:"adstable_owner"});
-  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup,phaseCandidate,reuseStagedCanonical,triggerPhaseDetail,reuseCanonicalRows,endToEnd,optimizeReadback,sharedDaySources,verifyDaySources,callBreakdown});
+  const options={ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup,phaseCandidate,reuseStagedCanonical,triggerPhaseDetail,reuseCanonicalRows,endToEnd,optimizeReadback,sharedDaySources,verifyDaySources,callBreakdown};
+  if(reread===undefined) return runKlaviyoDailyTimingProbe(client,options);
+  assert.ok(["unchanged","five-changed"].includes(reread));
+  assert.ok(endToEnd&&sharedDaySources&&optimizeReadback&&!hostedDetail&&!verifyDaySources&&!callBreakdown);
+  const owner=await ownerFixture(client,"klaviyo");
+  options.ownerFixture=async()=>owner;
+  // Complete the original first-day flow before starting the measured reread.
+  const seed=await runKlaviyoDailyTimingProbe(client,options);
+  const readFacts=async()=>(await client.query(
+    "select to_jsonb(x) fact from analytics.cpd_product_sales_facts x where installation_id=$1 order by provider_event_id",
+    [owner.installationId])).rows.map(x=>x.fact);
+  const old=await readFacts();
+  assert.equal(old.length,productEvents);
+  const {rows:[{receipt}]}=await client.query(
+    "select manifest->'klaviyoDailyReceipt' receipt from evidence.source_batches where authority=$1::jsonb and manifest ? 'klaviyoDailyReceipt'",[owner]);
+  assert.equal(receipt.revision,1);
+  await client.query("drop table pg_temp.adstable_klaviyo_daily_report_stage");
+  const result=await runKlaviyoDailyTimingProbe(client,{...options,repeat:{
+    day:receipt.businessDate,changedEvents:reread==="five-changed"?5:0,previous:receipt,
+  }});
+  const current=await readFacts(),prior=new Map(old.map(x=>[x.provider_event_id,x]));
+  let changed=0,rebound=0,revised=0;
+  const business=fact=>Object.fromEntries(Object.entries(fact).filter(([key])=>
+    !["updated_at","revision","payload_digest","provenance","source_batch_id"].includes(key)));
+  for(const fact of current) {
+    const before=prior.get(fact.provider_event_id);
+    assert.ok(before);
+    assert.equal(fact.id,before.id);
+    assert.equal(fact.native_key_hash,before.native_key_hash);
+    if(JSON.stringify(business(fact))!==JSON.stringify(business(before))) changed++;
+    if(fact.source_batch_id!==before.source_batch_id) rebound++;
+    if(Number(fact.revision)===Number(before.revision)+1) revised++;
+    const index=Number(fact.provider_event_id.slice(1)),expected=reread==="five-changed"&&index<5;
+    assert.equal(String(fact.sales_quantity),expected?"2":"1");
+    assert.equal(String(fact.sales_value),expected?"39.98":"19.99");
+  }
+  assert.equal(current.length,productEvents);
+  assert.equal(changed,reread==="five-changed"?5:0);
+  assert.equal(rebound,productEvents);
+  assert.equal(revised,productEvents);
+  assert.equal((await client.query(KLAVIYO_DAILY_INSPECT_SQL,[owner,receipt.operationId])).rows[0].result.status,"superseded");
+  return {...result,reread,businessRowsChanged:changed,rowsRebound:rebound,rowsRevisionAdvanced:revised,
+    seed:{reportRows:seed.reportRows,requests:seed.requests,completed:true,excludedFromTiming:true}};
 }
 
 async function installHostedReportClocks(client) {
@@ -1047,20 +1089,22 @@ async function installHostedReportClocks(client) {
     end $clock$;`);
 }
 
-async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false}) {
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,repeat}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
   const detailed=mode==="detailed",reportOnly=mode==="report",measureReport=detailed||reportOnly;
   if(retentionOnly||retentionWall) assert.ok(["current","cached"].includes(retentionVariant));
-  await installExactBulkWriter(client);
+  if(!repeat) await installExactBulkWriter(client);
   // The enclosing rehearsal savepoint restores the inherited timeout.
   await client.query("set local statement_timeout='60s'");
   const owner=await ownerFixture(client,"klaviyo"),now=Date.now;
-  const day=new Date(now()-86400000).toISOString().slice(0,10),window={from:day,to:day};
+  const day=repeat?.day??new Date(now()-86400000).toISOString().slice(0,10),window={from:day,to:day};
   const generation=randomUUID(),operationId=randomUUID(),hash=()=>randomBytes(32).toString("hex");
   const cipher=createSourceEvidenceCipher({keys:new Map([[1,randomBytes(32)]]),activeVersion:1,forbiddenKeys:[]});
   const policy=sourceStoreFixture().input.policy;
+  // The second pass reuses exactly the SQL installed for its seed.
+  if(!repeat) {
   // The enclosing savepoint is rolled back, including these diagnostics.
   if (measureReport) {
     await installPublishTimers(client,{reportOnly});
@@ -1130,6 +1174,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     (workspace_id,install_generation,provider,installation_id,connection_id,connection_version,account_id,client_scope_key,connection_scope_key,connection_epoch,api_version,enabled)
     values ($1,$2,'klaviyo',$3,$4,$5,$6,$7,$8,1,'2026-10-15',true)`,
   [owner.workspaceId,owner.generation,owner.installationId,owner.connectionId,owner.connectionVersion,owner.accountId,hash(),hash()]);
+  }
   const cost={requests:21,dbWrites:4000,connections:3,rows:2000,bytes:4000000};
   await client.query("update operations.refresh_control set budget=$1,bounds=$2 where singleton",[
     {global:cost,interactiveReserve:{requests:0,dbWrites:0,connections:0,rows:0,bytes:0},
@@ -1257,7 +1302,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     const run=await runScheduledRefreshCheck({store,generation,work:{
       now,entitlementVerifier,
       buildWorkPlan:async candidate=>candidate.workspaceId===owner.workspaceId&&candidate.provider==="klaviyo"
-        ? {window,partitionId:"synthetic-daily-timing:"+day,workClass:"deep_reconciliation",cost,limits}:null,
+        ? {window,partitionId:"synthetic-daily-timing:"+day+(repeat?":reread":""),workClass:"deep_reconciliation",cost,limits}:null,
       async readPage({claim,entitlementReceipt,signal}) {
         try {
           claimId=claim.id;
@@ -1273,9 +1318,9 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
             window,limits:{...limits,maxPages:10,maxBytes:1048576},signal,now,guard,pacerFactory:()=>async()=>{},
             async transport(endpoint) {
               requests++;
-              if (!detailed&&!endToEnd) return syntheticResponse(endpoint,owner,day);
+              if (!detailed&&!endToEnd) return syntheticResponse(endpoint,owner,day,repeat?.changedEvents??0);
               const before=performance.now();
-              try {return syntheticResponse(endpoint,owner,day);}
+              try {return syntheticResponse(endpoint,owner,day,repeat?.changedEvents??0);}
               finally {durations.providerFixture+=performance.now()-before;}
             },
             async onDataset({dataset,pages,complete,coverage}) {
@@ -1316,7 +1361,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
           if(endToEnd) reportCpuStart=process.cpuUsage();
           durations.handoff=reportAt-collectedAt;
         }
-        return {owner,batches,cipher,expectedRevision:0,database:reportDatabase};
+        return {owner,batches,cipher,expectedRevision:repeat?1:0,database:reportDatabase};
       },
     }});
     if (failed) throw failed;
@@ -1342,6 +1387,8 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     if (detailed||endToEnd) durations.reportFlow=ended-reportAt;
     assert.equal(run.work?.status,"completed",JSON.stringify(run));
     assert.equal(reportReceipt?.rowCount,productEvents);
+    assert.equal(reportReceipt?.revision,repeat?2:1);
+    if(repeat) assert.notEqual(reportReceipt.operationId,repeat.previous.operationId);
     assert.deepEqual(reportReceipt.packages.map(part=>part.rowCount),[200,200,200,200,200]);
     assert.equal(requests,15);
     const status=(await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",

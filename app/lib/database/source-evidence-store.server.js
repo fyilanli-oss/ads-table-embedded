@@ -241,8 +241,14 @@ export function createSourceEvidenceRepository(database) {
           ||!instant(read.observedAt)||!instant(read.completedAt)||!instant(read.deadlineAt))fail("READ_BINDING_INVALID");
       }
       if(read!==null&&kind==="google_dataset"){
-        exact(read,["jobId","fence","window","observedAt","operationId","quotaContext","completedAt","deadlineAt","dataset"]);
-        if(write.owner.provider!=="google_ads"||write.ordinal!==0||!uuid.test(read.operationId)||!text(read.jobId,256)||!id(read.fence)
+        const multipart=Object.hasOwn(read,"packageCount");
+        exact(read,["jobId","fence","window","observedAt","operationId","quotaContext","completedAt","deadlineAt","dataset",
+          ...multipart?["packageCount","pageCount","recordCount","families"]:[]]);
+        if(write.owner.provider!=="google_ads"||(!multipart&&write.ordinal!==0)
+          ||(multipart&&(!Number.isInteger(read.packageCount)||read.packageCount<2||read.packageCount>20||write.ordinal>=read.packageCount
+            ||!Number.isInteger(read.pageCount)||read.pageCount<1||read.pageCount>300||!Number.isInteger(read.recordCount)||read.recordCount<0||read.recordCount>20000
+            ||!Array.isArray(read.families)||read.dataset==="merchant_identity"||write.body.sourceState!=="partial"))
+          ||!uuid.test(read.operationId)||!text(read.jobId,256)||!id(read.fence)
           ||!["account_performance","product_performance","merchant_identity"].includes(read.dataset)
           ||!instant(read.observedAt)||!instant(read.completedAt)||!instant(read.deadlineAt))fail("READ_BINDING_INVALID");
       }

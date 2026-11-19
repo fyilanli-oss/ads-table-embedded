@@ -76,7 +76,7 @@ export function createGoogleRawDatasetReader({environment,verified,tokenVault,ex
    const save=async(dataset,pages,complete,reason=null)=>{
     await guard();const recordCount=pages.reduce((n,p)=>n+(p.records?.length??0),0);
     writeSent=true;writeKnown=false;
-    const receipt=await storeGoogleRawDataset({database,owner,attemptId:randomUUID(),dataset,pages,complete,cipher,policy:c.sourcePolicy,limits:c.storageLimits,now:new Date(now()).toISOString(),onCommitted:()=>{writeKnown=true;},
+    const receipt=await storeGoogleRawDataset({database,owner,attemptId:randomUUID(),dataset,pages,complete,cipher,policy:c.sourcePolicy,limits:c.storageLimits,now:new Date(now()).toISOString(),guard,onSending:()=>{writeKnown=false;},onCommitted:()=>{writeKnown=true;},
      read:{jobId:scope.claim.id,fence:String(scope.claim.fence),window:scope.window,observedAt:scope.entitlementReceipt.observedAt,
       operationId:c.operationId,quotaContext:initial,completedAt:new Date(now()).toISOString(),deadlineAt:new Date(started+l.maxElapsedMs).toISOString()}});
     writeKnown=true;await guard();

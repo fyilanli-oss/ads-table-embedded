@@ -13,6 +13,7 @@ import {maturityProbe} from "./eo05c-maturity-probe.mjs";
 import {reconciliationProbe} from "./eo05d-reconciliation-probe.mjs";
 import {klaviyoDailyTimingProbe} from "./eo05-klaviyo-daily-timing-probe.mjs";
 import {observabilityProbe} from "./eo05e-observability-probe.mjs";
+import {googleDailyPackagesProbe} from "./eo05-google-daily-packages-probe.mjs";
 
 async function rejected(client, action, pattern) {
   await client.query("savepoint dataset_expected_failure"); let error;
@@ -89,6 +90,7 @@ export async function datasetStorageProbe(client, connection, environment = proc
     await datasetServerProbe(client, {ownerFixture});
     await maturityProbe(client, {ownerFixture});
     await reconciliationProbe(client, {ownerFixture});
+    console.log("EO05_GOOGLE_DAILY_PACKAGES_PASS",JSON.stringify(await googleDailyPackagesProbe(client,{ownerFixture})));
     await observabilityProbe(client, {ownerFixture});
     for (const provider of ["google_ads", "meta", "klaviyo"]) {
       const owner = await ownerFixture(client, provider), source = await sourceFixture(client, owner);

@@ -6,6 +6,14 @@ import {handleGoogleRawCaptureRequest} from "../app/lib/refresh/google-raw-reque
 import {createConfiguredSourceEvidenceCipher} from "../app/lib/database/source-evidence-config.server.js";
 import {parseGoogleRawJson,projectGoogleRawPage} from "../app/lib/providers/google-raw-projection.server.js";
 
+for(const lost of [false,true])test("Google package writes preserve per-package acknowledgement state: "+lost,async()=>{
+ const x=googleRawDatasetsFixture();x.plan.storageLimits.maxRows=5;x.setPlan();let commits=0;
+ x.hooks.source=(sql)=>{if(sql.startsWith("select evidence.commit_google_dataset_source(")&&++commits===2&&lost)throw Error("lost second acknowledgement");};
+ const e=createGoogleRawCaptureExecution(x.options),r=await e.run();await e.close();
+ if(lost){assert.equal(r.status,"unconfirmed");assert.equal(r.sourceStored,null);assert.equal(commits,2);assert.equal(x.writes.length,1);}
+ else{assert.equal(r.status,"partial");assert.equal(r.datasets.account_performance.packageReceipts.length,2);assert.equal(r.datasets.product_performance.packageReceipts.length,2);}
+});
+
 for(const merchant of [false,true])test("three fixed datasets: successful Ads zero; Merchant "+(merchant?"complete":"absent is not zero"),async()=>{
  const x=googleRawDatasetsFixture({merchant}),e=createGoogleRawCaptureExecution(x.options),r=await e.run();await e.close();
  assert.equal(r.status,merchant?"stored":"partial",JSON.stringify({r,sql:x.calls.map(c=>c.sql)}));

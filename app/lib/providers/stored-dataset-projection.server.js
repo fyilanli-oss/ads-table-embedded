@@ -125,6 +125,9 @@ function googleSource(bundle) {
     const breakdowns = performance ? Object.fromEntries(Object.entries(f).filter(([k]) => k.startsWith("segments.product_")
       && !["segments.product_item_id", "segments.product_merchant_id", "segments.product_feed_label", "segments.product_language"].includes(k)).map(([k, v]) => [k, sourceScalar(v)])) : {};
     const r = baseStoredFact(bundle, products, table, [item.page, contextPage], breakdowns);
+    // A multipart row belongs to the physical package containing its page,
+    // not necessarily the first receipt of the assembled product dataset.
+    r.source_batch_id=item.page.ref.batch_id;
     if (account.receipt.sourceState === "partial") r.source_completeness = "partial";
     Object.assign(r, {root_entity_type: "campaign", root_entity_id: native.campaign_id, root_entity_name: get(f, "campaign.name", true),
       campaign_type: get(f, "campaign.advertising_channel_type"), product_context: {merchant_id: native.merchant_id, feed_label: native.feed_label, language: native.language},

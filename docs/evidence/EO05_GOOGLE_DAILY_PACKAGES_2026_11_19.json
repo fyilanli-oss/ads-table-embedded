@@ -1,0 +1,82 @@
+{
+  "version": "eo05-google-daily-packages-v1",
+  "checked_at": "2026-11-19",
+  "status": "prepared_pending_final_ci",
+  "scope": "Google normal first-day publication only; no reread, attribution change, native provider call, live migration, merge or deploy.",
+  "implementation": {
+    "native_pages_preserved": true,
+    "raw_packages_per_performance_dataset_max": 20,
+    "report_rows_per_package_max": 200,
+    "report_packages_max": 20,
+    "raw_capture_total_row_byte_request_budgets_changed": false,
+    "source_packages_remain_partial_until_verified_group": true,
+    "all_report_packages_in_one_transaction": true,
+    "daily_receipts": 1,
+    "empty_day_has_no_fake_facts": true,
+    "readback_before_closure": true,
+    "automatic_retry": false,
+    "scheduled_activation": "explicit server-owned googleDailyPackages opt-in; existing scheduler defaults retained",
+    "klaviyo_functions_changed": false,
+    "google_private_writer": "Verified #378 bulk writer adapted into a separate Google-only function, with preserved row triggers and canonical reporting account. Reuse the stable retention calculation pattern and ordered canonical JSON in Google-private helpers only. Existing shared and Klaviyo functions are not replaced.",
+    "migration": "supabase/migrations/20261119112554_eo05_google_daily_packages.sql",
+    "migration_created_with": "supabase@2.121.0 migration new eo05_google_daily_packages",
+    "migration_live_applied": false
+  },
+  "validation": {
+    "application_tests": {
+      "passed": 4499,
+      "failed": 0,
+      "frozen_final_run": true
+    },
+    "owner_role_sql": {
+      "environment": "isolated Frankfurt Nano; synthetic encrypted source fixtures; outer rollback",
+      "cases": [
+        {
+          "report_rows": 501,
+          "report_packages": 3,
+          "daily_receipt": true,
+          "job_closed": true
+        },
+        {
+          "report_rows": 0,
+          "report_packages": 1,
+          "daily_receipt": true,
+          "job_closed": true
+        }
+      ],
+      "missing_report_package_rejected": true,
+      "tampered_stage_digest_rejected": true,
+      "wrong_receipt_hash_did_not_close": true,
+      "canonical_corpus_matches_existing_digest": true,
+      "accepted_run": "GOOGLE_DAILY_PASS in isolated test session r34"
+    },
+    "dataset_runner_role_sql": {
+      "hosted_status": "not_verified",
+      "reason": "Temporary test login had only adstable_owner membership. SET ROLE adstable_refresh_dataset_runner was denied (42501). Stopped that session, did not add permission or retry through another hosted route.",
+      "ci_status": "pending_standard_isolated_F01_replay"
+    },
+    "failures_preserved": [
+      "Initial generated SQL had a replacement-string syntax error; corrected before acceptance.",
+      "Large fixture exposed the existing generic source-fixture byte budget; changed only the synthetic fixture to use actual Google packaging and bounded synthetic native pages.",
+      "Multipart product projection incorrectly used the first package as primary source for every row; corrected to the physical source page batch.",
+      "Verified empty day exposed a fingerprint precondition requiring at least one row; Google-only fingerprint now accepts zero and still requires exact physical count.",
+      "501-row SQL fixture hit the unchanged 30-second statement timeout on a run; Google-private canonical/retention preparation now reuses the already established stable patterns. Timeout was not increased.",
+      "A full local suite started before code freeze is not acceptance evidence; its snapshot guards detected subsequent edits. A frozen final run is required."
+    ],
+    "typecheck": "passed",
+    "constitution_guards": "passed",
+    "whitespace": "passed"
+  },
+  "cleanup": {
+    "installations": 0,
+    "source_batches": 0,
+    "facts": 0,
+    "bindings": 0,
+    "temporary_roles": 0
+  },
+  "limitations": [
+    "This is functional synthetic validation, not a timing or capacity result.",
+    "The 501-row SQL case contains 250 product performance rows, 250 product sale rows and one entity-performance row; it is not 501 orders or 501 stores.",
+    "Standard role/profile and full replay acceptance remain dependent on required CI."
+  ]
+}

@@ -1,5 +1,5 @@
 import pg from "pg";
-import {DATASET_STORAGE_RPC, DATASET_RECONCILIATION_RPC, SCHEDULED_DATASET_RPC, KLAVIYO_DAILY_REPORT_RPC} from "./dataset-rpc.server.js";
+import {GOOGLE_DAILY_REPORT_RPC, DATASET_STORAGE_RPC, DATASET_RECONCILIATION_RPC, SCHEDULED_DATASET_RPC, KLAVIYO_DAILY_REPORT_RPC} from "./dataset-rpc.server.js";
 import {SUPABASE_ROOT_CA_2021} from "./supabase-root-ca-2021.server.js";
 import {GOOGLE_DATASET_SOURCE_RPC, GOOGLE_SOURCE_ROLE, GOOGLE_SOURCE_ROLE_CHECK_SQL, readGoogleSourceDatabaseConfig} from "./google-source-postgres.server.js";
 import {META_SOURCE_RPC, META_SOURCE_ROLE, META_SOURCE_ROLE_CHECK_SQL, readMetaSourceDatabaseConfig} from "./meta-source-postgres.server.js";
@@ -45,8 +45,8 @@ const scheduledProfile = `select current_user as role, (
       or (c.relkind='S' and has_sequence_privilege(current_user,c.oid,'USAGE,SELECT,UPDATE'))))
 ) as profile_ready`;
 
-export function createScheduledDatasetPostgresClient({environment, deadlineAt, signal, now = Date.now, poolFactory = c => new pg.Pool(c), klaviyoDailyPackages = false}) {
-  if (typeof klaviyoDailyPackages !== "boolean") throw failure();
+export function createScheduledDatasetPostgresClient({environment, deadlineAt, signal, now = Date.now, poolFactory = c => new pg.Pool(c), klaviyoDailyPackages = false, googleDailyPackages = false}) {
+  if (typeof klaviyoDailyPackages !== "boolean" || typeof googleDailyPackages !== "boolean" || klaviyoDailyPackages && googleDailyPackages) throw failure();
   let config;
   try {
     const url = new URL(environment.ADSTABLE_REFRESH_DATASET_DATABASE_URL);
@@ -58,9 +58,9 @@ export function createScheduledDatasetPostgresClient({environment, deadlineAt, s
     url.search = "";
     config = {connectionString: url.toString(), timeoutMs: Number(timeout), ssl: {ca: SUPABASE_ROOT_CA_2021, rejectUnauthorized: true}};
   } catch {throw failure();}
-  const rpc = klaviyoDailyPackages ? [...SCHEDULED_DATASET_RPC,...KLAVIYO_DAILY_REPORT_RPC] : SCHEDULED_DATASET_RPC;
+  const rpc = googleDailyPackages ? [...SCHEDULED_DATASET_RPC,...GOOGLE_DAILY_REPORT_RPC] : klaviyoDailyPackages ? [...SCHEDULED_DATASET_RPC,...KLAVIYO_DAILY_REPORT_RPC] : SCHEDULED_DATASET_RPC;
   const signatures = rpc.map(([, signature]) => signature);
-  const recognizedSignatures = [...SCHEDULED_DATASET_RPC,...KLAVIYO_DAILY_REPORT_RPC].map(([, signature]) => signature);
+  const recognizedSignatures = [...SCHEDULED_DATASET_RPC,...KLAVIYO_DAILY_REPORT_RPC,...GOOGLE_DAILY_REPORT_RPC].map(([, signature]) => signature);
   return createBoundedDatasetClient({config, rpc, signatures, recognizedSignatures,
     profile: scheduledProfile, role: scheduledRole, deadlineAt, signal, now, poolFactory, transactionSupport: true});
 }

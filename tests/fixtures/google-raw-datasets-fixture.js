@@ -20,12 +20,12 @@ export function googleRawDatasetsFixture({merchant=false}={}) {
   if(sql.startsWith("select evidence.commit_google_dataset_source(")){
    const body=JSON.parse(args[3]),read=JSON.parse(args[4]);
    const receipt={status:"committed",batchId:String(91+writes.length),commitId:randomUUID(),digest:createHash("sha256").update(args[3]).digest("hex"),sourceState:body.sourceState,
-    manifest:{counts:Object.fromEntries(["pages","references","rules","mappings","orders","lines","journeys","claims","links"].map(k=>[k,body[k].length]))}};
+    manifest:{googleDatasetRead:read,counts:Object.fromEntries(["pages","references","rules","mappings","orders","lines","journeys","claims","links"].map(k=>[k,body[k].length]))}};
    const pages=body.pages.map(p=>({...p,id:String(++pageId),available:true,expired:false,retentionPruned:false}));
-   const w={body,read,receipt,pages,owner:JSON.parse(args[0]),attemptId:args[1]};writes.push(w);receipts.set(args[1],w);return {rows:[{result:receipt}]};
+   const w={body,read,receipt,pages,owner:JSON.parse(args[0]),attemptId:args[1]};writes.push(w);receipts.set(args[1]+":"+args[2],w);return {rows:[{result:receipt}]};
   }
-  if(sql.startsWith("select evidence.read_source_receipt("))return {rows:[{result:receipts.get(args[1])?.receipt??null}]};
-  if(sql.startsWith("select evidence.read_source_pages("))return {rows:[{result:receipts.get(args[1])?.pages.filter(p=>BigInt(p.id)>BigInt(args[3])).slice(0,args[4])??[]}]};
+  if(sql.startsWith("select evidence.read_source_receipt("))return {rows:[{result:receipts.get(args[1]+":"+args[2])?.receipt??null}]};
+  if(sql.startsWith("select evidence.read_source_pages("))return {rows:[{result:receipts.get(args[1]+":"+args[2])?.pages.filter(p=>BigInt(p.id)>BigInt(args[3])).slice(0,args[4])??[]}]};
  };
  return {...x,hooks,writes};
 }

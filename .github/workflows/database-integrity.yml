@@ -34,6 +34,8 @@ on:
       - "tests/fixtures/dataset-storage-fixture.js"
       - "tools/eo05b-dataset-storage-probe.mjs"
       - "tools/eo05-klaviyo-daily-timing-probe.mjs"
+      - "tools/eo05-google-daily-packages-probe.mjs"
+      - "tests/google-daily-packages.test.js"
       - "app/lib/refresh/meta-*"
       - "app/lib/database/meta-*"
       - "app/lib/providers/meta-raw-projection.server.js"

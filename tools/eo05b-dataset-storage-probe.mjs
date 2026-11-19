@@ -72,6 +72,13 @@ export async function datasetStorageProbe(client, connection, environment = proc
       }
     }
     await client.query("set local role adstable_owner");
+    // Keep complete-flow inventory independent of later fixture owners.
+    await client.query("savepoint google_complete_flow");
+    try{
+      await prepareGoogleTimingLocalRoles(client);
+      const proof=await googleDailyTimingProbe(client,{ownerFixture});
+      console.log("EO05_GOOGLE_COMPLETE_FLOW_PASS",JSON.stringify({rows:proof.reportRows,nativeRows:proof.nativeRows,packages:proof.reportPackages,requests:proof.requests,receipts:proof.receipts,completed:proof.completed,realRoleChecks:proof.roleChecks>0,correctnessOnly:true}));
+    }finally{await client.query("rollback to savepoint google_complete_flow");await client.query("release savepoint google_complete_flow");}
     const verificationComparison=[];
     for(const variant of [{}, {combinedVerification:true}, {combinedVerification:true,reduceReportRepeats:true}]) {
       await client.query("savepoint klaviyo_daily_timing");
@@ -92,12 +99,6 @@ export async function datasetStorageProbe(client, connection, environment = proc
     await maturityProbe(client, {ownerFixture});
     await reconciliationProbe(client, {ownerFixture});
     console.log("EO05_GOOGLE_DAILY_PACKAGES_PASS",JSON.stringify(await googleDailyPackagesProbe(client,{ownerFixture})));
-    await client.query("savepoint google_complete_flow");
-    try{
-      await prepareGoogleTimingLocalRoles(client);
-      const proof=await googleDailyTimingProbe(client,{ownerFixture});
-      console.log("EO05_GOOGLE_COMPLETE_FLOW_PASS",JSON.stringify({rows:proof.reportRows,nativeRows:proof.nativeRows,packages:proof.reportPackages,requests:proof.requests,receipts:proof.receipts,completed:proof.completed,realRoleChecks:proof.roleChecks>0,correctnessOnly:true}));
-    }finally{await client.query("rollback to savepoint google_complete_flow");await client.query("release savepoint google_complete_flow");}
     await observabilityProbe(client, {ownerFixture});
     for (const provider of ["google_ads", "meta", "klaviyo"]) {
       const owner = await ownerFixture(client, provider), source = await sourceFixture(client, owner);

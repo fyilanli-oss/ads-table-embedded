@@ -108,6 +108,15 @@
       "error": "REFRESH_WORK_REPOSITORY_UNAVAILABLE",
       "hosted_mutations": false,
       "action": "Preserve failure; expose retained test-only SQL/profile cause without modifying production error handling or permissions."
+    },
+    {
+      "commit": "b43d42ee6db44fc6c2d1f8f6891f3f9744b013ba",
+      "run": 44546038104,
+      "job": 135636732225,
+      "stage": "first isolated replay, before Google collection",
+      "error": "REFRESH_NATIVE_INVENTORY_OVER_BOUND",
+      "hosted_mutations": false,
+      "action": "Run the unchanged complete-flow probe before other probes create additional fixture owners, preserving its fixed 8-workspace/8-account bounds. Its own savepoint rollback keeps subsequent tests unchanged."
     }
   ]
 }

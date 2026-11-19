@@ -336,6 +336,50 @@ async function installTriggerSourceReuse(client) {
 }
 
 async function installReadbackMetadataReuse(client) {
+  const {rows:[{canonicalDefinition}]}=await client.query(
+    "select pg_get_functiondef('analytics.dataset_json(jsonb,integer)'::regprocedure) as \"canonicalDefinition\"");
+  let fastCanonical=canonicalDefinition.replaceAll("analytics.dataset_json","analytics.eo05_readback_json");
+  assert.notEqual(fastCanonical,canonicalDefinition);
+  const child="analytics.eo05_readback_json(v,depth+1)";
+  assert.equal(fastCanonical.split(child).length,3);
+  fastCanonical=fastCanonical.replaceAll(child,`(case when jsonb_typeof(v) in ('object','array')
+    then analytics.eo05_readback_json(v,depth+1) else v::text end)`);
+  const objectBranch=" if jsonb_typeof(p)='object' then";
+  assert.equal(fastCanonical.split(objectBranch).length,2);
+  fastCanonical=fastCanonical.replace(objectBranch,` if depth=32 and
+   ((jsonb_typeof(p)='object' and p<>'{}'::jsonb) or (jsonb_typeof(p)='array' and p<>'[]'::jsonb))
+ then raise exception 'DATASET_JSON_BOUNDS';end if;
+${objectBranch}`);
+  await client.query(fastCanonical);
+  await client.query(`revoke all on function analytics.eo05_readback_json(jsonb,integer)
+    from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner`);
+  for(const [payload,depth] of [
+    ["{}",0],["[]",0],["null",0],['{"a":[true,null,1.2300,{"b":"é"}],"z":9007199254740993}',0],
+    [JSON.stringify({value:'line\nquote"slash\\'}),0],["0",32],["{}",32],["[]",32],
+  ]) {
+    const {rows:[{original,candidate}]}=await client.query(`select analytics.dataset_json($1::jsonb,$2) as original,
+      analytics.eo05_readback_json($1::jsonb,$2) as candidate`,[payload,depth]);
+    assert.equal(candidate,original);
+  }
+  for(const [payload,depth,expected] of [
+    ['{"a":[{"secret":"blocked"}]}',0,"DATASET_PRIVATE_FIELD"],
+    [JSON.stringify({["x".repeat(513)]:1}),0,"DATASET_PRIVATE_FIELD"],
+    ['{"a":1}',32,"DATASET_JSON_BOUNDS"],["[0]",32,"DATASET_JSON_BOUNDS"],
+    ["[".repeat(33)+"0"+"]".repeat(33),0,"DATASET_JSON_BOUNDS"],
+    [JSON.stringify("x".repeat(1048576)),0,"DATASET_JSON_BOUNDS"],
+  ]) {
+    for(const name of ["dataset_json","eo05_readback_json"]) {
+      await client.query("savepoint readback_json_reject");
+      let failure;
+      try {await client.query(`select analytics.${name}($1::jsonb,$2)`,[payload,depth]);}
+      catch(error) {if(error.code!=="P0001") throw error;failure=error.message;}
+      finally {
+        await client.query("rollback to savepoint readback_json_reject");
+        await client.query("release savepoint readback_json_reject");
+      }
+      assert.equal(failure,expected);
+    }
+  }
   const {rows:[{definition}]}=await client.query(
     "select pg_get_functiondef('analytics.reconciliation_fact_digest(text,jsonb)'::regprocedure) definition");
   let helper=definition.replace("analytics.reconciliation_fact_digest(t text, j jsonb)",
@@ -344,6 +388,9 @@ async function installReadbackMetadataReuse(client) {
   const catalog="for k in select attname::text from pg_catalog.pg_attribute where attrelid=('analytics.'||t)::regclass and atttypid in ('numeric'::regtype,'bigint'::regtype) and attnum>0 and not attisdropped loop";
   assert.equal(helper.split(catalog).length,2);
   helper=helper.replace(catalog,"foreach k in array numeric_columns loop");
+  const payloadDigest="return analytics.dataset_digest(v);";
+  assert.equal(helper.split(payloadDigest).length,2);
+  helper=helper.replace(payloadDigest,"return encode(sha256(convert_to(analytics.eo05_readback_json(v),'UTF8')),'hex');");
   await client.query(helper);
   await client.query(`revoke all on function analytics.eo05_fact_digest_with_columns(text,jsonb,text[])
     from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner`);

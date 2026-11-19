@@ -335,6 +335,184 @@ async function installTriggerSourceReuse(client) {
   await client.query(trigger);
 }
 
+// Private transaction-local proof, active only during nested first-day writes.
+async function installSharedDaySources(client) {
+  await client.query([
+    "create function analytics.eo05_active_day(o jsonb,c jsonb) returns jsonb",
+    "language plpgsql security invoker set search_path='' as $fn$ declare m jsonb;begin",
+    "if pg_catalog.to_regclass('pg_temp.eo05_day_meta') is null then return null;end if;",
+    "if not exists(select 1 from pg_catalog.pg_class where oid=pg_catalog.to_regclass('pg_temp.eo05_day_meta')",
+    "and relnamespace=pg_catalog.pg_my_temp_schema() and relowner=current_user::regrole",
+    "and relkind='r' and relpersistence='t') then raise exception 'EO05_DAY_PROOF_INVALID';end if;",
+    "select body into m from pg_temp.eo05_day_meta;if not found then return null;end if;",
+    "if (select count(*) from pg_temp.eo05_day_meta)<>1 or m->'owner' is distinct from o",
+    "or m->'context' is distinct from c or m->>'transaction' is distinct from pg_catalog.txid_current()::text",
+    "or m->'valid' is distinct from 'true'::jsonb or (m->>'deadline')::timestamptz<=clock_timestamp()",
+    "then raise exception 'EO05_DAY_PROOF_INVALID';end if;return m;end $fn$;",
+    "create function analytics.eo05_prepare_day(o jsonb,c jsonb,d timestamptz,op uuid,policy jsonb,digests jsonb)",
+    "returns void language plpgsql security invoker set search_path='' as $fn$",
+    "declare original jsonb;r jsonb;b evidence.source_batches%rowtype;p evidence.source_pages%rowtype;begin",
+    "perform evidence.assert_source_owner(o);",
+    "if o->>'provider' is distinct from 'klaviyo' or c->'expectedRevision' is distinct from '0'::jsonb",
+    "or jsonb_array_length(c->'batchIds') not between 3 and 22 or jsonb_array_length(c->'sources') not between 1 and 300",
+    "then raise exception 'EO05_DAY_PROOF_INVALID';end if;",
+    "perform analytics.assert_klaviyo_daily_report_claim(o,c,d);",
+    "if (select count(*) from pg_temp.adstable_klaviyo_daily_report_stage",
+    "where daily_sources_verified and body->>'operationId'=op::text)<>jsonb_array_length(digests)",
+    "or exists(select 1 from pg_temp.adstable_klaviyo_daily_report_stage where not daily_sources_verified",
+    "or body->>'operationId' is distinct from op::text or digest is distinct from digests->>package_ordinal)",
+    "then raise exception 'EO05_DAY_PROOF_INVALID';end if;",
+    "if pg_catalog.to_regclass('pg_temp.eo05_day_meta') is null then",
+    "create temp table pg_temp.eo05_day_meta(body jsonb not null) on commit drop;",
+    "create temp table pg_temp.eo05_day_refs(page_id bigint primary key,source_ref jsonb not null,source_state text not null,",
+    "batch_until timestamptz not null,page_until timestamptz not null) on commit drop;end if;",
+    "if not exists(select 1 from pg_catalog.pg_class where oid=pg_catalog.to_regclass('pg_temp.eo05_day_meta')",
+    "and relowner=current_user::regrole and relnamespace=pg_catalog.pg_my_temp_schema() and relpersistence='t' and relkind='r')",
+    "or not exists(select 1 from pg_catalog.pg_class where oid=pg_catalog.to_regclass('pg_temp.eo05_day_refs')",
+    "and relowner=current_user::regrole and relnamespace=pg_catalog.pg_my_temp_schema() and relpersistence='t' and relkind='r')",
+    "then raise exception 'EO05_DAY_PROOF_INVALID';end if;",
+    "if exists(select 1 from pg_temp.eo05_day_meta) then raise exception 'EO05_DAY_PROOF_INVALID';end if;",
+    "truncate pg_temp.eo05_day_refs;",
+    "select source into strict original from operations.refresh_work_bindings",
+    "where workspace_id=(o->>'workspaceId')::uuid and install_generation=(o->>'generation')::bigint",
+    "and provider='klaviyo' and account_id=o->>'accountId' and job_id=c->'sourceContext'->>'job_id'",
+    "and fence=(c->'sourceContext'->>'fence')::bigint and from_date=(c->>'businessDate')::date and to_date=from_date for share;",
+    "if original is distinct from c->'sourceContext'->'snapshot'",
+    "or evidence.source_hash(original) is distinct from c->'sourceContext'->>'digest'",
+    "then raise exception 'EO05_DAY_PROOF_INVALID';end if;",
+    "for r in select value from jsonb_array_elements(c->'sources')",
+    "order by (value->>'batch_id')::bigint,(value->>'page_id')::bigint loop",
+    "perform analytics.assert_dataset_source(o,r);",
+    "select * into strict b from evidence.source_batches where id=(r->>'batch_id')::bigint for share;",
+    "select * into strict p from evidence.source_pages where id=(r->>'page_id')::bigint for share;",
+    "if b.manifest->'privacyRedacted'='true'::jsonb",
+    "or b.manifest->'klaviyoDatasetRead'->>'jobId' is distinct from c->'sourceContext'->>'job_id'",
+    "or b.manifest->'klaviyoDatasetRead'->>'fence' is distinct from c->'sourceContext'->>'fence'",
+    "or b.manifest->'klaviyoDatasetRead'->'window' is distinct from c->'sourceContext'->'window'",
+    "then raise exception 'EO05_DAY_PROOF_INVALID';end if;",
+    "insert into pg_temp.eo05_day_refs values(p.id,r,b.source_state,b.retain_until,p.retain_until);end loop;",
+    "insert into pg_temp.eo05_day_meta values(jsonb_build_object('owner',o,'context',c->'sourceContext',",
+    "'source',original,'operation',op,'transaction',pg_catalog.txid_current()::text,'valid',true,'deadline',d,'policy',policy));end $fn$;",
+    "create function analytics.eo05_invalidate_day() returns trigger",
+    "language plpgsql security invoker set search_path='' as $fn$ begin",
+    "if pg_catalog.to_regclass('pg_temp.eo05_day_meta') is null then return null;end if;",
+    "if exists(select 1 from pg_temp.eo05_day_meta) then",
+    "if tg_op='DELETE' or tg_table_name<>'source_batches'",
+    "or (to_jsonb(new)-'manifest') is distinct from (to_jsonb(old)-'manifest')",
+    "or ((to_jsonb(new)->'manifest')-'datasetStorageReceipts') is distinct from ((to_jsonb(old)->'manifest')-'datasetStorageReceipts')",
+    "then update pg_temp.eo05_day_meta set body=jsonb_set(body,'{valid}','false'::jsonb);end if;end if;return null;end $fn$;",
+    ...["evidence.source_batches","evidence.source_pages","operations.refresh_work_bindings"].map(table=>
+      "create trigger eo05_invalidate_day after update or delete on "+table+" for each row execute function analytics.eo05_invalidate_day();"),
+    "revoke all on function analytics.eo05_active_day(jsonb,jsonb),analytics.eo05_prepare_day(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb),",
+    "analytics.eo05_invalidate_day() from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner;",
+  ].join("\n"));
+  const get=async signature=>(await client.query("select pg_get_functiondef($1::regprocedure) definition",[signature])).rows[0].definition;
+  const change=(sql,from,to)=>{assert.equal(sql.split(from).length,2,"shared day anchor: "+from);return sql.replace(from,()=>to);};
+  let writer=await get("analytics.write_klaviyo_staged_first_report_day_verified(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb,jsonb)");
+  writer=change(writer,"analytics.write_klaviyo_staged_first_report_day_verified(","analytics.eo05_first_day_before_shared(");
+  await client.query(writer);
+  await client.query([
+    "revoke all on function analytics.eo05_first_day_before_shared(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb,jsonb)",
+    "from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner;",
+    "create or replace function analytics.write_klaviyo_staged_first_report_day_verified(",
+    "o jsonb,c jsonb,d timestamptz,operation uuid,policy jsonb,digests jsonb,verified_summary jsonb)",
+    "returns jsonb language plpgsql security invoker set search_path='' as $fn$ declare result jsonb;begin",
+    "perform analytics.eo05_prepare_day(o,c,d,operation,policy,digests);",
+    "result:=analytics.eo05_first_day_before_shared(o,c,d,operation,policy,digests,verified_summary);",
+    "truncate pg_temp.eo05_day_meta,pg_temp.eo05_day_refs;return result;end $fn$;",
+  ].join("\n"));
+  // Exceptions unwind proof population and report rows with the same statement.
+  let trigger=await get("analytics.validate_dataset_fact()");
+  trigger=change(trigger," retention_for_ref timestamptz;"," retention_for_ref timestamptz; shared_day jsonb; shared_ref record;");
+  trigger=change(trigger," o:=b.authority; perform evidence.assert_source_owner(o);",
+    " o:=b.authority; perform evidence.assert_source_owner(o);\n shared_day:=analytics.eo05_active_day(o,new.provenance->'source_context');");
+  const bindingStart=trigger.indexOf("  select source into original_source from operations.refresh_work_bindings");
+  const bindingEnd=trigger.indexOf(" for share;",bindingStart)+" for share;".length;
+  assert.ok(bindingStart>=0&&bindingEnd>bindingStart);
+  const binding=trigger.slice(bindingStart,bindingEnd);
+  trigger=change(trigger,binding,"  if shared_day is null then\n"+binding+"\n  else original_source:=shared_day->'source';end if;");
+  trigger=change(trigger,"  if not found or original_source is distinct",
+    "  if (shared_day is null and not found) or original_source is distinct");
+  trigger=change(trigger,"evidence.source_hash(original_source) is distinct from context->>'digest'",
+    "(case when shared_day is null then evidence.source_hash(original_source) else shared_day->'context'->>'digest' end) is distinct from context->>'digest'");
+  const firstStart=trigger.indexOf("  for ref in select value from jsonb_array_elements(new.provenance->'sources') loop");
+  const firstEnd=trigger.indexOf("\n  end loop;",firstStart)+"\n  end loop;".length;
+  assert.ok(firstStart>=0&&firstEnd>firstStart);
+  const first=trigger.slice(firstStart,firstEnd);
+  trigger=change(trigger,first,"  if shared_day is null then\n"+first+"\n  end if;");
+  const secondStart=trigger.indexOf("  perform analytics.assert_dataset_source(o,ref);");
+  const secondEnd=trigger.indexOf("\n end loop;",secondStart);
+  assert.ok(secondStart>=0&&secondEnd>secondStart);
+  const second=trigger.slice(secondStart,secondEnd);
+  trigger=change(trigger,second,[
+    "  if shared_day is null then",second,"  else",
+    "    select * into shared_ref from pg_temp.eo05_day_refs r where r.page_id=(ref->>'page_id')::bigint and r.source_ref=ref;",
+    "    if not found or shared_ref.batch_until<=clock_timestamp() or shared_ref.page_until<=clock_timestamp()",
+    "      then raise exception 'EO05_DAY_SOURCE_INVALID';end if;",
+    "    if shared_ref.source_state<>'complete' then all_complete:=false;end if;",
+    "    if shared_ref.batch_until<new.retain_until then raise exception 'DATASET_SOURCE_POLICY_INVALID';end if;",
+    "  end if;",
+  ].join("\n"));
+  await client.query(trigger);
+}
+
+async function verifySharedDaySources(client,args) {
+  const owner=JSON.parse(args[0]),context=JSON.parse(args[1]);
+  const active="select analytics.eo05_active_day($1::jsonb,$2::jsonb) as result";
+  const prepare="select analytics.eo05_prepare_day($1::jsonb,$2::jsonb,$3::timestamptz,$4::uuid,$5::jsonb,$6::jsonb)";
+  assert.equal((await client.query(active,[owner,context.sourceContext])).rows[0].result,null);
+  await client.query("savepoint shared_day_correctness");
+  let checks=0;
+  try {
+    await client.query(prepare,args);
+    assert.equal((await client.query(active,[owner,context.sourceContext])).rows[0].result.valid,true);
+    const {rows:[{fact}]}=await client.query("select to_jsonb(x) fact from analytics.cpd_product_sales_facts x where installation_id=$1 limit 1",[owner.installationId]);
+    const insert="insert into analytics.cpd_product_sales_facts overriding system value select * from jsonb_populate_record(null::analytics.cpd_product_sales_facts,$1::jsonb)";
+    async function reject(run,expected) {
+      await client.query("savepoint shared_day_negative");
+      let message;
+      try {await run();}
+      catch(error) {if(error.code!=="P0001") throw error;message=error.message;}
+      finally {
+        await client.query("rollback to savepoint shared_day_negative");
+        await client.query("release savepoint shared_day_negative");
+      }
+      assert.equal(message,expected);
+      checks++;
+    }
+    for(const [key,value] of [["generation","999999"],["connectionVersion","999999"],["accountId","foreign"]]) {
+      await reject(()=>client.query(active,[{...owner,[key]:value},context.sourceContext]),"EO05_DAY_PROOF_INVALID");
+    }
+    for(const [key,value] of [["job_id","foreign"],["fence","999999"],["window",{from:"1900-01-01",to:"1900-01-01"}]]) {
+      await reject(()=>client.query(active,[owner,{...context.sourceContext,[key]:value}]),"EO05_DAY_PROOF_INVALID");
+    }
+    const altered=structuredClone(fact);
+    altered.provenance.sources[0].payload_hash="0".repeat(64);
+    await reject(()=>client.query(insert,[altered]),"EO05_DAY_SOURCE_INVALID");
+    await reject(()=>client.query(insert,[{...fact,source_currency:"EUR"}]),"DATASET_CONTEXT_MISMATCH");
+    await reject(()=>client.query(insert,[{...fact,provenance:{...fact.provenance,sources:[]}}]),"DATASET_PROVENANCE_INVALID");
+    const ref=context.sources[0];
+    await reject(()=>client.query("update evidence.source_pages set purged_at=clock_timestamp() where id=$1",[ref.page_id]),"DATASET_EVIDENCE_PINNED");
+    for(const [sql,parameters] of [
+      ["update evidence.source_pages set retain_until=retain_until+interval '1 second' where id=$1",[ref.page_id]],
+      ["update evidence.source_batches set manifest=manifest||'{\"privacyRedacted\":true}'::jsonb where id=$1",[ref.batch_id]],
+      ["update operations.refresh_work_bindings set source=source||'{\"timezone\":\"Europe/Paris\"}'::jsonb where workspace_id=$1 and job_id=$2",[owner.workspaceId,context.sourceContext.job_id]],
+      ["update pg_temp.eo05_day_meta set body=jsonb_set(body,'{deadline}',to_jsonb((clock_timestamp()-interval '1 second')::text))",[]],
+      ["update pg_temp.eo05_day_meta set body=jsonb_set(body,'{transaction}','\"not-current-transaction\"'::jsonb)",[]],
+      ["alter table pg_temp.eo05_day_meta rename to eo05_real_day_meta; create temp view eo05_day_meta as select * from pg_temp.eo05_real_day_meta",[]],
+    ]) {
+      await reject(async()=>{await client.query(sql,parameters);await client.query(active,[owner,context.sourceContext]);},"EO05_DAY_PROOF_INVALID");
+    }
+    await client.query("truncate pg_temp.eo05_day_meta,pg_temp.eo05_day_refs");
+    assert.equal((await client.query(active,[owner,context.sourceContext])).rows[0].result,null);
+  } finally {
+    await client.query("rollback to savepoint shared_day_correctness");
+    await client.query("release savepoint shared_day_correctness");
+  }
+  assert.equal(checks,16);
+  return checks;
+}
+
 async function installReadbackMetadataReuse(client) {
   const {rows:[{canonicalDefinition}]}=await client.query(
     "select pg_get_functiondef('analytics.dataset_json(jsonb,integer)'::regprocedure) as \"canonicalDefinition\"");
@@ -839,14 +1017,14 @@ export async function klaviyoDailyTimingProbe(client,options) {
   return runKlaviyoDailyTimingProbe(client,options);
 }
 
-export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,callBreakdown=false}) {
+export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,reduceReportRepeats=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false}) {
   assert.equal(connection.host,"aws-1-eu-central-1.pooler.supabase.com");
   assert.equal(connection.port,5432);
   assert.equal(connection.database,"postgres");
   assert.equal(connection.user,"adstable_benchmark_session.lxphenczjmueblnonklm");
   const {rows:[identity]}=await client.query("select session_user as login,current_user as role");
   assert.deepEqual(identity,{login:"adstable_benchmark_session",role:"adstable_owner"});
-  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup,phaseCandidate,reuseStagedCanonical,triggerPhaseDetail,reuseCanonicalRows,endToEnd,optimizeReadback,callBreakdown});
+  return runKlaviyoDailyTimingProbe(client,{ownerFixture,mode:"retention-boundary",retentionVariant:"cached",combinedVerification:true,reduceReportRepeats,hosted:true,hostedDetail,reportWriteCleanup,phaseCandidate,reuseStagedCanonical,triggerPhaseDetail,reuseCanonicalRows,endToEnd,optimizeReadback,sharedDaySources,verifyDaySources,callBreakdown});
 }
 
 async function installHostedReportClocks(client) {
@@ -869,7 +1047,7 @@ async function installHostedReportClocks(client) {
     end $clock$;`);
 }
 
-async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,callBreakdown=false}) {
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
@@ -916,6 +1094,10 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   if(reuseCanonicalRows) {
     assert.ok(reuseStagedCanonical&&(hostedDetail||endToEnd));
     await installCanonicalRowsReuse(client);
+  }
+  if(sharedDaySources) {
+    assert.ok(endToEnd&&reuseCanonicalRows);
+    await installSharedDaySources(client);
   }
   if(optimizeReadback) {
     assert.ok(endToEnd&&reuseCanonicalRows);
@@ -973,7 +1155,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
       writerPhaseCounts[writer[1]]=(writerPhaseCounts[writer[1]]??0)+1;
     }
   };
-  let failed,phase="start",requests=0,claimId,reportReceipt,reportWriteMs,reportCpuStart;
+  let failed,phase="start",requests=0,claimId,reportReceipt,reportWriteMs,reportCpuStart,sharedDayChecks=0;
   let reportQueueCallsMs=0;
   let timingStep="queueEnqueue";
   const callTimings=[];
@@ -1029,6 +1211,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
           const result=await executeMeasured(timedSql,args,sql===KLAVIYO_DAILY_STAGE_SQL?"reportStage":"reportPublish");
           if(endToEnd) databaseTimings[sql===KLAVIYO_DAILY_STAGE_SQL?"reportStage":"reportPublish"]+=performance.now()-callStart;
           hostedReportMs.push(result.rows[0].elapsed_ms);
+          if(verifyDaySources&&sql===KLAVIYO_DAILY_PUBLISH_SQL) sharedDayChecks=await verifySharedDaySources(client,args);
           return result;
         } catch(error) {failed??=error;throw error;}
       }
@@ -1173,7 +1356,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     assert.equal(receipts,1);
     const summary={provider:"klaviyo",synthetic:true,rollbackOnly:true,writerCommit:bulkWriterCommit,
       queueMode:"isolated_no_backlog",productEvents,reportRows:reportReceipt.rowCount,rawPackages:batches.length,
-      reportPackages:reportReceipt.packages.length,receipts,requests};
+      reportPackages:reportReceipt.packages.length,receipts,requests,...verifyDaySources?{sharedDayChecks,correctnessOnly:true}: {}};
     if(retentionOnly) {
       const {rows:[{calls}]}=await client.query("select current_setting('eo05.retention_calls')::int calls");
       assert.equal(calls,retentionVariant==="cached"?1:productEvents);

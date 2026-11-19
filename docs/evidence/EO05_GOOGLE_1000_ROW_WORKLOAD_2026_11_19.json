@@ -1,0 +1,129 @@
+{
+  "version": "eo05-google-1000-row-workload-v1",
+  "checked_at": "2026-11-19",
+  "status": "local_functional_passed_required_ci_pending",
+  "owner_approval": [
+    {
+      "scope": "Google total native capture-row ceiling 1000 -> 2000, exact 1000 projected report facts and isolated correctness tests",
+      "response": "Onaylıyorum",
+      "after": "Exact recipe of 500 product-performance + 499 product-sales + one PD fact; five 200-row report packages, one daily receipt. No timing or hosted mutation."
+    },
+    {
+      "scope": "Google v2 storageLimits.maxBytes ceiling 1048576 -> 2097152 only, explicit new fixture input; preserve HTTP byte ceiling and all row/page/receipt guards",
+      "response": "Onaylıyorum",
+      "after": "The unchanged envelope bound rejected a whole native sale page; hex ciphertext and references alone require at least 1104427 bytes. Separate approval was requested under the raw-source constitution."
+    }
+  ],
+  "workload": {
+    "business_date": "2026-11-01",
+    "native_rows": 1501,
+    "report_rows": 1000,
+    "tables": {
+      "pd_facts": 1,
+      "cpd_product_performance_facts": 500,
+      "cpd_product_sales_facts": 499
+    },
+    "native_report_families": 17,
+    "native_report_pages": 17,
+    "product_500_has_performance_without_sale": true,
+    "report_packages": [
+      200,
+      200,
+      200,
+      200,
+      200
+    ],
+    "daily_receipts": 1,
+    "output_truncation": false
+  },
+  "limits": {
+    "capture_rows_max": 2000,
+    "source_rows_per_envelope_max": 1000,
+    "google_envelope_bytes_max": 2097152,
+    "http_response_bytes_max": 1048576,
+    "report_rows_per_package_max": 200,
+    "report_envelope_bytes_max": 1048576,
+    "other_runtime_limits_changed": false,
+    "old_explicit_1000_row_plan_still_stops": true,
+    "old_1MiB_envelope_still_rejects_large_page": true,
+    "above_new_ceilings_rejected": true
+  },
+  "verification": {
+    "targeted_tests": {
+      "passed": 82,
+      "failed": 0
+    },
+    "synthetic_http_to_projection": {
+      "native_rows": 1501,
+      "facts": 1000,
+      "mocked_google_requests": 18,
+      "oauth_renewal_requests": 0,
+      "includes_merchant_absent_probe": true,
+      "merchant_state": "unavailable; remains separate from complete Ads performance",
+      "stored_pages_decrypted_and_verified": true
+    },
+    "application_handoff": {
+      "sql_responses": "mocked",
+      "five_packages": true,
+      "one_publication": true,
+      "independent_receipt_inspection": true,
+      "one_closure": true
+    },
+    "sql_fixture_preparation": {
+      "passed": true,
+      "intact_native_pages": true,
+      "envelope_above_1MiB": true,
+      "envelopes_within_2MiB": true
+    },
+    "required_postgres_probe": "Prepared as additional case in existing localhost:54322-only rollback probe. Keeps 501-row and empty cases. Actual SQL acceptance pending required CI."
+  },
+  "failures_preserved": [
+    {
+      "attempt": "total-row change with unchanged 1MiB envelope",
+      "tests": 41,
+      "passed": 40,
+      "failed": 1,
+      "result": "SOURCE_STORE_BOUNDS during preparation; no product publication. Size analysis had initially omitted full encrypted-envelope/reference overhead."
+    },
+    {
+      "attempt": "2MiB capture, old HTTP SQL mock manifest",
+      "result": "Capture completed but report source reader rejected missing googleDatasetInputDigest in the mock. Add the field that real commit_google_dataset_source already writes; no runtime guard change."
+    },
+    {
+      "attempt": "large whole-page prebuilt SQL fixture",
+      "result": "Public sourcePayloadHash rejected an already prepared ciphertext string. Hash exact canonical prepared wire bytes as the real source client does. Public 65536-character plain-string guard stays unchanged."
+    }
+  ],
+  "protected_behavior": {
+    "klaviyo_runtime_changed": false,
+    "klaviyo_benchmark_tools_changed": false,
+    "google_queries_changed": false,
+    "oauth_behavior_changed": false,
+    "encryption_changed": false,
+    "whole_native_pages": true,
+    "unknown_write_retry": false,
+    "source_receipt_before_readback": false,
+    "privacy_retention_guards_preserved": true
+  },
+  "authority": {
+    "live_provider_calls": false,
+    "hosted_database_calls": false,
+    "live_config_changed": false,
+    "migration_changed": false,
+    "merge": false,
+    "deploy": false,
+    "timing_run": false,
+    "capacity_claim": false
+  },
+  "documentation": {
+    "checked_at": "2026-11-19",
+    "google_paging": "https://developers.google.com/google-ads/api/docs/reporting/paging",
+    "supabase_changelog": "https://supabase.com/changelog.md",
+    "postgres_transactions": "https://www.postgresql.org/docs/current/tutorial-transactions.html"
+  },
+  "limitations": [
+    "This is fixed-cardinality correctness preparation, not a queue-to-close timing result.",
+    "Application capture uses synthetic HTTP and mock database responses. The independent SQL probe uses prebuilt encrypted synthetic sources and actual PostgreSQL daily RPCs; these proofs are not a hosted full-capture benchmark.",
+    "1000 report rows across providers need not have equal bytes, table mix or native row counts. Any timing comparison must disclose those differences."
+  ]
+}

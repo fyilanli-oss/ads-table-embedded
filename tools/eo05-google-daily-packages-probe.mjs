@@ -17,7 +17,9 @@ export async function googleDailyPackagesProbe(client,{ownerFixture}) {
   const r=(await client.query("select analytics.dataset_json($1::jsonb) a,analytics.google_daily_json($1::jsonb) b,analytics.dataset_digest($1::jsonb) h,analytics.google_daily_digest($1::jsonb) g",[payload])).rows[0];
   assert.equal(r.a,r.b);assert.equal(r.h,r.g);
  }
- for(const nonempty of [true,false]){
+ for(const scenario of [{nonempty:true,rows:501,packages:3},{nonempty:false,rows:0,packages:1},
+  {nonempty:true,rows:1000,packages:5,googleProducts:500,googleSalesProducts:499,googlePageSize:10000}]){
+  const {nonempty}=scenario;
   await client.query("savepoint google_daily_case");
   try{
    // Same ephemeral membership used by the existing scheduled Dataset probe.
@@ -28,7 +30,8 @@ export async function googleDailyPackagesProbe(client,{ownerFixture}) {
    const owner=await ownerFixture(client,"google_ads");
    await client.query("update integrations.provider_connections set connected_at='2026-10-31' where id=$1",[owner.connectionId]);
    await client.query("update integrations.reporting_account_bindings set effective_from='2026-10-31' where connection_id=$1",[owner.connectionId]);
-   const input=await storedBindingFixture(client,owner,{nonempty,googleProducts:250});
+   const input=await storedBindingFixture(client,owner,{nonempty,googleProducts:scenario.googleProducts??250,
+    ...(scenario.rows===1000?{googleSalesProducts:scenario.googleSalesProducts,googlePageSize:scenario.googlePageSize,googleStorageMaxBytes:2097152}:{})});
    const job="synthetic-binding-job",day="2026-11-01",deadlineAt=Date.now()+120000,deadline=new Date(deadlineAt).toISOString();
    const fence=(await client.query("select (coalesce(max(fence),0)+1)::text n from operations.refresh_runs")).rows[0].n;
    const scope=[owner.workspaceId,owner.generation,"google_ads",owner.accountId,job,fence];
@@ -38,16 +41,21 @@ export async function googleDailyPackagesProbe(client,{ownerFixture}) {
     '{googleDatasetRead,fence}',to_jsonb($3::text)),'{googleDatasetRead,observedAt}',to_jsonb($4::text)),'{googleDatasetRead,completedAt}',to_jsonb($4::text))
     where authority=$1::jsonb and attempt_id=$2`,[JSON.stringify(owner),b.attemptId,fence,new Date(Date.now()-1000).toISOString()]);
    await client.query(`insert into operations.refresh_runs(workspace_id,install_generation,provider,account_id,job_id,fence,cost,status)
-    values($1,$2,$3,$4,$5,$6,'{"requests":18,"rows":1000,"bytes":1000000,"connections":1,"dbWrites":20}','running')`,scope);
+    values($1,$2,$3,$4,$5,$6,$7::jsonb,'running')`,[...scope,JSON.stringify({requests:18,rows:scenario.rows===1000?2000:1000,
+     bytes:scenario.rows===1000?16000000:1000000,connections:1,dbWrites:20})]);
    await client.query(`insert into operations.refresh_work_progress(workspace_id,install_generation,provider,account_id,job_id,fence,stage,from_date,to_date)
     values($1,$2,$3,$4,$5,$6,'ready_for_dataset',$7,$7)`,[...scope,day]);
-   const bundle=await readStoredDatasetSources({...input,limits:{...input.limits,deadlineAt,maxBytes:16000000}});
-   const rows=projectStoredGoogleDataset(bundle).rows;assert.equal(rows.length,nonempty?501:0);
+   const bundle=await readStoredDatasetSources({...input,limits:{...input.limits,deadlineAt,maxBytes:16000000,maxRows:scenario.rows===1000?2000:1000}});
+   const rows=projectStoredGoogleDataset(bundle).rows;assert.equal(rows.length,scenario.rows);
+   if(scenario.rows===1000){assert.equal(bundle.rowsRead,1501);assert.equal(bundle.pagesRead,17);
+    assert.deepEqual(["pd_facts","cpd_product_performance_facts","cpd_product_sales_facts"].map(t=>rows.filter(r=>r.table===t).length),[1,500,499]);}
    const operationId=randomUUID(),policy=resolveReportRetentionPolicy({businessDate:day,timeZone:"UTC"});
    const context={expectedRevision:0,businessDate:day,timeZone:"UTC",sourceContext:bundle.datasets[0].sourceContext,
     sources:bundle.datasets.flatMap(d=>d.pages.map(p=>p.ref)),batchIds:bundle.datasets.flatMap(d=>(d.packageReceipts??[d.receipt]).map(r=>r.batchId)),
     startedAt:new Date(Date.now()-1000).toISOString(),completedAt:new Date().toISOString()};
    const writes=prepareDailyDatasetPackages({owner,rows,policy,operationId,now:new Date().toISOString(),context,maxPackages:20});
+   assert.equal(writes.length,scenario.packages);
+   if(scenario.rows===1000)assert.deepEqual(writes.map(w=>w.rows.length),[200,200,200,200,200]);
    const args=[JSON.stringify(owner),JSON.stringify(context),deadline,operationId,JSON.stringify(policy)];
    const digests=[];
    const rpc=async(sql,parameters)=>{await client.query("set local role adstable_refresh_dataset_runner");const result=await client.query(sql,parameters);await client.query("set local role adstable_owner");return result;};

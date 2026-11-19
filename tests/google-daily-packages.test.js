@@ -6,6 +6,9 @@ import {reconcileStoredDatasetSources} from "../app/lib/database/dataset-reconci
 import {GOOGLE_DAILY_STAGE_SQL as STAGE,GOOGLE_DAILY_PUBLISH_SQL as PUBLISH,GOOGLE_DAILY_INSPECT_SQL as INSPECT,GOOGLE_DAILY_FINISH_SQL as FINISH} from "../app/lib/database/dataset-rpc.server.js";
 import {sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
 import {readStoredDatasetSources} from "../app/lib/database/dataset-source-reader.server.js";
+import {googleRawDatasetsFixture} from "./fixtures/google-raw-datasets-fixture.js";
+import {createGoogleRawCaptureExecution} from "../app/lib/refresh/google-raw-server.server.js";
+import {projectStoredGoogleDataset} from "../app/lib/providers/stored-dataset-projection.server.js";
 
 test("Google raw packaging keeps native pages intact, bounded and ordered",async()=>{
  const f=await datasetSourceBindingFixture("google_ads",{googleProducts:100});
@@ -32,6 +35,53 @@ test("Google multipart source rejects missing, reordered and foreign-bound packa
  const part=[...f.envelopes.values()].find(e=>e.sourceWrite.ordinal===1);
  part.receipt.manifest.googleDatasetRead={...part.receipt.manifest.googleDatasetRead,operationId:"00000000-0000-4000-8000-000000000000"};
  await assert.rejects(readStoredDatasetSources({...f,limits}),/PACKAGE_BINDING_INVALID/);
+});
+
+test("full synthetic Google capture projects exactly 1000 facts and publishes five 200-row packages",async()=>{
+ const x=googleRawDatasetsFixture({googleProducts:500,googleSalesProducts:499});
+ x.plan.limits.maxRows=2000;x.plan.storageLimits.maxBytes=2097152;x.setPlan();
+ const e=createGoogleRawCaptureExecution(x.options),capture=await e.run();await e.close();
+ assert.equal(capture.status,"partial",JSON.stringify(capture)); // Merchant absence stays separate.
+ assert.equal(capture.datasets.account_performance.recordCount,3);
+ assert.equal(capture.datasets.product_performance.recordCount,1498);
+ assert.equal(capture.datasets.merchant_identity.status,"unavailable");
+ assert.equal(capture.contentVerified,true);assert.equal(capture.jobPaused,true);
+ assert.equal(x.f.http.filter(u=>u.hostname==="googleads.googleapis.com").length,18);
+ assert.equal(x.f.http.filter(u=>u.hostname==="oauth2.googleapis.com").length,0);
+ assert.equal(x.plan.storageLimits.maxRows,1000);
+ assert.ok(x.writes.every(w=>Buffer.byteLength(JSON.stringify(w.body))<=x.plan.storageLimits.maxBytes));
+ const f=x.datasetInputs(),source=await readStoredDatasetSources(f);
+ assert.equal(source.rowsRead,1501);assert.equal(source.pagesRead,17);
+ assert.equal(new Set(source.datasets.flatMap(d=>d.pages.map(p=>p.family))).size,17);
+ const projection=projectStoredGoogleDataset(source);assert.deepEqual(projection.holds,[]);
+ assert.equal(projection.rows.length,1000);
+ assert.deepEqual(Object.fromEntries(["pd_facts","cpd_product_performance_facts","cpd_product_sales_facts"].map(t=>[t,projection.rows.filter(r=>r.table===t).length])),
+  {pd_facts:1,cpd_product_performance_facts:500,cpd_product_sales_facts:499});
+ assert.ok(projection.rows.some(r=>r.row.native_product_id==="product-500"));
+ assert.ok(!projection.rows.some(r=>r.row.native_sold_product_id==="product-500"));
+ let receipt,transactions=0;const packages=[];
+ f.database.transaction=async run=>{transactions++;return run(f.database);};
+ x.hooks.dataset=(sql,args)=>{
+  if(sql===STAGE){const w=JSON.parse(args[1]),c=JSON.parse(args[2]);const p={ordinal:args[4],rowCount:w.rows.length,digest:sourcePayloadHash({write:w,context:c})};packages.push(p);return {rows:[{result:{status:"staged",operationId:w.operationId,packageCount:args[5],...p}}]};}
+  if(sql===PUBLISH){const c=JSON.parse(args[1]);receipt={version:"google-daily-receipt-v1",status:"consumed",comparison:"matched",consumerReceipt:true,checkpointAdvanced:true,
+   operationId:args[3],rowCount:1000,revision:1,jobId:c.sourceContext.job_id,fence:c.sourceContext.fence,businessDate:c.businessDate,timeZone:c.timeZone,packages,batchIds:c.batchIds,digest:"a".repeat(64)};return {rows:[{result:receipt}]};}
+  if(sql===INSPECT)return {rows:[{result:structuredClone(receipt)}]};
+  if(sql===FINISH)return {rows:[{result:args[3]===receipt.operationId&&args[4]===receipt.digest}]};
+ };
+ const result=await reconcileStoredDatasetSources({...f,scheduled:true,googleDailyPackages:true,expectedRevision:0,
+  admittedScope:{jobId:source.scope.jobId,fence:source.scope.fence,from:source.scope.window.from,to:source.scope.window.to}});
+ assert.equal(result.jobCompleted,true);assert.equal(result.rowsStored,1000);assert.equal(transactions,1);
+ assert.deepEqual(packages.map(p=>p.rowCount),[200,200,200,200,200]);
+ for(const sql of [PUBLISH,INSPECT,FINISH])assert.equal(f.queries.filter(s=>s===sql).length,1);
+});
+
+test("the SQL source fixture retains intact large native pages for exactly 1000 facts",async()=>{
+ const f=await datasetSourceBindingFixture("google_ads",{googleProducts:500,googleSalesProducts:499,googlePageSize:10000,googleStorageMaxBytes:2097152});
+ const source=await readStoredDatasetSources({...f,limits:{...f.limits,maxRows:2000,maxBytes:16000000}});
+ assert.equal(source.rowsRead,1501);assert.equal(source.pagesRead,17);
+ assert.equal(projectStoredGoogleDataset(source).rows.length,1000);
+ assert.ok([...f.envelopes.values()].some(e=>Buffer.byteLength(JSON.stringify(e.sourceWrite.body))>1048576));
+ assert.ok([...f.envelopes.values()].every(e=>Buffer.byteLength(JSON.stringify(e.sourceWrite.body))<=2097152));
 });
 
 for(const mode of ["success","lost_publish","bad_readback","lost_finish"]){

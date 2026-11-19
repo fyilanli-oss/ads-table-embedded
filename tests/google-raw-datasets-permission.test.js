@@ -14,6 +14,42 @@ for(const lost of [false,true])test("Google package writes preserve per-package 
  else{assert.equal(r.status,"partial");assert.equal(r.datasets.account_performance.packageReceipts.length,2);assert.equal(r.datasets.product_performance.packageReceipts.length,2);}
 });
 
+test("Google total capture permits 2000 rows while envelope bounds stay at 1000",()=>{
+ const x=googleRawDatasetsFixture();x.plan.limits.maxRows=2000;x.setPlan();
+ const plan=readGoogleRawCapturePlan(x.environment,x.options.now());
+ assert.equal(plan.limits.maxRows,2000);assert.equal(plan.storageLimits.maxRows,1000);
+ x.plan.limits.maxRows=2001;x.setPlan();assert.throws(()=>readGoogleRawCapturePlan(x.environment,x.options.now()));
+ x.plan.limits.maxRows=2000;x.plan.storageLimits.maxRows=1001;x.setPlan();
+ assert.throws(()=>readGoogleRawCapturePlan(x.environment,x.options.now()));
+ assert.equal(x.calls.length,0);assert.equal(x.f.http.length,0);
+});
+
+test("Google envelope ceiling is 2 MiB while HTTP response bytes stay at 1 MiB",()=>{
+ const x=googleRawDatasetsFixture();x.plan.storageLimits.maxBytes=2097152;x.setPlan();
+ assert.equal(readGoogleRawCapturePlan(x.environment,x.options.now()).storageLimits.maxBytes,2097152);
+ x.plan.storageLimits.maxBytes=2097153;x.setPlan();assert.throws(()=>readGoogleRawCapturePlan(x.environment,x.options.now()));
+ x.plan.storageLimits.maxBytes=2097152;x.plan.limits.maxBytes=1048577;x.setPlan();
+ assert.throws(()=>readGoogleRawCapturePlan(x.environment,x.options.now()));
+ assert.equal(x.calls.length,0);assert.equal(x.f.http.length,0);
+});
+
+test("the intact 499-sale native page still rejects the old 1 MiB envelope limit",async()=>{
+ const x=googleRawDatasetsFixture({googleProducts:500,googleSalesProducts:499});
+ x.plan.limits.maxRows=2000;x.plan.storageLimits.maxBytes=1048576;x.setPlan();
+ const e=createGoogleRawCaptureExecution(x.options),r=await e.run();await e.close();
+ assert.equal(r.status,"unconfirmed");assert.equal(r.datasets.account_performance.status,"stored");
+ assert.notEqual(r.datasets.product_performance.status,"stored");assert.equal(r.empty,null);
+});
+
+test("an explicit 1000-row capture plan still stops the 1501-native-row workload",async()=>{
+ const x=googleRawDatasetsFixture({googleProducts:500,googleSalesProducts:499});
+ const e=createGoogleRawCaptureExecution(x.options);const r=await e.run();await e.close();
+ assert.equal(r.reason,"row_limit");assert.equal(r.datasets.product_performance.status,"failed");
+ assert.equal(r.datasets.account_performance.status,"stored");assert.equal(r.datasets.merchant_identity.status,"not_attempted");
+ assert.equal(r.recordCount,null);assert.equal(r.empty,null);
+ assert.equal(x.writes.length,1);assert.equal(x.f.http.filter(u=>u.hostname==="googleads.googleapis.com").length,12);
+});
+
 for(const merchant of [false,true])test("three fixed datasets: successful Ads zero; Merchant "+(merchant?"complete":"absent is not zero"),async()=>{
  const x=googleRawDatasetsFixture({merchant}),e=createGoogleRawCaptureExecution(x.options),r=await e.run();await e.close();
  assert.equal(r.status,merchant?"stored":"partial",JSON.stringify({r,sql:x.calls.map(c=>c.sql)}));

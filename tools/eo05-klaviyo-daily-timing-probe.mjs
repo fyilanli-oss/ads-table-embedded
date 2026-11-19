@@ -502,6 +502,24 @@ async function installMultipartRevisionPermit(client,{verify=false}={}) {
     "for s in select body,day_binding from pg_temp.adstable_klaviyo_daily_report_stage");
   replacement=change(replacement,"'transactionId',pg_catalog.txid_current()::text,'table',table_name,'id',old_fact->>'id',",
     "'transactionId',pg_catalog.txid_current()::text,'dailyOperation',operation::text,'dailyBinding',s.day_binding,'table',table_name,'id',old_fact->>'id',");
+  // The plan above validates the owned staged day before any replacement. Hold
+  // each distinct source once, in deterministic order, inside this transaction;
+  // the original hold still checks live expiry/privacy and locks the source.
+  // Do not repeatedly UPDATE all source references for every product row.
+  replacement=change(replacement,
+    "  perform analytics.plan_klaviyo_staged_report_replacement(o,c,d,operation,policy,digests);",
+    ["  perform analytics.plan_klaviyo_staged_report_replacement(o,c,d,operation,policy,digests);",
+     "  for source_id in select distinct (ref->>'batch_id')::bigint",
+     "    from pg_temp.adstable_klaviyo_daily_report_stage staged",
+     "    cross join lateral jsonb_array_elements(staged.body->'rows') entry",
+     "    cross join lateral jsonb_array_elements(entry->'row'->'provenance'->'sources') ref",
+     "    order by 1 loop",
+     "    perform analytics.hold_report_source_batch(o,source_id,(policy->>'until')::timestamptz);",
+     ...verify?["    insert into pg_temp.eo05_revision_retention_holds values(source_id,policy);"]:[],
+     "  end loop;"].join("\n"));
+  replacement=change(replacement,
+    "      for source_id in select distinct (ref->>'batch_id')::bigint from jsonb_array_elements(r->'provenance'->'sources') ref loop\n        perform analytics.hold_report_source_batch(o,source_id,(policy->>'until')::timestamptz);\n      end loop;",
+    "      -- Source retention held once for this validated staged day above.");
   await client.query(replacement);
   let validator=await get("analytics.validate_dataset_fact()");
   validator=change(validator,"and storage_state='committed' and source_state='complete' and handoff_state='pending';",
@@ -512,6 +530,7 @@ async function installMultipartRevisionPermit(client,{verify=false}={}) {
 
 async function installMultipartRevisionChecks(client) {
   await client.query([
+    "create temp table eo05_revision_retention_holds(batch_id bigint primary key,policy jsonb not null) on commit drop;",
     "create temp table eo05_revision_checks(n integer not null) on commit drop;insert into eo05_revision_checks values(0);",
     "alter function analytics.eo05_multipart_revision_allowed(jsonb,jsonb,jsonb,text) rename to eo05_multipart_revision_unmetered;",
     "create function analytics.eo05_multipart_revision_allowed(o jsonb,p jsonb,j jsonb,t text) returns boolean",
@@ -1166,13 +1185,18 @@ export async function klaviyoHostedReportProbe(client,{ownerFixture,connection,r
   assert.equal(revised,productEvents);
   assert.equal((await client.query(KLAVIYO_DAILY_INSPECT_SQL,[owner,receipt.operationId])).rows[0].result.status,"superseded");
   let revisionPermitChecks;
+  let revisionRetentionHolds;
   if(verifyRevisionPermit) {
     revisionPermitChecks=(await client.query("select n from pg_temp.eo05_revision_checks")).rows[0].n;
     assert.equal(revisionPermitChecks,15);
+    const count=(await client.query("select count(*)::int n from pg_temp.eo05_revision_retention_holds")).rows[0].n;
+    const expected=(await client.query("select count(distinct ref->>'batch_id')::int n from pg_temp.adstable_klaviyo_daily_report_stage s cross join lateral jsonb_array_elements(s.body->'rows') entry cross join lateral jsonb_array_elements(entry->'row'->'provenance'->'sources') ref")).rows[0].n;
+    assert.equal(count,expected);
+    revisionRetentionHolds={actual:count,expected};
   }
   return {...result,reread,businessRowsChanged:changed,rowsRebound:rebound,rowsRevisionAdvanced:revised,
     seed:{reportRows:seed.reportRows,requests:seed.requests,completed:true,excludedFromTiming:true},
-    ...verifyRevisionPermit?{revisionPermitChecks,correctnessOnly:true}: {}};
+    ...verifyRevisionPermit?{revisionPermitChecks,revisionRetentionHolds,correctnessOnly:true}: {}};
 }
 
 async function installHostedReportClocks(client) {

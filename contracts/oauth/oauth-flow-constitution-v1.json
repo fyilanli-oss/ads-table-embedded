@@ -1765,7 +1765,7 @@
       "tools/eo05-google-acceptance-probe.mjs": "c70c383952e96f852053a6406f75c5dc9c6058aca4514748fd81f99ae4da78ea",
       "tools/eo05-google-daily-packages-probe.mjs": "f7ea022c7b97f6a6d9bcc0c12f7ed3c60eba9e54b04ab730d25e5e23a4034322",
       "tools/eo05-google-daily-timing-probe.mjs": "ffb714114afe996b421474acaa231b02770a68390dcd38b2413756aa05318ba5",
-      "tools/eo05-google-hosted-benchmark.mjs": "f47a7b142de2586e96656a0ebc07364425bca27039f451e45f2a43776fcc545b",
+      "tools/eo05-google-hosted-benchmark.mjs": "6c8f2fa7c9deadcd97d18b5b2e37f2dc5a1fbbf82184aa7fd45ab8ef9bf0d999",
       "tools/eo05-google-identity-renewal-probe.mjs": "2f429c983600225ccdc9cadeede2611de9d48522dc575d5cb583b324b6f07fd1",
       "tools/eo05-google-mapping-flow-probe.mjs": "4cbdd4f19fb6db6ae199daa1ffcc5921ec885e467d45a1ec4abf2e6e14650d2d",
       "tools/eo05-google-merchant-server-probe.mjs": "6892d0ecceac339e83116fbf23407c26de05b94e62d80d3b40dbcee37a21a637",

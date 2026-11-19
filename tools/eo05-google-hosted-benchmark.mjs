@@ -18,8 +18,10 @@ let open=false;
 try{
  await client.connect();await client.query("begin");open=true;await client.query("set local role adstable_owner");
  const lineage=JSON.parse(readFileSync(new URL("../contracts/a6-tech-01-f01-migration-lineage-v1.json",import.meta.url),"utf8"));
- // Existing prepared SQL only, with original timeout/guards. Never commit.
- for(const entry of lineage.prepared_migrations){const text=readFileSync(new URL("../"+entry.file,import.meta.url),"utf8").replace(/\r\n/g,"\n").trim();
+ // Nano already has the older prerequisites. Only this Google-specific prepared
+ // definition is absent; do not reinstall tables or other providers' writers.
+ const entries=lineage.prepared_migrations.filter(e=>e.name==="eo05_google_daily_packages");assert.equal(entries.length,1);
+ for(const entry of entries){const text=readFileSync(new URL("../"+entry.file,import.meta.url),"utf8").replace(/\r\n/g,"\n").trim();
   assert.equal(createHash("sha256").update(text).digest("hex"),entry.repository_sql_sha256);
   await client.query(text.replace(/^begin;/," ").replace(/commit;$/," "));}
  await client.query("set local role adstable_owner");

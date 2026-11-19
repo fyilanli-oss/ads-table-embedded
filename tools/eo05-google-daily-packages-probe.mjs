@@ -10,6 +10,8 @@ import {GOOGLE_DAILY_STAGE_SQL,GOOGLE_DAILY_PUBLISH_SQL,GOOGLE_DAILY_INSPECT_SQL
 // Synthetic source fixtures, real AEAD/readback, physical facts and daily RPCs.
 // Caller owns the outer rollback transaction; no native HTTP or durable data.
 export async function googleDailyPackagesProbe(client,{ownerFixture}) {
+ assert.equal(client.connectionParameters.host,"127.0.0.1");
+ assert.equal(Number(client.connectionParameters.port),54322);
  const cases=[];
  for(const payload of ['{}','[]','null','{"n":9007199254740993,"d":1.2300,"x":[true,null,"é"]}']){
   const r=(await client.query("select analytics.dataset_json($1::jsonb) a,analytics.google_daily_json($1::jsonb) b,analytics.dataset_digest($1::jsonb) h,analytics.google_daily_digest($1::jsonb) g",[payload])).rows[0];
@@ -18,6 +20,11 @@ export async function googleDailyPackagesProbe(client,{ownerFixture}) {
  for(const nonempty of [true,false]){
   await client.query("savepoint google_daily_case");
   try{
+   // Same ephemeral membership used by the existing scheduled Dataset probe.
+   // It exists only inside this localhost savepoint and is rolled back below.
+   await client.query("set local role postgres");
+   await client.query("grant adstable_refresh_dataset_runner to adstable_owner with inherit false,set true,admin false");
+   await client.query("set local role adstable_owner");
    const owner=await ownerFixture(client,"google_ads");
    await client.query("update integrations.provider_connections set connected_at='2026-10-31' where id=$1",[owner.connectionId]);
    await client.query("update integrations.reporting_account_bindings set effective_from='2026-10-31' where connection_id=$1",[owner.connectionId]);

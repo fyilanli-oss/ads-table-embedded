@@ -53,7 +53,9 @@
     "dataset_runner_role_sql": {
       "hosted_status": "not_verified",
       "reason": "Temporary test login had only adstable_owner membership. SET ROLE adstable_refresh_dataset_runner was denied (42501). Stopped that session, did not add permission or retry through another hosted route.",
-      "ci_status": "pending_standard_isolated_F01_replay"
+      "ci_status": "initial_F01_failed_at_test_membership_SETUP_only_fix_prepared",
+      "failed_ci_run": 44518994499,
+      "fixture_fix": "New probe is explicitly localhost:54322 only and uses the existing transactional postgres -> non-inheriting/set-only Dataset-runner membership pattern inside its savepoint. Each case rolls it back. No hosted retry/permission change or runtime change."
     },
     "failures_preserved": [
       "Initial generated SQL had a replacement-string syntax error; corrected before acceptance.",

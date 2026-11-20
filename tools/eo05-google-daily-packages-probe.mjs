@@ -64,12 +64,15 @@ export async function googleDailyPackagesProbe(client,{ownerFixture,verifyWriter
    async function reject(run,pattern){await client.query("savepoint google_daily_negative");let e;try{await run();}catch(error){e=error;}finally{await client.query("rollback to savepoint google_daily_negative");await client.query("release savepoint google_daily_negative");}assert.ok(e);if(pattern)assert.match(e.message,pattern);}
    if(verifyWriterPreparation&&scenario.rows===1000){
     const commit=p=>client.query("select analytics.commit_google_daily_package($1::jsonb,$2::jsonb)",[args[0],JSON.stringify(p)]);
-    const malformed=structuredClone(writes[0]);
-    const repeatTable=malformed.rows.findIndex((item,index)=>malformed.rows.slice(0,index).some(before=>before.table===item.table));
-    assert.ok(repeatTable>0);
-    delete malformed.rows[repeatTable].row.metric_extensions;
+    const first=structuredClone(writes[0]);
+    const repeated=first.rows.slice(1).find(item=>item.table===first.rows[0].table);
+    // Use two rows in the same table to exercise the cached metadata path.
+    assert.ok(repeated);
+    const sample={...first,rows:[first.rows[0],repeated]};
+    const malformed=structuredClone(sample);
+    delete malformed.rows[1].row.metric_extensions;
     await reject(()=>commit(malformed),/DATASET_ROW_SHAPE_INVALID/);
-    const invalidDecimal=structuredClone(writes[0]),item=invalidDecimal.rows[repeatTable];
+    const invalidDecimal=structuredClone(sample),item=invalidDecimal.rows[1];
     const metric=item.table==="cpd_product_sales_facts"?"sales_value":"spend_value";
     assert.ok(Object.hasOwn(item.row,metric));
     item.row[metric]="1.00";

@@ -77,9 +77,14 @@ export async function datasetStorageProbe(client, connection, environment = proc
     try{
       await prepareGoogleTimingLocalRoles(client);
       const proof=await googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics:true});
-      assert.ok(proof.collectionBreakdown.groups.roleProfile.sqlTimedCalls>=256);
-      assert.ok(proof.collectionBreakdown.groups.quota.sqlTimedCalls>=108);
-      assert.ok(proof.collectionBreakdown.groups.transactionControl.untimedWallMs>0);
+      const {roleProfile,quota,transactionControl,other}=proof.collectionBreakdown.groups;
+      // Each of the 37 reader guards makes three source-role calls and
+      // a separate runtime-vault read. Quota transport adds 18 x 6 source calls.
+      assert.ok(roleProfile.sqlTimedCalls>=37*3+18*6);
+      assert.ok(quota.sqlTimedCalls>=18*6);
+      assert.ok(other.sqlTimedCalls>=37);
+      assert.equal(transactionControl.calls,roleProfile.sqlTimedCalls*2);
+      assert.ok(transactionControl.untimedWallMs>0);
       console.log("EO05_GOOGLE_COLLECTION_DIAGNOSTICS_PASS",JSON.stringify(Object.fromEntries(
         Object.entries(proof.collectionBreakdown.groups).map(([kind,value])=>[kind,{calls:value.calls,sqlTimedCalls:value.sqlTimedCalls}]))));
       console.log("EO05_GOOGLE_COMPLETE_FLOW_PASS",JSON.stringify({rows:proof.reportRows,nativeRows:proof.nativeRows,packages:proof.reportPackages,requests:proof.requests,receipts:proof.receipts,completed:proof.completed,realRoleChecks:proof.roleChecks>0,correctnessOnly:true}));

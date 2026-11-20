@@ -198,6 +198,29 @@ export async function datasetStorageProbe(client, connection, environment = proc
       }finally{await client.query("rollback to savepoint eo05_four_phase_diagnostics");await client.query("release savepoint eo05_four_phase_diagnostics");}
     }
     console.log("EO05_FOUR_PHASE_COMPARISON_PASS",JSON.stringify(sharedDiagnostics));
+    const singleReportCloseComparison={};
+    for(const [i,provider] of ["google","klaviyo"].entries()){
+      await client.query("savepoint eo05_single_close_comparison");
+      try{
+        if(provider==="google")await prepareGoogleTimingLocalRoles(client);
+        const options={ownerFixture,singleReportClose:true};
+        const candidate=provider==="google"
+          ?await googleDailyTimingProbe(client,{...options,combinedCandidate:true,reportBreakdown:true,packageReuseCandidate:true})
+          :await klaviyoDailyTimingProbe(client,{...options,connection,environment,mode:"retention-boundary",retentionVariant:"cached",
+            combinedVerification:true,reduceReportRepeats:true,reportWriteCleanup:true,phaseCandidate:"ordered-json",
+            reuseStagedCanonical:true,reuseCanonicalRows:true,endToEnd:true,sharedDaySources:true,matchedTransport:"authority"});
+        const {reportRows,reportPackages,requests,receipts,durationsMs,totalMs}=candidate;
+        assert.deepEqual([reportRows,reportPackages,requests,receipts],[1000,5,queueToClose[i].requests,1]);
+        assert.deepEqual(Object.keys(durationsMs),Object.keys(queueToClose[i].durationsMs));
+        assert.ok(Object.values(durationsMs).every(ms=>Number.isFinite(ms)&&ms>=0));
+        assert.ok(Math.abs(Object.values(durationsMs).reduce((a,b)=>a+b,0)-totalMs)<0.01);
+        singleReportCloseComparison[provider]={control:queueToClose[i],candidate:{reportRows,reportPackages,requests,receipts,durationsMs,totalMs}};
+      }finally{
+        await client.query("rollback to savepoint eo05_single_close_comparison");
+        await client.query("release savepoint eo05_single_close_comparison");
+      }
+    }
+    console.log("EO05_SINGLE_REPORT_CLOSE_COMPARISON_PASS",JSON.stringify(singleReportCloseComparison));
     await client.query("savepoint google_package_reuse_correctness");
     try{
       await installGoogleCombinedCandidate(client);

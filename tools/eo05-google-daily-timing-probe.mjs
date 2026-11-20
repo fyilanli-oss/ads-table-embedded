@@ -3,6 +3,7 @@ import {randomBytes,randomUUID,createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
 import {collectComparableReportTiming,installComparableReportTiming} from "./eo05-klaviyo-daily-timing-probe.mjs";
 import {createFourPhaseDiagnostics} from "./eo05-four-phase-diagnostics.mjs";
+import {loadSingleReportCloseCandidate, verifySingleReportCloseRejections} from "./eo05-single-report-close-probe.mjs";
 import {registerHooks} from "node:module";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {createRefreshEntitlementVerifier} from "../app/lib/refresh/entitlement-check.server.js";
@@ -656,7 +657,7 @@ export function summarizeGooglePublishTrace(notices) {
  return {...publish,...writer,writerBoundaryOverheadMs};
 }
 
-export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false,factTriggerTrace=false,writerPreparationCandidate=false,comparableReport=false,packageReuseCandidate=false,fourPhaseDiagnostics=false}){
+export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false,factTriggerTrace=false,writerPreparationCandidate=false,comparableReport=false,packageReuseCandidate=false,fourPhaseDiagnostics=false,singleReportClose=false}){
  const target=assertGoogleTimingTarget(client.connectionParameters);
  if(quotaClaimComparison)assert.equal(target,"local");
  assert.ok(!combinedCandidate||!quotaClaimComparison);
@@ -668,8 +669,10 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  assert.ok(!packageReuseCandidate||(target==="local"&&reportBreakdown&&!comparableReport&&(!publishTrace||factTriggerTrace)));
  assert.ok(!comparableReport||(target==="local"&&reportBreakdown&&!publishTrace&&!collectionDiagnostics&&!writerPreparationCandidate));
  assert.ok(!fourPhaseDiagnostics||(target==="local"&&packageReuseCandidate&&!writerPreparationCandidate&&!publishTrace&&!collectionDiagnostics&&!comparableReport));
+ assert.ok(!singleReportClose||(target==="local"&&packageReuseCandidate&&!writerPreparationCandidate&&!publishTrace&&!collectionDiagnostics&&!comparableReport&&!fourPhaseDiagnostics));
+ const runScheduled=singleReportClose?(await loadSingleReportCloseCandidate(client,"google")).runScheduledRefreshWithDataset:runScheduledRefreshWithDataset;
  const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger,combinedCandidate);
- let ordinal=0,failed,reader,roleChecks=0,comparable,fourPhase;
+ let ordinal=0,failed,reader,roleChecks=0,comparable,fourPhase,closeArgs,reportPublished=false;
  const publishNotices=[];
  const observePublish=notice=>{
   const message=notice.message;
@@ -708,6 +711,9 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   fourPhase?fourPhase.query(ledger.phase,sql,args,()=>queryAsRole(role,sql,args)):queryAsRole(role,sql,args);
  function poolFactory(role){return ()=>({on(){},async end(){},async connect(){
   const name="google_rpc_"+(++ordinal),connected=performance.now();let open=false,report=false;
+  if(singleReportClose&&role==="adstable_refresh_dataset_runner"&&reportPublished){
+   await client.query("savepoint eo05_single_close_proof");
+  }
   return {release(){if(report&&ledger.phase==="reportWrite")ledger.phaseAt("reportPreparation");},async query(sql,args=[]){
    if(sql==="begin"){open=true;return q("savepoint "+name,[],role==="adstable_refresh_dataset_runner"?"dataset":null);}
    if(role==="adstable_google_source_runner"&&sql.startsWith("begin; set local statement_timeout = ")){
@@ -719,8 +725,14 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
    if(sql.startsWith("select pg_catalog.set_config("))return q(sql,args,role==="adstable_refresh_dataset_runner"?"dataset":null);
    if(sql===GOOGLE_DAILY_STAGE_SQL&&!report){report=true;if(ledger.phase==="reportPreparation")ledger.phaseAt("reportWrite",connected);}
    if(sql===GOOGLE_DAILY_INSPECT_SQL&&ledger.phase==="reportPreparation")ledger.phaseAt("receiptReadback",connected);
+   if(sql===GOOGLE_DAILY_FINISH_SQL&&singleReportClose){
+    closeArgs=args;
+    ledger.phaseAt("receiptReadback",connected);
+   }
    if(sql===GOOGLE_DAILY_FINISH_SQL&&ledger.phase==="receiptReadback")ledger.phaseAt("jobClose",connected);
-   return roleQuery(role,sql,args);
+   const result=await roleQuery(role,sql,args);
+   if(sql===GOOGLE_DAILY_PUBLISH_SQL&&singleReportClose)reportPublished=true;
+   return result;
   }};
  }});}
  const runtime={query:(sql,args)=>roleQuery("adstable_runtime",sql,args)};
@@ -786,7 +798,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   ledger.start();
   await store.checkQueueFromAuthority({expectedRevision:(await store.readQueueCheck()).revision});
   ledger.phaseAt("queueAndAdmission");
-  const run=await runScheduledRefreshWithDataset({store,generation,environment,poolFactory:poolFactory("adstable_refresh_dataset_runner"),work:{now,entitlementVerifier,
+  const run=await runScheduled({store,generation,environment,poolFactory:poolFactory("adstable_refresh_dataset_runner"),work:{now,entitlementVerifier,
    buildWorkPlan:async candidate=>candidate.workspaceId===owner.workspaceId&&candidate.provider==="google_ads"?{window,partitionId:"synthetic-google-daily:"+day,workClass:"deep_reconciliation",cost,limits}:null,
    async readPage({claim,entitlementReceipt,signal}){
     claimId=claim.id;scope={claim,window,entitlementReceipt};
@@ -821,6 +833,12 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   const receipts=(await client.query("select manifest->'googleDailyReceipt' receipt from evidence.source_batches where authority=$1::jsonb and manifest ? 'googleDailyReceipt'",[JSON.stringify(owner)])).rows;
   assert.equal(receipts.length,1);assert.equal(receipts[0].receipt.rowCount,1000);assert.deepEqual(receipts[0].receipt.packages.map(p=>p.rowCount),[200,200,200,200,200]);
   assert.equal((await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",[owner.workspaceId,claimId])).rows[0].status,"completed");
+  if(singleReportClose){
+   assert.ok(closeArgs);
+   await client.query("rollback to savepoint eo05_single_close_proof");
+   await verifySingleReportCloseRejections(client,"google",GOOGLE_DAILY_FINISH_SQL,closeArgs);
+   await client.query("release savepoint eo05_single_close_proof");
+  }
   assert.ok(Math.abs(Object.values(measured.durationsMs).reduce((a,b)=>a+b,0)-measured.totalMs)<0.01);
   const reportWriteBreakdown=reportBreakdown?summarizeGoogleReportWrite(ledger.calls,measured.durationsMs.reportWrite):null;
   if(reportWriteBreakdown){

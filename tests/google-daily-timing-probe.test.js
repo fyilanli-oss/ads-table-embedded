@@ -3,8 +3,28 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {EventEmitter} from "node:events";
 import {createFourPhaseDiagnostics} from "../tools/eo05-four-phase-diagnostics.mjs";
+import {loadSingleReportCloseCandidate,singleReportCloseSql,singleReportCloseSource} from "../tools/eo05-single-report-close-probe.mjs";
 import {collectComparableReportTiming,installComparableReportTiming} from "../tools/eo05-klaviyo-daily-timing-probe.mjs";
 import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection,summarizeGoogleReportWrite,summarizeGooglePublishTrace,installGoogleFactTriggerTrace,summarizeGoogleFactTriggerTrace,installGoogleWriterPreparationCandidate,installGooglePackageReuseCandidate,installGooglePublishTrace} from "../tools/eo05-google-daily-timing-probe.mjs";
+
+test("single-close rehearsal keeps the locked inspection and compares the exact receipt for both providers",async()=>{
+ const source=readFileSync(new URL("../app/lib/database/dataset-reconciliation.server.js",import.meta.url),"utf8").replaceAll("\r\n","\n");
+ const candidate=singleReportCloseSource(source);
+ for(const [provider,migration] of [["google","20261119112554_eo05_google_daily_packages.sql"],["klaviyo","20261117183725_eo05_klaviyo_report_package_staging.sql"]]){
+  assert.ok(!candidate.includes(`database.query(${provider.toUpperCase()}_DAILY_INSPECT_SQL`));
+  assert.ok(candidate.includes(`${provider.toUpperCase()}_DAILY_FINISH_SQL,[ownerJson,admittedScope.jobId,admittedScope.fence,operationId,JSON.stringify(receipt)]`));
+  const sql=readFileSync(new URL(`../supabase/migrations/${migration}`,import.meta.url),"utf8");
+  const finish=sql.slice(sql.indexOf(`create function analytics.finish_${provider}_daily_report_job(`)).split("end $fn$;")[0];
+  const changed=singleReportCloseSql(finish);
+  assert.match(changed,/r is distinct from h::jsonb/);
+  assert.equal(changed,finish.replace("h is null or h !~ '^[0-9a-f]{64}$'","h is null or jsonb_typeof(h::jsonb) is distinct from 'object'").replace("r->>'digest' is distinct from h","r is distinct from h::jsonb"));
+  assert.ok(changed.indexOf("for update")<changed.indexOf(`r:=analytics.inspect_${provider}_daily_report`));
+  assert.ok(changed.indexOf("r is distinct from h::jsonb")<changed.indexOf("return operations.finish_refresh_work_before_stops"));
+  const client={connectionParameters:{host:"127.0.0.1",port:54322},async query(_sql,args){return args?{rows:[{definition:finish}]}:{rows:[]};}};
+  assert.equal(typeof (await loadSingleReportCloseCandidate(client,provider)).runScheduledRefreshWithDataset,"function");
+ }
+ await assert.rejects(loadSingleReportCloseCandidate({connectionParameters:{host:"remote",port:54322}},"google"));
+});
 
 test("Google measurement refuses production, alternate project/host and unbound users",()=>{
  assert.equal(assertGoogleTimingTarget({host:"127.0.0.1",port:54322}),"local");

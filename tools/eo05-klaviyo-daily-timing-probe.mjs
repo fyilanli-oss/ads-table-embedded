@@ -18,6 +18,7 @@ import {createRefreshEntitlementVerifier} from "../app/lib/refresh/entitlement-c
 import {runScheduledRefreshCheck} from "../app/lib/refresh/scheduled-queue-check.server.js";
 import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
 import {createFourPhaseDiagnostics} from "./eo05-four-phase-diagnostics.mjs";
+import {loadSingleReportCloseCandidate, verifySingleReportCloseRejections} from "./eo05-single-report-close-probe.mjs";
 
 const productEvents=1000;
 const pageSize=200;
@@ -1400,7 +1401,7 @@ async function installHostedReportClocks(client) {
     end $clock$;`);
 }
 
-async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,repeat,revisionPermit=false,verifyRevisionPermit=false,matchedTransport,comparableReport=false,fourPhaseDiagnostics=false}) {
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,repeat,revisionPermit=false,verifyRevisionPermit=false,matchedTransport,comparableReport=false,fourPhaseDiagnostics=false,singleReportClose=false}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
@@ -1409,6 +1410,9 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   if(comparableReport)assert.ok(matchedTransport==="quota"&&sharedDaySources&&reuseCanonicalRows);
   const fullAuthority=matchedTransport==="authority";
   if(fourPhaseDiagnostics)assert.ok(fullAuthority&&!comparableReport&&!callBreakdown);
+  if(singleReportClose)assert.ok(fullAuthority&&!comparableReport&&!fourPhaseDiagnostics&&!callBreakdown&&!optimizeReadback);
+  const runScheduled=singleReportClose?(await loadSingleReportCloseCandidate(client,"klaviyo")).runScheduledRefreshCheck:runScheduledRefreshCheck;
+  let closeArgs;
   if(retentionOnly||retentionWall) assert.ok(["current","cached"].includes(retentionVariant));
   if(!repeat) await installExactBulkWriter(client);
   // The enclosing rehearsal savepoint restores the inherited timeout.
@@ -1600,6 +1604,10 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
         return result;
       }
       const measuredPhase=bucket==="reportReadback"?"receiptReadback":bucket==="jobClose"?"jobClose":null;
+      if(singleReportClose&&bucket==="jobClose"){
+        closeArgs=args;
+        await client.query("savepoint eo05_single_close_proof");
+      }
       return timedQuery(bucket,sql,args,measuredPhase);
     },
     async transaction(run) {
@@ -1639,7 +1647,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     const batches=[];
     let collectedAt,reportAt;
     phase="admission";
-    const run=await runScheduledRefreshCheck({store,generation,work:{
+    const run=await runScheduled({store,generation,work:{
       now,entitlementVerifier,
       buildWorkPlan:async candidate=>candidate.workspaceId===owner.workspaceId&&candidate.provider==="klaviyo"
         ? {window,partitionId:"synthetic-daily-timing:"+day+(repeat?":reread":""),workClass:"deep_reconciliation",cost,limits}:null,
@@ -1786,6 +1794,12 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
         reportSourceRead,reportPreparation:durations.reportFlow-reportSourceRead-reportWriteMs-receiptReadback-jobClose,
         reportWrite:reportWriteMs,receiptReadback,jobClose,
       };
+      if(singleReportClose){
+        assert.ok(closeArgs);
+        await client.query("rollback to savepoint eo05_single_close_proof");
+        await verifySingleReportCloseRejections(client,"klaviyo",KLAVIYO_DAILY_FINISH_SQL,closeArgs);
+        await client.query("release savepoint eo05_single_close_proof");
+      }
       return {...summary,matchedTransport,quotaDebits,authorityChecks,reportComparison,totalMs:ended-start,durationsMs,
         ...(fourPhase?{fourPhaseDiagnostics:fourPhase.result(durationsMs,requests)}:{})};
     }

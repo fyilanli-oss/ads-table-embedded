@@ -314,10 +314,68 @@ ${verify}
  await client.query(write);
 }
 
-export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false}){
+export async function installGoogleReportCandidate(client) {
+ assertGoogleTimingTarget(client.connectionParameters);
+ const canonical="analytics.google_daily_json(v,depth+1)";
+ const scalar=`case when depth<32 and jsonb_typeof(v) in ('null','boolean','number','string')
+  and octet_length(v::text)<=1048576 then v::text else ${canonical} end`;
+ let json=await functionDefinition(client,"analytics.google_daily_json(jsonb,integer)");
+ json=replaceOnce(json,`to_jsonb(k)::text||':'||${canonical}`,`to_jsonb(k)::text||':'||(${scalar})`);
+ json=replaceOnce(json,`string_agg(${canonical},',' order by ordinal)`,`string_agg(${scalar},',' order by ordinal)`);
+ await client.query(json);
+
+ let write=await functionDefinition(client,"analytics.commit_google_daily_package(jsonb,jsonb)");
+ write=replaceOnce(write," operation uuid; h text;"," package_bytes bytea;\n operation uuid; h text;");
+ write=replaceOnce(write," or octet_length(analytics.google_daily_json(p))>1048576 then raise exception 'DATASET_INPUT_INVALID';end if;",
+  ` then raise exception 'DATASET_INPUT_INVALID';end if;
+ package_bytes:=convert_to(analytics.google_daily_json(p),'UTF8');
+ if octet_length(package_bytes)>1048576 then raise exception 'DATASET_INPUT_INVALID';end if;`);
+ write=replaceOnce(write,"h:=analytics.google_daily_digest(p);","h:=encode(sha256(package_bytes),'hex');");
+ await client.query(write);
+}
+
+export async function proveGoogleReportCanonicalParity(client) {
+ assert.equal(assertGoogleTimingTarget(client.connectionParameters),"local");
+ const valid=[
+  '{}','[]','null','{"z":[true,null,false],"a":{"e":1}}',
+  '{"decimal":1.2300,"integer":9007199254740993,"negative":-42,"exponent":1e-8}',
+  JSON.stringify({name:'é\n"\\\t',nested:[{b:[],a:{}},false,null],block:'a'.repeat(131072)}),
+  "[".repeat(32)+"null"+"]".repeat(32),
+  JSON.stringify(["a".repeat(1048572)]),
+ ];
+ const invalid=[
+  ['{"nested":[{"secret":"blocked"}]}',"DATASET_PRIVATE_FIELD"],
+  ['{"é":1}',"DATASET_PRIVATE_FIELD"],
+  ["[".repeat(33)+"null"+"]".repeat(33),"DATASET_JSON_BOUNDS"],
+  [JSON.stringify(["a".repeat(1048573)]),"DATASET_JSON_BOUNDS"],
+  [JSON.stringify({s:"a".repeat(1048576)}),"DATASET_JSON_BOUNDS"],
+ ];
+ const read=async value=>(await client.query(
+  "select analytics.google_daily_json($1::jsonb) canonical,analytics.google_daily_digest($1::jsonb) digest",[value])).rows[0];
+ const rejection=async([value,code])=>{
+  let failure;
+  await client.query("savepoint google_report_canonical_negative");
+  try{await read(value);}catch(error){failure=error;}
+  finally{
+   await client.query("rollback to savepoint google_report_canonical_negative");
+   await client.query("release savepoint google_report_canonical_negative");
+  }
+  assert.equal(failure?.message,code);
+ };
+ const original=[];
+ for(const value of valid)original.push(await read(value));
+ for(const value of invalid)await rejection(value);
+ await installGoogleReportCandidate(client);
+ for(const [index,value] of valid.entries())assert.deepEqual(await read(value),original[index]);
+ for(const value of invalid)await rejection(value);
+ return {identical:valid.length,rejected:invalid.length};
+}
+
+export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false}){
  const target=assertGoogleTimingTarget(client.connectionParameters);
  if(quotaClaimComparison)assert.equal(target,"local");
  assert.ok(!combinedCandidate||!quotaClaimComparison);
+ assert.ok(!reportCandidate||combinedCandidate);
  const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger,combinedCandidate);
  let ordinal=0,failed,reader,roleChecks=0;
  const collectionCalls=[];
@@ -371,6 +429,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  const store=createRefreshWorkRepository({query:(sql,args)=>/operations\.(check_refresh_queue_on_tick|review_refresh_interrupted_work)\(/.test(sql)?queue.query(sql,args):coordinator.query(sql,args)});
  try{
   if(combinedCandidate)await installGoogleCombinedCandidate(client);
+  if(reportCandidate)await installGoogleReportCandidate(client);
   await installRoleAdapter(client,collectionDiagnostics);
   const owner=await ownerFixture(client,"google_ads"),day="2026-11-01",window={from:day,to:day},now=Date.now;
   const issued=now(),generation=randomUUID(),operationId=randomUUID(),hash=()=>randomBytes(32).toString("hex"),key=()=>randomBytes(32).toString("base64url");
@@ -452,7 +511,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   assert.equal(receipts.length,1);assert.equal(receipts[0].receipt.rowCount,1000);assert.deepEqual(receipts[0].receipt.packages.map(p=>p.rowCount),[200,200,200,200,200]);
   assert.equal((await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",[owner.workspaceId,claimId])).rows[0].status,"completed");
   assert.ok(Math.abs(Object.values(measured.durationsMs).reduce((a,b)=>a+b,0)-measured.totalMs)<0.01);
-  return {provider:"google_ads",synthetic:true,rollbackOnly:true,combinedCandidate,reportRows:1000,nativeRows:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,
+  return {provider:"google_ads",synthetic:true,rollbackOnly:true,combinedCandidate,reportCandidate,reportRows:1000,nativeRows:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,
    adstableWallMs:measured.totalMs-measured.postgresCallWallMs,providerNetworkMeasured:false,sqlInnerTimers:collectionDiagnostics,durableCommitMeasured:false,
    ...(collectionDiagnostics?{collectionBreakdown:summarizeGoogleCollection(collectionCalls,measured.durationsMs.providerCollection)}:{})};
  }catch(error){

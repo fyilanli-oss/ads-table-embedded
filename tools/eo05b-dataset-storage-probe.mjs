@@ -14,7 +14,7 @@ import {reconciliationProbe} from "./eo05d-reconciliation-probe.mjs";
 import {klaviyoDailyTimingProbe} from "./eo05-klaviyo-daily-timing-probe.mjs";
 import {observabilityProbe} from "./eo05e-observability-probe.mjs";
 import {googleDailyPackagesProbe} from "./eo05-google-daily-packages-probe.mjs";
-import {googleDailyTimingProbe,prepareGoogleTimingLocalRoles,installGoogleCombinedCandidate} from "./eo05-google-daily-timing-probe.mjs";
+import {googleDailyTimingProbe,prepareGoogleTimingLocalRoles,installGoogleCombinedCandidate,proveGoogleReportCanonicalParity} from "./eo05-google-daily-timing-probe.mjs";
 
 async function rejected(client, action, pattern) {
   await client.query("savepoint dataset_expected_failure"); let error;
@@ -101,11 +101,12 @@ export async function datasetStorageProbe(client, connection, environment = proc
       await prepareGoogleTimingLocalRoles(client);
       await client.query("savepoint google_combined_candidate_flow");
       let candidate;
-      try{candidate=await googleDailyTimingProbe(client,{ownerFixture,combinedCandidate:true});}
+      try{candidate=await googleDailyTimingProbe(client,{ownerFixture,combinedCandidate:true,reportCandidate:true});}
       finally{await client.query("rollback to savepoint google_combined_candidate_flow");await client.query("release savepoint google_combined_candidate_flow");}
       await installGoogleCombinedCandidate(client);
+      const canonical=await proveGoogleReportCanonicalParity(client);
       const reportCases=await googleDailyPackagesProbe(client,{ownerFixture});
-      console.log("EO05_GOOGLE_COMBINED_FLOW_PASS",JSON.stringify({rows:candidate.reportRows,packages:candidate.reportPackages,receipts:candidate.receipts,completed:candidate.completed,reportCases,correctnessOnly:true}));
+      console.log("EO05_GOOGLE_REPORT_CANDIDATE_PASS",JSON.stringify({rows:candidate.reportRows,packages:candidate.reportPackages,receipts:candidate.receipts,completed:candidate.completed,canonical,reportCases,correctnessOnly:true}));
     }finally{await client.query("rollback to savepoint google_combined_flow");await client.query("release savepoint google_combined_flow");}
     const verificationComparison=[];
     for(const variant of [{}, {combinedVerification:true}, {combinedVerification:true,reduceReportRepeats:true}]) {

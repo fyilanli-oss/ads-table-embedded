@@ -76,7 +76,7 @@ export async function datasetStorageProbe(client, connection, environment = proc
     await client.query("savepoint google_complete_flow");
     try{
       await prepareGoogleTimingLocalRoles(client);
-      const proof=await googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics:true});
+      const proof=await googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics:true,quotaClaimComparison:true});
       const {roleProfile,quota,transactionControl,other}=proof.collectionBreakdown.groups;
       // Each of the 37 reader guards makes three source-role calls and
       // a separate runtime-vault read. Quota transport adds 18 x 6 source calls.

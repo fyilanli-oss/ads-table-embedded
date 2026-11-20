@@ -147,8 +147,99 @@ async function installRoleAdapter(client, collectionDiagnostics){
  await client.query(`revoke all on function pg_temp.eo05_google_role_query(text,text,jsonb${type}) from public,anon,authenticated,service_role`);
 }
 
-export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false}){
- assertGoogleTimingTarget(client.connectionParameters);
+const quotaSignature="uuid,bigint,text,text,text,bigint,date,date,text,timestamptz";
+const claimSignature="uuid,bigint,text,text,text,bigint";
+const currentClaim="operations.refresh_claim_is_current(p_workspace,p_generation,p_provider,p_account,p_job,p_fence)";
+
+function replaceOnce(text, anchor, replacement) {
+ assert.equal(text.split(anchor).length,2,"GOOGLE_QUOTA_COMPARISON_DEFINITION_CHANGED");
+ return text.replace(anchor,()=>replacement);
+}
+
+async function compareGoogleQuotaClaimReuse(client,{claim,window,entitlementReceipt}) {
+ assert.equal(assertGoogleTimingTarget(client.connectionParameters),"local");
+ const definition=async(signature)=>(await client.query("select pg_get_functiondef($1::regprocedure) definition",[signature])).rows[0].definition;
+ const sqlBody=async(name,signature)=>{
+  const body=(await definition(`operations.${name}(${signature})`)).split("$function$");
+  assert.equal(body.length,3,"GOOGLE_QUOTA_COMPARISON_BODY_CHANGED");
+  return replaceOnce(body[1].trim(),currentClaim,"common_claim");
+ };
+ const authority=await sqlBody("load_refresh_bound_authority",`${claimSignature},date,date`);
+ const installation=await sqlBody("load_refresh_entitlement_installation",claimSignature);
+ const entitlement=await sqlBody("refresh_entitlement_is_current",`${claimSignature},timestamptz`);
+ const baseName="operations.load_refresh_quota_context_before_merchant";
+ const signature=`(${quotaSignature})`;
+ const tempBase="pg_temp.eo05_quota_context_reuse_base";
+ const tempOuter="pg_temp.eo05_quota_context_reuse";
+ let base=replaceOnce(await definition(baseName+signature),`FUNCTION ${baseName}(`,`FUNCTION ${tempBase}(`);
+ base=replaceOnce(base,"SECURITY DEFINER","SECURITY INVOKER");
+ base=replaceOnce(base,"declare authority jsonb;","declare common_claim boolean; authority jsonb;");
+ base=replaceOnce(base,"  authority:=operations.load_refresh_bound_authority(p_workspace,p_generation,p_provider,p_account,p_job,p_fence,p_from,p_to);",
+  `  if p_provider is distinct from 'google_ads' or p_target is distinct from 'google_ads' then return null; end if;
+  common_claim:=${currentClaim};
+  if common_claim is distinct from true then return null; end if;
+  authority:=(${authority});`);
+ base=replaceOnce(base,"operations.load_refresh_entitlement_installation(p_workspace,p_generation,p_provider,p_account,p_job,p_fence)",`(${installation})`);
+ base=replaceOnce(base,"operations.refresh_entitlement_is_current(p_workspace,p_generation,p_provider,p_account,p_job,p_fence,p_observed)",`(${entitlement})`);
+ // The original claim clock runs once. Reject a deadline crossed while
+ // checking the remaining predicates, before returning any quota context.
+ base=replaceOnce(base,"  return jsonb_build_object('provider',cfg.provider",
+  `  if not exists(select 1 from operations.refresh_work_bindings b
+    where b.workspace_id=p_workspace and b.install_generation=p_generation and b.provider=p_provider
+      and b.account_id=p_account and b.job_id=p_job and b.fence=p_fence
+      and b.deadline_at_ms>floor(extract(epoch from clock_timestamp())*1000)::bigint) then return null; end if;
+  return jsonb_build_object('provider',cfg.provider`);
+ assert.equal(base.split(currentClaim).length,2);
+ let outer=replaceOnce(await definition("operations.load_refresh_quota_context"+signature),
+  "FUNCTION operations.load_refresh_quota_context(",`FUNCTION ${tempOuter}(`);
+ outer=replaceOnce(outer,"SECURITY DEFINER","SECURITY INVOKER");
+ outer=replaceOnce(outer,baseName,tempBase);
+ await client.query("savepoint google_quota_comparison");
+ try{
+  await client.query(base);
+  await client.query(outer);
+  await client.query(`revoke all on function ${tempBase}${signature}, ${tempOuter}${signature} from public,anon,authenticated,service_role`);
+  const args=[claim.workspaceId,claim.installGeneration,"google_ads",claim.accountId,claim.id,String(claim.fence),
+   window.from,window.to,"google_ads",entitlementReceipt.observedAt];
+  const placeholders=quotaSignature.split(",").map((type,i)=>`$${i+1}::${type}`).join(",");
+  const read=async(name,parameters)=>{
+   const start=performance.now();
+   const {rows:[{value}]}=await client.query(`select ${name}(${placeholders}) value`,parameters);
+   return {value,ms:performance.now()-start};
+  };
+  const original="operations.load_refresh_quota_context";
+  const parity=async(parameters,allowed)=>{
+   const reference=await read(original,parameters),candidate=await read(tempOuter,parameters);
+   assert.deepEqual(candidate.value,reference.value);
+   assert.equal(reference.value!==null,allowed);
+  };
+  const changed=(index,value)=>args.map((parameter,i)=>i===index?value:parameter);
+  await parity(args,true);
+  await parity(changed(4,"wrong-synthetic-job"),false);
+  await parity(changed(5,String(BigInt(claim.fence)+1n)),false);
+  await parity(changed(6,"2026-10-30"),false);
+  await parity(changed(9,"2100-01-01T00:00:00Z"),false);
+  const samples=[];
+  for(let i=0;i<6;i++){
+   const order=i%2?[tempOuter,original]:[original,tempOuter];
+   const first=await read(order[0],args),second=await read(order[1],args);
+   assert.ok(first.value);
+   assert.deepEqual(first.value,second.value);
+   samples.push(i%2?{originalMs:second.ms,candidateMs:first.ms}:{originalMs:first.ms,candidateMs:second.ms});
+  }
+  const expired=await client.query("update operations.refresh_work_bindings set deadline_at_ms=1 where workspace_id=$1 and job_id=$2 and fence=$3",args.filter((_,i)=>[0,4,5].includes(i)));
+  assert.equal(expired.rowCount,1);
+  await parity(args,false);
+  console.log("EO05_GOOGLE_QUOTA_CLAIM_REUSE_PASS",JSON.stringify({correctnessChecks:6,samples,localOnly:true,rollbackOnly:true,rpcOnly:true}));
+ }finally{
+  await client.query("rollback to savepoint google_quota_comparison");
+  await client.query("release savepoint google_quota_comparison");
+ }
+}
+
+export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false}){
+ const target=assertGoogleTimingTarget(client.connectionParameters);
+ if(quotaClaimComparison)assert.equal(target,"local");
  const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger);
  let ordinal=0,failed,reader,roleChecks=0;
  const collectionCalls=[];
@@ -249,7 +340,15 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   const run=await runScheduledRefreshWithDataset({store,generation,environment,poolFactory:poolFactory("adstable_refresh_dataset_runner"),work:{now,entitlementVerifier,
    buildWorkPlan:async candidate=>candidate.workspaceId===owner.workspaceId&&candidate.provider==="google_ads"?{window,partitionId:"synthetic-google-daily:"+day,workClass:"deep_reconciliation",cost,limits}:null,
    async readPage({claim,entitlementReceipt,signal}){
-    claimId=claim.id;scope={claim,window,entitlementReceipt};ledger.phaseAt("providerCollection");
+    claimId=claim.id;scope={claim,window,entitlementReceipt};
+    if(quotaClaimComparison){
+     try{await compareGoogleQuotaClaimReuse(client,scope);}
+     catch(error){
+      failed??={code:error.code,message:error.message,operation:"quota_claim_comparison"};
+      throw error;
+     }
+    }
+    ledger.phaseAt("providerCollection");
     reader=createReader({verified,environment,tokenVault,execution:scope,configuration:{operationId,limits:{maxRows:2000,maxBytes:1048576,maxElapsedMs:60000,maxRequests:40,maxPages:10,maxLinkPages:1,maxLinks:100},
      storageLimits:{maxRows:1000,maxBytes:2097152},sourcePolicy:sourceStoreFixture().input.policy,merchant:null},signal,now,poolFactory:poolFactory("adstable_google_source_runner"),
      fetchFn:async(url,init)=>{assert.equal(new URL(url).hostname,"googleads.googleapis.com");requests++;const query=JSON.parse(init.body).query;

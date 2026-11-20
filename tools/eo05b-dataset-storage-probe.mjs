@@ -147,21 +147,29 @@ export async function datasetStorageProbe(client, connection, environment = proc
     }));
     assert.ok(reportOnly.every(result=>result.completed&&result.stageCalls===5&&result.publishCalls===1));
     console.log("EO05_GOOGLE_REPORT_ONLY_COMPARISON_PASS",JSON.stringify({reference:reportOnly[0],writer:reportOnly[1]}));
-    await client.query("savepoint google_package_reuse_comparison");
-    let reused;
-    try{
-      await prepareGoogleTimingLocalRoles(client);
-      reused=await googleDailyTimingProbe(client,{ownerFixture,combinedCandidate:true,reportBreakdown:true,packageReuseCandidate:true});
-      assert.deepEqual([reused.reportRows,reused.reportPackages,reused.receipts,reused.completed],[1000,5,1,true]);
-    }finally{await client.query("rollback to savepoint google_package_reuse_comparison");await client.query("release savepoint google_package_reuse_comparison");}
+    const packageReuseComparison=[];
+    for(const writerPreparationCandidate of [false,true]){
+      await client.query("savepoint google_package_reuse_comparison");
+      try{
+        await prepareGoogleTimingLocalRoles(client);
+        const result=await googleDailyTimingProbe(client,{
+          ownerFixture,combinedCandidate:true,reportBreakdown:true,packageReuseCandidate:true,writerPreparationCandidate,
+        });
+        assert.deepEqual([result.reportRows,result.reportPackages,result.receipts,result.completed],[1000,5,1,true]);
+        packageReuseComparison.push(result.reportWriteBreakdown);
+      }finally{await client.query("rollback to savepoint google_package_reuse_comparison");await client.query("release savepoint google_package_reuse_comparison");}
+    }
+    const [reused,combinedWriter]=packageReuseComparison;
     await client.query("savepoint google_package_reuse_correctness");
     try{
       await installGoogleCombinedCandidate(client);
+      await installGoogleWriterPreparationCandidate(client);
       await installGooglePackageReuseCandidate(client);
-      const cases=await googleDailyPackagesProbe(client,{ownerFixture,verifyPackageReuse:true});
+      const cases=await googleDailyPackagesProbe(client,{ownerFixture,verifyPackageReuse:true,verifyWriterPreparation:true});
       console.log("EO05_GOOGLE_PACKAGE_REUSE_COMPARISON_PASS",JSON.stringify({
-        reference:reference.reportWriteBreakdown,reused:reused.reportWriteBreakdown,cases,
+        reference:reference.reportWriteBreakdown,reused,cases,
       }));
+      console.log("EO05_GOOGLE_COMBINED_WRITER_COMPARISON_PASS",JSON.stringify({reused,combinedWriter,cases}));
     }finally{await client.query("rollback to savepoint google_package_reuse_correctness");await client.query("release savepoint google_package_reuse_correctness");}
     const deepReport={};
     for(const provider of ["google","klaviyo"]){

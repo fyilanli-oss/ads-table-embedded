@@ -412,7 +412,7 @@ export async function installGooglePackageReuseCandidate(client) {
 
  let commit=privateCopy(await read("commit_google_daily_package","jsonb,jsonb"),"commit_google_daily_package",
   "eo05_google_commit_verified_package","verified_rows text","(o jsonb, p jsonb)");
- commit=replaceOnce(commit," bulk_rows jsonb:='{}';"," canonical_package text;\n bulk_rows jsonb:='{}';");
+ commit=replaceOnce(commit,"declare item jsonb;","declare canonical_package text; item jsonb;");
  commit=replaceOnce(commit," or octet_length(analytics.google_daily_json(p))>1048576 then raise exception 'DATASET_INPUT_INVALID';end if;",` then raise exception 'DATASET_INPUT_INVALID';end if;
  canonical_package:=case when verified_rows is null then ${canonical}(p)
    else analytics.eo05_google_package_from_rows(p,verified_rows,0) end;
@@ -656,7 +656,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  assert.ok(!publishTrace||(target==="local"&&reportBreakdown&&!collectionDiagnostics));
  assert.ok(!factTriggerTrace||publishTrace);
  assert.ok(!writerPreparationCandidate||(target==="local"&&combinedCandidate&&!reportCandidate));
- assert.ok(!packageReuseCandidate||(target==="local"&&reportBreakdown&&!writerPreparationCandidate&&!publishTrace&&!comparableReport));
+ assert.ok(!packageReuseCandidate||(target==="local"&&reportBreakdown&&!publishTrace&&!comparableReport));
  assert.ok(!comparableReport||(target==="local"&&reportBreakdown&&!publishTrace&&!collectionDiagnostics&&!writerPreparationCandidate));
  const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger,combinedCandidate);
  let ordinal=0,failed,reader,roleChecks=0,comparable;
@@ -721,8 +721,9 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  const store=createRefreshWorkRepository({query:(sql,args)=>/operations\.(check_refresh_queue_on_tick|review_refresh_interrupted_work)\(/.test(sql)?queue.query(sql,args):coordinator.query(sql,args)});
  try{
   if(combinedCandidate)await installGoogleCombinedCandidate(client);
-  if(packageReuseCandidate)await installGooglePackageReuseCandidate(client);
+  // The private package-reuse writer copies the selected preparation definition.
   if(writerPreparationCandidate)await installGoogleWriterPreparationCandidate(client);
+  if(packageReuseCandidate)await installGooglePackageReuseCandidate(client);
   if(reportCandidate)await installGoogleReportCandidate(client);
   if(publishTrace){await installGooglePublishTrace(client);client.on("notice",observePublish);}
   if(factTriggerTrace)await installGoogleFactTriggerTrace(client);

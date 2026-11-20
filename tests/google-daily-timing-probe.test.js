@@ -186,6 +186,10 @@ test("Google package reuse keeps the audited stage, private writer and physical 
   const fn=new RegExp("create function analytics\\."+name+"\\([\\s\\S]*?end \\$fn\\$;","i");
   let definition=migration.match(fn)?.[0];
   assert.ok(definition,name);
+  if(name==="commit_google_daily_package"){
+   const previous=installed.findLast(sql=>sql.startsWith("CREATE OR REPLACE FUNCTION analytics.commit_google_daily_package("));
+   if(previous)return {rows:[{definition:previous}]};
+  }
   if(signatures[name]){
    definition=definition.replace(/^create function [^(]+\([^)]*\)/,`CREATE OR REPLACE FUNCTION analytics.${name}(${signatures[name]})`)
     .replace(/language plpgsql security definer/i,"LANGUAGE plpgsql\n SECURITY DEFINER");
@@ -209,4 +213,11 @@ test("Google package reuse keeps the audited stage, private writer and physical 
  assert.match(checker,/summary:=verified_summary/);
  assert.match(checker,/GOOGLE_REPORT_FACT_READBACK_MISMATCH/);
  assert.match(installed.at(-2),/revoke all on function.*eo05_google_commit_verified_package/);
+ installed.length=0;
+ await installGoogleWriterPreparationCandidate(client);
+ await installGooglePackageReuseCandidate(client);
+ const combined=installed.find(sql=>sql.includes("FUNCTION analytics.eo05_google_commit_verified_package"));
+ assert.match(combined,/jsonb_agg\(body order by ordinal\)/);
+ assert.match(combined,/eo05_google_package_from_rows\(p,verified_rows,0\)/);
+ assert.match(combined,/DATASET_DECIMAL_INVALID/);
 });

@@ -324,6 +324,48 @@ ${verify}
  await client.query(write);
 }
 
+export async function installGoogleWriterPreparationCandidate(client) {
+ assert.equal(assertGoogleTimingTarget(client.connectionParameters),"local");
+ let writer=await functionDefinition(client,"analytics.commit_google_daily_package(jsonb,jsonb)");
+ writer=replaceOnce(writer," bulk_rows jsonb:='{}'; bulk_ids jsonb:='{}'; stored record;",` column_metadata jsonb:='{}'; table_metadata jsonb; numeric_columns text[];
+ package_tables text[]:='{}'; package_rows jsonb[]:='{}';
+ prepared_group record; bulk_ids jsonb:='{}'; stored record;`);
+ const start=writer.indexOf("  select array_agg(attname::text order by attnum) into allowed");
+ const end=writer.indexOf("   if r->k<>'null'::jsonb",start);
+ assert.ok(start>=0&&end>start);
+ const catalog=writer.slice(start,end);
+ const exclusions=catalog.match(/and attname not in \([^)]+\)/)?.[0];
+ assert.ok(exclusions);
+ writer=replaceOnce(writer,catalog,`   table_metadata:=column_metadata->name;
+   if table_metadata is null then
+    select array_agg(attname::text order by attnum) filter (where true ${exclusions}),
+      coalesce(array_agg(attname::text order by attnum) filter (where atttypid='numeric'::regtype),'{}')
+    into allowed,numeric_columns
+    from pg_catalog.pg_attribute
+    where attrelid=('analytics.'||name)::regclass and attnum>0 and not attisdropped;
+    column_metadata:=column_metadata||jsonb_build_object(name,
+      jsonb_build_object('allowed',allowed,'numeric',numeric_columns));
+   else
+    allowed:=array(select jsonb_array_elements_text(table_metadata->'allowed'));
+    numeric_columns:=array(select jsonb_array_elements_text(table_metadata->'numeric'));
+   end if;
+   if (select count(*) from jsonb_object_keys(r))<>cardinality(allowed) or not r ?& allowed then raise exception 'DATASET_ROW_SHAPE_INVALID';end if;
+   foreach k in array numeric_columns loop
+`);
+ writer=replaceOnce(writer,"   bulk_rows:=jsonb_set(bulk_rows,array[name],coalesce(bulk_rows->name,'[]')||jsonb_build_array(injected));",`   package_tables:=array_append(package_tables,name);
+   package_rows:=array_append(package_rows,injected);`);
+ writer=replaceOnce(writer,`  for name in select jsonb_object_keys(bulk_rows) order by 1 loop
+   select string_agg(quote_ident(key),',' order by key) into cols from jsonb_object_keys(bulk_rows->name->0) key;`,`  for prepared_group in
+    select target_table,jsonb_agg(body order by ordinal) as payload
+    from unnest(package_tables,package_rows) with ordinality as prepared(target_table,body,ordinal)
+    group by target_table order by target_table
+   loop
+    name:=prepared_group.target_table;
+    select string_agg(quote_ident(key),',' order by key) into cols from jsonb_object_keys(prepared_group.payload->0) key;`);
+ writer=replaceOnce(writer,"using bulk_rows->name,p->'policy'","using prepared_group.payload,p->'policy'");
+ await client.query(writer);
+}
+
 export async function installGoogleReportCandidate(client) {
  assertGoogleTimingTarget(client.connectionParameters);
  const canonical="analytics.google_daily_json(v,depth+1)";
@@ -516,7 +558,7 @@ export function summarizeGooglePublishTrace(notices) {
  return {...publish,...writer,writerBoundaryOverheadMs};
 }
 
-export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false,factTriggerTrace=false}){
+export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false,factTriggerTrace=false,writerPreparationCandidate=false}){
  const target=assertGoogleTimingTarget(client.connectionParameters);
  if(quotaClaimComparison)assert.equal(target,"local");
  assert.ok(!combinedCandidate||!quotaClaimComparison);
@@ -524,6 +566,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  assert.ok(!reportBreakdown||(combinedCandidate&&!reportCandidate));
  assert.ok(!publishTrace||(target==="local"&&reportBreakdown&&!collectionDiagnostics));
  assert.ok(!factTriggerTrace||publishTrace);
+ assert.ok(!writerPreparationCandidate||(target==="local"&&combinedCandidate&&!reportCandidate));
  const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger,combinedCandidate);
  let ordinal=0,failed,reader,roleChecks=0;
  const publishNotices=[];
@@ -587,6 +630,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  const store=createRefreshWorkRepository({query:(sql,args)=>/operations\.(check_refresh_queue_on_tick|review_refresh_interrupted_work)\(/.test(sql)?queue.query(sql,args):coordinator.query(sql,args)});
  try{
   if(combinedCandidate)await installGoogleCombinedCandidate(client);
+  if(writerPreparationCandidate)await installGoogleWriterPreparationCandidate(client);
   if(reportCandidate)await installGoogleReportCandidate(client);
   if(publishTrace){await installGooglePublishTrace(client);client.on("notice",observePublish);}
   if(factTriggerTrace)await installGoogleFactTriggerTrace(client);

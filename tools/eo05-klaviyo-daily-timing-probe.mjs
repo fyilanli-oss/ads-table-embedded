@@ -4,6 +4,10 @@ import {readFileSync} from "node:fs";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {createSharedQuotaRepository} from "../app/lib/database/shared-quota-repository.server.js";
 import {createKlaviyoSourcePostgresClient} from "../app/lib/database/klaviyo-source-postgres.server.js";
+import {createIdentityRuntimeAuthorityLoader} from "../app/lib/providers/identity-runtime-authority.server.js";
+import {loadKlaviyoBackgroundOwner} from "../app/lib/refresh/klaviyo-background-owner.server.js";
+import {createTokenVault} from "../app/lib/oauth/token-vault.server.js";
+import {createTokenEnvelopeCipher,readProviderTokenKeyring} from "../app/lib/oauth/token-envelope.server.js";
 import {createRefreshKlaviyoRawTransport} from "../app/lib/refresh/quota-authority-binding.server.js";
 import {quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {createSourceEvidenceCipher} from "../app/lib/database/source-evidence-store.server.js";
@@ -1132,7 +1136,7 @@ function syntheticResponse(endpoint,owner,day,changedEvents=0) {
   });
 }
 
-async function prepareMatchedKlaviyoTransport(client,context) {
+async function prepareMatchedKlaviyoTransport(client,context,{fullAuthority}) {
   await client.query("set local role postgres");
   if (!(await client.query("select to_regrole('adstable_klaviyo_source_runner') is not null as present")).rows[0].present) {
     const sql=readFileSync(new URL("./sql/eo05-klaviyo-source-role-install.sql",import.meta.url),"utf8");
@@ -1140,6 +1144,7 @@ async function prepareMatchedKlaviyoTransport(client,context) {
   }
   await client.query("set local role postgres");
   await client.query("grant adstable_klaviyo_source_runner to adstable_owner with inherit false,set true,admin false");
+  if(fullAuthority)await client.query("grant adstable_runtime to adstable_owner with inherit false,set true,admin false");
   await client.query("set local role adstable_owner");
   await client.query("set local statement_timeout='60s'");
   const policy=randomUUID();
@@ -1178,6 +1183,31 @@ async function prepareMatchedKlaviyoTransport(client,context) {
     }};}}),
   });
   return {database,policy};
+}
+
+async function prepareKlaviyoReadAuthority(client,owner,database,now) {
+  const key=()=>randomBytes(32).toString("base64url");
+  const environment={ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION:"1",ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1:key()};
+  const scopes=(await client.query("select granted_scopes from integrations.provider_connections where id=$1",[owner.connectionId])).rows[0].granted_scopes;
+  const versions=await client.query("select distinct key_version v from integrations.provider_credential_envelopes union select distinct key_version v from integrations.oauth_pkce_envelopes");
+  for(const {v} of versions.rows) if(Number(v)!==1)environment[`ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V${v}`]=key();
+  const token={access_token:"SYNTHETIC-ONLY",scopes,scope_verified_at:new Date(now()).toISOString(),expires_at:new Date(now()+3600000).toISOString()};
+  const sealed=createTokenEnvelopeCipher({keyring:readProviderTokenKeyring(environment)}).seal({
+    identity:{recordId:owner.credentialId,workspaceId:owner.workspaceId,installGeneration:Number(owner.generation),provider:"klaviyo",purpose:"provider_token_set"},
+    secret:JSON.stringify(token),
+  });
+  await client.query("update integrations.provider_credential_envelopes set payload_ciphertext=$2,nonce=$3,auth_tag=$4,key_version=$5 where id=$1",
+    [owner.credentialId,sealed.ciphertext,sealed.nonce,sealed.authTag,sealed.keyVersion]);
+  const runtime={async query(sql,args){
+    await client.query("set local role adstable_runtime");
+    try{return await client.query(sql,args);}
+    finally{await client.query("set local role adstable_owner");}
+  }};
+  const verified=await loadKlaviyoBackgroundOwner({database:runtime,owner:{
+    workspaceId:owner.workspaceId,installGeneration:Number(owner.generation),shopId:owner.shopId,shopDomain:owner.shopDomain,
+  }});
+  const tokenVault=createTokenVault({database:runtime,environment});
+  return signal=>createIdentityRuntimeAuthorityLoader({verified,database,tokenVault,provider:"klaviyo",signal,now:()=>new Date(now())});
 }
 
 /** Run within the existing F01 localhost rollback transaction. */
@@ -1276,7 +1306,8 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
   const detailed=mode==="detailed",reportOnly=mode==="report",measureReport=detailed||reportOnly;
-  if(matchedTransport!==undefined) assert.ok(["quota","direct"].includes(matchedTransport)&&!hosted&&!repeat&&endToEnd&&reportBoundary);
+  if(matchedTransport!==undefined) assert.ok(["quota","direct","authority"].includes(matchedTransport)&&!hosted&&!repeat&&endToEnd&&reportBoundary);
+  const fullAuthority=matchedTransport==="authority";
   if(retentionOnly||retentionWall) assert.ok(["current","cached"].includes(retentionVariant));
   if(!repeat) await installExactBulkWriter(client);
   // The enclosing rehearsal savepoint restores the inherited timeout.
@@ -1287,7 +1318,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   const cipher=createSourceEvidenceCipher({keys:new Map([[1,randomBytes(32)]]),activeVersion:1,forbiddenKeys:[]});
   const policy=sourceStoreFixture().input.policy;
   // The second pass reuses exactly the SQL installed for its seed.
-  let matchedQuota;
+  let matchedQuota,createReadAuthority,authorityChecks=0;
   if(!repeat) {
   // The enclosing savepoint is rolled back, including these diagnostics.
   if (measureReport) {
@@ -1363,7 +1394,8 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     (workspace_id,install_generation,provider,installation_id,connection_id,connection_version,account_id,client_scope_key,connection_scope_key,connection_epoch,api_version,enabled)
     values ($1,$2,'klaviyo',$3,$4,$5,$6,$7,$8,1,'2026-10-15',true)`,
   [owner.workspaceId,owner.generation,owner.installationId,owner.connectionId,owner.connectionVersion,owner.accountId,context.clientScopeKey,context.connectionScopeKey]);
-  if(matchedTransport==="quota") matchedQuota=await prepareMatchedKlaviyoTransport(client,context);
+  if(matchedTransport==="quota"||fullAuthority) matchedQuota=await prepareMatchedKlaviyoTransport(client,context,{fullAuthority});
+  if(fullAuthority)createReadAuthority=await prepareKlaviyoReadAuthority(client,owner,matchedQuota.database,now);
   }
   const cost={requests:21,dbWrites:4000,connections:3,rows:2000,bytes:4000000};
   await client.query("update operations.refresh_control set budget=$1,bounds=$2 where singleton",[
@@ -1505,9 +1537,22 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
           if (detailed||endToEnd) durations.queueAndAdmission=beforeCollect-start-durations.queueEnqueue;
           phase="collection";
           timingStep="providerCollection";
+          const loader=createReadAuthority?.(signal);
+          const current=await loader?.loadCurrent();
           if(matchedTransport)quotaContext=await loadContext();
           assert.ok(quotaContext);
-          const guard=async()=>assert.equal(await store.isClaimCurrent({claim}),true);
+          if(loader){
+            assert.equal(current.account.id,claim.accountId);
+            assert.equal(quotaContext.accountId,current.account.id);
+            assert.equal(quotaContext.apiVersion,"2026-10-15");
+          }
+          const guard=loader?async()=>{
+            if(signal.aborted)throw Error("read_aborted");
+            await loader.loadCurrent();
+            assert.deepEqual(await loadContext(),quotaContext);
+            if(signal.aborted)throw Error("read_aborted");
+            authorityChecks++;
+          }:async()=>assert.equal(await store.isClaimCurrent({claim}),true);
           const fixtureFetch=async endpoint=>{
             requests++;
             if (!detailed&&!endToEnd) return syntheticResponse(endpoint,owner,day,repeat?.changedEvents??0);
@@ -1527,7 +1572,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
             ...execution,workStore:quotaWorkStore,quotaStore:createSharedQuotaRepository(matchedQuota.database),now,fetchFn:fixtureFetch,
           }):fixtureFetch;
           await collectKlaviyoRawDatasets({
-            accessToken:"synthetic-only",accountId:owner.accountId,source:{timezone:"UTC",currency:"USD"},
+            accessToken:current?.tokenSet.access_token??"synthetic-only",accountId:owner.accountId,source:{timezone:"UTC",currency:"USD"},
             window,limits:{...limits,maxPages:10,maxBytes:1048576},signal,now,guard,transport,pacerFactory:()=>async()=>{},
             async onDataset({dataset,pages,complete,coverage}) {
               timingStep="rawStore";
@@ -1614,8 +1659,9 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
       const quotaDebits=matchedQuota?(await client.query(`select count(*)::int as reserved,
         count(*) filter(where settled)::int as settled from operations.api_quota_debits where policy_id=$1`,[matchedQuota.policy])).rows[0]:null;
       if(matchedQuota) assert.deepEqual(quotaDebits,{reserved:requests,settled:requests});
+      if(fullAuthority) assert.ok(authorityChecks>=2*requests);
       const reportSourceRead=databaseTimings.reportSourceRead,receiptReadback=databaseTimings.reportReadback,jobClose=databaseTimings.jobClose;
-      return {...summary,matchedTransport,quotaDebits,totalMs:ended-start,durationsMs:{
+      return {...summary,matchedTransport,quotaDebits,authorityChecks,totalMs:ended-start,durationsMs:{
         queueEnqueue:durations.queueEnqueue,queueAndAdmission:durations.queueAndAdmission,
         providerCollection:durations.providerCollection,rawStore:durations.rawStore,handoff:durations.handoff,
         reportSourceRead,reportPreparation:durations.reportFlow-reportSourceRead-reportWriteMs-receiptReadback-jobClose,

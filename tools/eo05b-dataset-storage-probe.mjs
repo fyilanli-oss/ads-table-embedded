@@ -14,7 +14,7 @@ import {reconciliationProbe} from "./eo05d-reconciliation-probe.mjs";
 import {klaviyoDailyTimingProbe} from "./eo05-klaviyo-daily-timing-probe.mjs";
 import {observabilityProbe} from "./eo05e-observability-probe.mjs";
 import {googleDailyPackagesProbe} from "./eo05-google-daily-packages-probe.mjs";
-import {googleDailyTimingProbe,prepareGoogleTimingLocalRoles,installGoogleCombinedCandidate,proveGoogleReportCanonicalParity} from "./eo05-google-daily-timing-probe.mjs";
+import {googleDailyTimingProbe,prepareGoogleTimingLocalRoles,installGoogleCombinedCandidate,installGoogleWriterPreparationCandidate,proveGoogleReportCanonicalParity} from "./eo05-google-daily-timing-probe.mjs";
 
 async function rejected(client, action, pattern) {
   await client.query("savepoint dataset_expected_failure"); let error;
@@ -105,17 +105,18 @@ export async function datasetStorageProbe(client, connection, environment = proc
       finally{await client.query("rollback to savepoint google_combined_candidate_flow");await client.query("release savepoint google_combined_candidate_flow");}
       await installGoogleCombinedCandidate(client);
       const canonical=await proveGoogleReportCanonicalParity(client);
-      const reportCases=await googleDailyPackagesProbe(client,{ownerFixture});
+      await installGoogleWriterPreparationCandidate(client);
+      const reportCases=await googleDailyPackagesProbe(client,{ownerFixture,verifyWriterPreparation:true});
       console.log("EO05_GOOGLE_REPORT_BREAKDOWN_PASS",JSON.stringify({rows:candidate.reportRows,packages:candidate.reportPackages,receipts:candidate.receipts,completed:candidate.completed,
         reportWriteBreakdown:candidate.reportWriteBreakdown,publishTrace:candidate.publishTrace,factTriggerTrace:candidate.factTriggerTrace,canonical,reportCases,isolatedEnvironment:true}));
     }finally{await client.query("rollback to savepoint google_combined_flow");await client.query("release savepoint google_combined_flow");}
     const matched=[];
-    for(const kind of ["google","direct","quota"]){
+    for(const kind of ["google","quota","authority","googleWriter"]){
       await client.query("savepoint matched_provider_flow");
       try{
-        if(kind==="google"){
+        if(kind==="google"||kind==="googleWriter"){
           await prepareGoogleTimingLocalRoles(client);
-          matched.push(await googleDailyTimingProbe(client,{ownerFixture,combinedCandidate:true}));
+          matched.push(await googleDailyTimingProbe(client,{ownerFixture,combinedCandidate:true,writerPreparationCandidate:kind==="googleWriter"}));
         }else{
           matched.push(await klaviyoDailyTimingProbe(client,{
             ownerFixture,connection,environment,mode:"retention-boundary",retentionVariant:"cached",
@@ -134,9 +135,10 @@ export async function datasetStorageProbe(client, connection, environment = proc
       assert.ok(Object.values(durationsMs).every(ms=>Number.isFinite(ms)&&ms>=0));
       assert.ok(Math.abs(Object.values(durationsMs).reduce((a,b)=>a+b,0)-totalMs)<0.01);
     }
-    console.log("EO05_MATCHED_PROVIDER_FLOW_PASS",JSON.stringify(matched.map(({
-      provider,matchedTransport,quotaDebits,reportRows,reportPackages,requests,receipts,durationsMs,totalMs,
-    })=>({provider,matchedTransport,quotaDebits,reportRows,reportPackages,requests,receipts,durationsMs,totalMs}))));
+    console.log("EO05_MATCHED_AUTHORITY_AND_WRITER_PASS",JSON.stringify(matched.map(({
+      provider,matchedTransport,quotaDebits,authorityChecks,reportRows,reportPackages,requests,receipts,durationsMs,totalMs,
+    },index)=>({variant:["google","klaviyoQuota","klaviyoAuthority","googleWriter"][index],
+      provider,matchedTransport,quotaDebits,authorityChecks,reportRows,reportPackages,requests,receipts,durationsMs,totalMs}))));
     const verificationComparison=[];
     for(const variant of [{}, {combinedVerification:true}, {combinedVerification:true,reduceReportRepeats:true}]) {
       await client.query("savepoint klaviyo_daily_timing");

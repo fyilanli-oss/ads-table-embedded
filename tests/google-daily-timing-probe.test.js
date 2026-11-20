@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection,summarizeGoogleReportWrite,summarizeGooglePublishTrace,installGoogleFactTriggerTrace,summarizeGoogleFactTriggerTrace} from "../tools/eo05-google-daily-timing-probe.mjs";
+import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection,summarizeGoogleReportWrite,summarizeGooglePublishTrace,installGoogleFactTriggerTrace,summarizeGoogleFactTriggerTrace,installGoogleWriterPreparationCandidate} from "../tools/eo05-google-daily-timing-probe.mjs";
 
 test("Google measurement refuses production, alternate project/host and unbound users",()=>{
  assert.equal(assertGoogleTimingTarget({host:"127.0.0.1",port:54322}),"local");
@@ -111,4 +111,21 @@ test("fact trigger diagnostics match the real validator and refuse hosted instal
   host:"aws-1-eu-central-1.pooler.supabase.com",port:5432,user:"adstable_benchmark_google_r1.lxphenczjmueblnonklm",
  }}));
  assert.equal(calls.length,3);
+});
+
+test("Google writer preparation targets the real package writer and preserves validation and ordering",async()=>{
+ const migration=readFileSync(new URL("../supabase/migrations/20261119112554_eo05_google_daily_packages.sql",import.meta.url),"utf8").replace(/\r\n/g,"\n");
+ const definition=migration.match(/create function analytics\.commit_google_daily_package\(o[\s\S]*?end \$fn\$;/)[0];
+ const calls=[];
+ const client={connectionParameters:{host:"127.0.0.1",port:54322},async query(sql){
+  calls.push(sql);
+  return {rows:[{definition}]};
+ }};
+ await installGoogleWriterPreparationCandidate(client);
+ assert.equal(calls.length,2);
+ assert.doesNotMatch(calls[1],/bulk_rows/);
+ assert.match(calls[1],/jsonb_agg\(body order by ordinal\)/);
+ for(const guard of ["DATASET_ROW_SHAPE_INVALID","DATASET_DECIMAL_INVALID","DATASET_PAYLOAD_DIGEST_INVALID","DATASET_NATIVE_CONFLICT"]){
+  assert.ok(calls[1].includes(guard));
+ }
 });

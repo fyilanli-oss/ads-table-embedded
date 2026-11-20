@@ -9,7 +9,7 @@ import {GOOGLE_DAILY_STAGE_SQL,GOOGLE_DAILY_PUBLISH_SQL,GOOGLE_DAILY_INSPECT_SQL
 
 // Synthetic source fixtures, real AEAD/readback, physical facts and daily RPCs.
 // Caller owns the outer rollback transaction; no native HTTP or durable data.
-export async function googleDailyPackagesProbe(client,{ownerFixture}) {
+export async function googleDailyPackagesProbe(client,{ownerFixture,verifyWriterPreparation=false}) {
  assert.equal(client.connectionParameters.host,"127.0.0.1");
  assert.equal(Number(client.connectionParameters.port),54322);
  const cases=[];
@@ -61,7 +61,20 @@ export async function googleDailyPackagesProbe(client,{ownerFixture}) {
    const rpc=async(sql,parameters)=>{await client.query("set local role adstable_refresh_dataset_runner");const result=await client.query(sql,parameters);await client.query("set local role adstable_owner");return result;};
    assert.equal((await client.query("select has_function_privilege('adstable_refresh_dataset_runner','analytics.commit_google_daily_package(jsonb,jsonb)','EXECUTE') allowed")).rows[0].allowed,false);
    const publish=()=>rpc(GOOGLE_DAILY_PUBLISH_SQL,[...args,JSON.stringify(digests)]);
-   async function reject(run){await client.query("savepoint google_daily_negative");let e;try{await run();}catch(error){e=error;}finally{await client.query("rollback to savepoint google_daily_negative");await client.query("release savepoint google_daily_negative");}assert.ok(e);}
+   async function reject(run,pattern){await client.query("savepoint google_daily_negative");let e;try{await run();}catch(error){e=error;}finally{await client.query("rollback to savepoint google_daily_negative");await client.query("release savepoint google_daily_negative");}assert.ok(e);if(pattern)assert.match(e.message,pattern);}
+   if(verifyWriterPreparation&&scenario.rows===1000){
+    const commit=p=>client.query("select analytics.commit_google_daily_package($1::jsonb,$2::jsonb)",[args[0],JSON.stringify(p)]);
+    const malformed=structuredClone(writes[0]);
+    const repeatTable=malformed.rows.findIndex((item,index)=>malformed.rows.slice(0,index).some(before=>before.table===item.table));
+    assert.ok(repeatTable>0);
+    delete malformed.rows[repeatTable].row.metric_extensions;
+    await reject(()=>commit(malformed),/DATASET_ROW_SHAPE_INVALID/);
+    const invalidDecimal=structuredClone(writes[0]),item=invalidDecimal.rows[repeatTable];
+    const metric=item.table==="cpd_product_sales_facts"?"sales_value":"spend_value";
+    assert.ok(Object.hasOwn(item.row,metric));
+    item.row[metric]="1.00";
+    await reject(()=>commit(invalidDecimal),/DATASET_DECIMAL_INVALID/);
+   }
    for(let i=0;i<writes.length;i++){
     const receipt=(await rpc(GOOGLE_DAILY_STAGE_SQL,[args[0],JSON.stringify(writes[i]),args[1],deadline,i,writes.length])).rows[0].result;
     digests.push(receipt.digest);

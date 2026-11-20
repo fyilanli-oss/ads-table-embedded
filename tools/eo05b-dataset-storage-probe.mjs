@@ -116,7 +116,9 @@ export async function datasetStorageProbe(client, connection, environment = proc
       try{
         if(kind==="google"||kind==="googleWriter"){
           await prepareGoogleTimingLocalRoles(client);
-          matched.push(await googleDailyTimingProbe(client,{ownerFixture,combinedCandidate:true,writerPreparationCandidate:kind==="googleWriter"}));
+          matched.push(await googleDailyTimingProbe(client,{
+            ownerFixture,combinedCandidate:true,reportBreakdown:true,writerPreparationCandidate:kind==="googleWriter",
+          }));
         }else{
           matched.push(await klaviyoDailyTimingProbe(client,{
             ownerFixture,connection,environment,mode:"retention-boundary",retentionVariant:"cached",
@@ -139,6 +141,12 @@ export async function datasetStorageProbe(client, connection, environment = proc
       provider,matchedTransport,quotaDebits,authorityChecks,reportRows,reportPackages,requests,receipts,durationsMs,totalMs,
     },index)=>({variant:["google","klaviyoQuota","klaviyoAuthority","googleWriter"][index],
       provider,matchedTransport,quotaDebits,authorityChecks,reportRows,reportPackages,requests,receipts,durationsMs,totalMs}))));
+    const [reference,,,writer]=matched;
+    const reportOnly=[reference,writer].map(({reportRows,reportPackages,receipts,completed,reportWriteBreakdown})=>({
+      reportRows,reportPackages,receipts,completed,...reportWriteBreakdown,
+    }));
+    assert.ok(reportOnly.every(result=>result.completed&&result.stageCalls===5&&result.publishCalls===1));
+    console.log("EO05_GOOGLE_REPORT_ONLY_COMPARISON_PASS",JSON.stringify({reference:reportOnly[0],writer:reportOnly[1]}));
     const verificationComparison=[];
     for(const variant of [{}, {combinedVerification:true}, {combinedVerification:true,reduceReportRepeats:true}]) {
       await client.query("savepoint klaviyo_daily_timing");

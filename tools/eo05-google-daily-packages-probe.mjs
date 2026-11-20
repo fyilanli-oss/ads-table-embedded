@@ -65,10 +65,11 @@ export async function googleDailyPackagesProbe(client,{ownerFixture,verifyWriter
    if(verifyWriterPreparation&&scenario.rows===1000){
     const commit=p=>client.query("select analytics.commit_google_daily_package($1::jsonb,$2::jsonb)",[args[0],JSON.stringify(p)]);
     const first=structuredClone(writes[0]);
-    const repeated=first.rows.slice(1).find(item=>item.table===first.rows[0].table);
+    const repeatIndex=first.rows.findIndex((item,index)=>first.rows.slice(0,index).some(before=>before.table===item.table));
     // Use two rows in the same table to exercise the cached metadata path.
-    assert.ok(repeated);
-    const sample={...first,rows:[first.rows[0],repeated]};
+    assert.ok(repeatIndex>0);
+    const repeated=first.rows[repeatIndex];
+    const sample={...first,rows:[first.rows.find(item=>item.table===repeated.table),repeated]};
     const malformed=structuredClone(sample);
     delete malformed.rows[1].row.metric_extensions;
     await reject(()=>commit(malformed),/DATASET_ROW_SHAPE_INVALID/);

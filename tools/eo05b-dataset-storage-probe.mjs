@@ -109,6 +109,34 @@ export async function datasetStorageProbe(client, connection, environment = proc
       console.log("EO05_GOOGLE_REPORT_BREAKDOWN_PASS",JSON.stringify({rows:candidate.reportRows,packages:candidate.reportPackages,receipts:candidate.receipts,completed:candidate.completed,
         reportWriteBreakdown:candidate.reportWriteBreakdown,publishTrace:candidate.publishTrace,factTriggerTrace:candidate.factTriggerTrace,canonical,reportCases,isolatedEnvironment:true}));
     }finally{await client.query("rollback to savepoint google_combined_flow");await client.query("release savepoint google_combined_flow");}
+    const matched=[];
+    for(const kind of ["google","direct","quota"]){
+      await client.query("savepoint matched_provider_flow");
+      try{
+        if(kind==="google"){
+          await prepareGoogleTimingLocalRoles(client);
+          matched.push(await googleDailyTimingProbe(client,{ownerFixture,combinedCandidate:true}));
+        }else{
+          matched.push(await klaviyoDailyTimingProbe(client,{
+            ownerFixture,connection,environment,mode:"retention-boundary",retentionVariant:"cached",
+            combinedVerification:true,reduceReportRepeats:true,reportWriteCleanup:true,
+            phaseCandidate:"ordered-json",reuseStagedCanonical:true,reuseCanonicalRows:true,
+            endToEnd:true,sharedDaySources:true,matchedTransport:kind,
+          }));
+        }
+      }finally{
+        await client.query("rollback to savepoint matched_provider_flow");
+        await client.query("release savepoint matched_provider_flow");
+      }
+    }
+    for(const {durationsMs,totalMs,reportRows,reportPackages,receipts} of matched){
+      assert.deepEqual([reportRows,reportPackages,receipts],[1000,5,1]);
+      assert.ok(Object.values(durationsMs).every(ms=>Number.isFinite(ms)&&ms>=0));
+      assert.ok(Math.abs(Object.values(durationsMs).reduce((a,b)=>a+b,0)-totalMs)<0.01);
+    }
+    console.log("EO05_MATCHED_PROVIDER_FLOW_PASS",JSON.stringify(matched.map(({
+      provider,matchedTransport,quotaDebits,reportRows,reportPackages,requests,receipts,durationsMs,totalMs,
+    })=>({provider,matchedTransport,quotaDebits,reportRows,reportPackages,requests,receipts,durationsMs,totalMs}))));
     const verificationComparison=[];
     for(const variant of [{}, {combinedVerification:true}, {combinedVerification:true,reduceReportRepeats:true}]) {
       await client.query("savepoint klaviyo_daily_timing");

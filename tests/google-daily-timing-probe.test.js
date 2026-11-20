@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection} from "../tools/eo05-google-daily-timing-probe.mjs";
+import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection,summarizeGoogleReportWrite} from "../tools/eo05-google-daily-timing-probe.mjs";
 
 test("Google measurement refuses production, alternate project/host and unbound users",()=>{
  assert.equal(assertGoogleTimingTarget({host:"127.0.0.1",port:54322}),"local");
@@ -59,4 +59,17 @@ test("combined candidate loads its alternate raw store without editing tracked s
   assert.equal(typeof reader,"function");
   assert.deepEqual(readFileSync(p),before);
  }finally{delete globalThis[Symbol.for("adstable.google.nano.stage-observer")];}
+});
+
+test("report breakdown counts only stage and publish, leaving connection overhead in the existing total",()=>{
+ const calls=[
+  {kind:"dataset",from:0,to:2},
+  {kind:"reportStage",from:2,to:7},
+  {kind:"reportStage",from:7,to:11},
+  {kind:"reportPublish",from:12,to:26},
+  {kind:"dataset",from:28,to:34},
+ ];
+ assert.deepEqual(summarizeGoogleReportWrite(calls,26),{
+  stageCalls:2,stageCallWallMs:9,publishCalls:1,publishCallWallMs:14,otherReportWriteMs:3,reportWriteMs:26,
+ });
 });

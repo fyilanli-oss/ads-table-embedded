@@ -65,6 +65,16 @@ export function createGoogleTimingLedger(clock=()=>performance.now()){
  };
 }
 
+export function summarizeGoogleReportWrite(calls, reportWriteMs) {
+ const stage = calls.filter(call=>call.kind==="reportStage");
+ const publish = calls.filter(call=>call.kind==="reportPublish");
+ const wall = entries=>entries.reduce((total,{from,to})=>total+to-from,0);
+ const stageCallWallMs=wall(stage),publishCallWallMs=wall(publish);
+ const otherReportWriteMs=reportWriteMs-stageCallWallMs-publishCallWallMs;
+ assert.ok(otherReportWriteMs>=-0.01);
+ return {stageCalls:stage.length,stageCallWallMs,publishCalls:publish.length,publishCallWallMs,otherReportWriteMs,reportWriteMs};
+}
+
 const rawStoreUrl=new URL("../app/lib/database/google-dataset-source-store.server.js",import.meta.url);
 
 export function googleCombinedReadbackSource(source) {
@@ -371,11 +381,12 @@ export async function proveGoogleReportCanonicalParity(client) {
  return {identical:valid.length,rejected:invalid.length};
 }
 
-export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false}){
+export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false}){
  const target=assertGoogleTimingTarget(client.connectionParameters);
  if(quotaClaimComparison)assert.equal(target,"local");
  assert.ok(!combinedCandidate||!quotaClaimComparison);
  assert.ok(!reportCandidate||combinedCandidate);
+ assert.ok(!reportBreakdown||(combinedCandidate&&!reportCandidate));
  const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger,combinedCandidate);
  let ordinal=0,failed,reader,roleChecks=0;
  const collectionCalls=[];
@@ -394,7 +405,12 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
    const observe=collectionDiagnostics&&ledger.phase==="providerCollection";
    const parameters=[role,statement,JSON.stringify(args.map(googleTimingParameter))];
    if(collectionDiagnostics)parameters.push(observe);
-   const result=await q(`select pg_temp.eo05_google_role_query($1,$2,$3${collectionDiagnostics?",$4":""}) as payload`,parameters,role==="adstable_refresh_dataset_runner"?"dataset":null,sql,observe);
+   let kind=role==="adstable_refresh_dataset_runner"?"dataset":null;
+   if(reportBreakdown&&kind==="dataset"){
+    if(sql===GOOGLE_DAILY_STAGE_SQL)kind="reportStage";
+    if(sql===GOOGLE_DAILY_PUBLISH_SQL)kind="reportPublish";
+   }
+   const result=await q(`select pg_temp.eo05_google_role_query($1,$2,$3${collectionDiagnostics?",$4":""}) as payload`,parameters,kind,sql,observe);
    const rows=observe?result.rows[0].payload.rows:result.rows[0].payload;
    for(const row of rows)for(const k of ["payload_ciphertext","nonce","auth_tag"])if(typeof row[k]==="string"&&row[k].startsWith("\\x"))row[k]=Buffer.from(row[k].slice(2),"hex");
    if(rows[0]?.role===role&&rows[0]?.profile_ready===true)roleChecks++;
@@ -511,8 +527,14 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   assert.equal(receipts.length,1);assert.equal(receipts[0].receipt.rowCount,1000);assert.deepEqual(receipts[0].receipt.packages.map(p=>p.rowCount),[200,200,200,200,200]);
   assert.equal((await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",[owner.workspaceId,claimId])).rows[0].status,"completed");
   assert.ok(Math.abs(Object.values(measured.durationsMs).reduce((a,b)=>a+b,0)-measured.totalMs)<0.01);
+  const reportWriteBreakdown=reportBreakdown?summarizeGoogleReportWrite(ledger.calls,measured.durationsMs.reportWrite):null;
+  if(reportWriteBreakdown){
+   assert.equal(reportWriteBreakdown.stageCalls,5);
+   assert.equal(reportWriteBreakdown.publishCalls,1);
+  }
   return {provider:"google_ads",synthetic:true,rollbackOnly:true,combinedCandidate,reportCandidate,reportRows:1000,nativeRows:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,
    adstableWallMs:measured.totalMs-measured.postgresCallWallMs,providerNetworkMeasured:false,sqlInnerTimers:collectionDiagnostics,durableCommitMeasured:false,
+   ...(reportWriteBreakdown?{reportWriteBreakdown}:{}),
    ...(collectionDiagnostics?{collectionBreakdown:summarizeGoogleCollection(collectionCalls,measured.durationsMs.providerCollection)}:{})};
  }catch(error){
   if(failed)throw Object.assign(Error("GOOGLE_TIMING_SQL_STOP "+failed.operation+": "+failed.message),{code:failed.code??"GOOGLE_TIMING_SQL_STOP"});

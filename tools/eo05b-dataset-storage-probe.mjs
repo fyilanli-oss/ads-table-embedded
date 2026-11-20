@@ -101,12 +101,13 @@ export async function datasetStorageProbe(client, connection, environment = proc
       await prepareGoogleTimingLocalRoles(client);
       await client.query("savepoint google_combined_candidate_flow");
       let candidate;
-      try{candidate=await googleDailyTimingProbe(client,{ownerFixture,combinedCandidate:true,reportCandidate:true});}
+      try{candidate=await googleDailyTimingProbe(client,{ownerFixture,combinedCandidate:true,reportBreakdown:true});}
       finally{await client.query("rollback to savepoint google_combined_candidate_flow");await client.query("release savepoint google_combined_candidate_flow");}
       await installGoogleCombinedCandidate(client);
       const canonical=await proveGoogleReportCanonicalParity(client);
       const reportCases=await googleDailyPackagesProbe(client,{ownerFixture});
-      console.log("EO05_GOOGLE_REPORT_CANDIDATE_PASS",JSON.stringify({rows:candidate.reportRows,packages:candidate.reportPackages,receipts:candidate.receipts,completed:candidate.completed,canonical,reportCases,correctnessOnly:true}));
+      console.log("EO05_GOOGLE_REPORT_BREAKDOWN_PASS",JSON.stringify({rows:candidate.reportRows,packages:candidate.reportPackages,receipts:candidate.receipts,completed:candidate.completed,
+        reportWriteBreakdown:candidate.reportWriteBreakdown,canonical,reportCases,isolatedEnvironment:true}));
     }finally{await client.query("rollback to savepoint google_combined_flow");await client.query("release savepoint google_combined_flow");}
     const verificationComparison=[];
     for(const variant of [{}, {combinedVerification:true}, {combinedVerification:true,reduceReportRepeats:true}]) {

@@ -76,7 +76,12 @@ export async function datasetStorageProbe(client, connection, environment = proc
     await client.query("savepoint google_complete_flow");
     try{
       await prepareGoogleTimingLocalRoles(client);
-      const proof=await googleDailyTimingProbe(client,{ownerFixture});
+      const proof=await googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics:true});
+      assert.ok(proof.collectionBreakdown.groups.roleProfile.sqlTimedCalls>=256);
+      assert.ok(proof.collectionBreakdown.groups.quota.sqlTimedCalls>=108);
+      assert.ok(proof.collectionBreakdown.groups.transactionControl.untimedWallMs>0);
+      console.log("EO05_GOOGLE_COLLECTION_DIAGNOSTICS_PASS",JSON.stringify(Object.fromEntries(
+        Object.entries(proof.collectionBreakdown.groups).map(([kind,value])=>[kind,{calls:value.calls,sqlTimedCalls:value.sqlTimedCalls}]))));
       console.log("EO05_GOOGLE_COMPLETE_FLOW_PASS",JSON.stringify({rows:proof.reportRows,nativeRows:proof.nativeRows,packages:proof.reportPackages,requests:proof.requests,receipts:proof.receipts,completed:proof.completed,realRoleChecks:proof.roleChecks>0,correctnessOnly:true}));
     }finally{await client.query("rollback to savepoint google_complete_flow");await client.query("release savepoint google_complete_flow");}
     const verificationComparison=[];

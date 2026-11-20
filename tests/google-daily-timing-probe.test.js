@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader} from "../tools/eo05-google-daily-timing-probe.mjs";
+import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection} from "../tools/eo05-google-daily-timing-probe.mjs";
 
 test("Google measurement refuses production, alternate project/host and unbound users",()=>{
  assert.equal(assertGoogleTimingTarget({host:"127.0.0.1",port:54322}),"local");
@@ -23,6 +23,22 @@ test("outer ledger partitions source DB calls once and preserves the total",asyn
  assert.equal(r.totalMs,40);assert.equal(r.postgresCallWallMs,20);assert.equal(r.durationsMs.reportSourceRead,5);assert.equal(r.durationsMs.reportPreparation,3);
  assert.equal(Object.values(r.durationsMs).reduce((a,b)=>a+b,0),40);
 });
+test("collection diagnostics partition call wall time without calling the residual network time", () => {
+ const calls = [
+  {sql:"select current_user as role, true as profile_ready",wallMs:5,sqlMs:2},
+  {sql:"select operations.reserve_shared_api_quota($1)",wallMs:8,sqlMs:6},
+  {sql:"savepoint sample; set local statement_timeout = '5000ms'",wallMs:4,sqlMs:null},
+  {sql:"select * from integrations.load_provider_identity_authority($1)",wallMs:7,sqlMs:1},
+ ].map(({sql,...call})=>({...call,kind:googleCollectionCallKind(sql)}));
+ const result=summarizeGoogleCollection(calls,30);
+ assert.equal(result.databaseWallMs,24);
+ assert.equal(result.outsideDatabaseCallsMs,6);
+ assert.deepEqual(result.groups.roleProfile,{calls:1,wallMs:5,sqlTimedCalls:1,sqlMs:2,residualMs:3,untimedWallMs:0});
+ assert.equal(result.groups.quota.residualMs,2);
+ assert.equal(result.groups.transactionControl.untimedWallMs,4);
+ assert.equal(result.groups.other.residualMs,6);
+});
+
 test("storage observations load a fresh module without changing production source bytes",async()=>{
  const p=new URL("../app/lib/refresh/google-raw-datasets.server.js",import.meta.url),before=readFileSync(p);
  const reader=await loadObservedGoogleReader({raw(){}});assert.equal(typeof reader,"function");

@@ -82,34 +82,79 @@ export async function loadObservedGoogleReader(ledger){
  finally{hooks.deregister();}
 }
 
-// A test-only, invoker adapter: one network call, real SET ROLE and real result.
-// It has no clock or privilege elevation. Outer rollback owns all changes.
-async function installRoleAdapter(client){
- await client.query(`create function pg_temp.eo05_google_role_query(target text,statement text,parameters jsonb)
+export function googleCollectionCallKind(sql) {
+ if (/^select current_user as role\b/i.test(sql)) return "roleProfile";
+ if (/^select operations\.(load_refresh_quota_context|resolve_shared_api_quota_route|reserve_shared_api_quota|settle_shared_api_quota)\(/i.test(sql)) return "quota";
+ if (/^(savepoint |release savepoint |rollback to savepoint |select pg_catalog\.set_config\()/i.test(sql)) return "transactionControl";
+ return "other";
+}
+
+export function summarizeGoogleCollection(calls, collectionMs) {
+ const groups = Object.fromEntries(["roleProfile", "quota", "transactionControl", "other"].map(kind =>
+  [kind, {calls: 0, wallMs: 0, sqlTimedCalls: 0, sqlMs: 0, residualMs: 0, untimedWallMs: 0}]));
+ let databaseWallMs = 0;
+ for (const {kind, wallMs, sqlMs} of calls) {
+  const group = groups[kind];
+  assert.ok(group && Number.isFinite(wallMs) && wallMs >= 0);
+  group.calls++;
+  group.wallMs += wallMs;
+  databaseWallMs += wallMs;
+  if (sqlMs === null) {
+   group.untimedWallMs += wallMs;
+  } else {
+   assert.ok(Number.isFinite(sqlMs) && sqlMs >= 0);
+   group.sqlTimedCalls++;
+   group.sqlMs += sqlMs;
+   group.residualMs += wallMs - sqlMs;
+  }
+ }
+ assert.ok(databaseWallMs <= collectionMs + 0.01);
+ return {groups, databaseWallMs, outsideDatabaseCallsMs: collectionMs - databaseWallMs};
+}
+
+// An opt-in clock measures execution inside the same temporary invoker. It
+// returns aggregate inputs without issuing an extra database request.
+async function installRoleAdapter(client, collectionDiagnostics){
+ const argument = collectionDiagnostics ? ",measure boolean" : "";
+ const type = collectionDiagnostics ? ",boolean" : "";
+ await client.query(`create function pg_temp.eo05_google_role_query(target text,statement text,parameters jsonb${argument})
  returns jsonb language plpgsql security invoker set search_path='' as $fn$
- declare previous text:=current_user;payload jsonb;
+ declare previous text:=current_user;payload jsonb;${collectionDiagnostics ? "started timestamptz;" : ""}
  begin
   if target<>all(array['adstable_owner','adstable_runtime','adstable_refresh_coordinator','adstable_refresh_queue_runner','adstable_google_source_runner','adstable_refresh_dataset_runner'])
    or statement !~* '^select ' or position(';' in statement)>0 then raise exception 'GOOGLE_TEST_ADAPTER_SCOPE';end if;
+  ${collectionDiagnostics ? "if measure then started:=clock_timestamp(); end if;" : ""}
   execute format('set local role %I',target);
   execute 'select coalesce(jsonb_agg(to_jsonb(output)),''[]''::jsonb) from ('||statement||') output' into payload using parameters;
   execute format('set local role %I',previous);
+  ${collectionDiagnostics ? "if measure then return jsonb_build_object('rows',payload,'sqlMs',extract(epoch from (clock_timestamp()-started))*1000); end if;" : ""}
   return payload;
  end $fn$`);
- await client.query("revoke all on function pg_temp.eo05_google_role_query(text,text,jsonb) from public,anon,authenticated,service_role");
+ await client.query(`revoke all on function pg_temp.eo05_google_role_query(text,text,jsonb${type}) from public,anon,authenticated,service_role`);
 }
 
-export async function googleDailyTimingProbe(client,{ownerFixture}){
+export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false}){
  assertGoogleTimingTarget(client.connectionParameters);
  const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger);
  let ordinal=0,failed,reader,roleChecks=0;
- const q=async(sql,args=[],kind=null)=>ledger.sql(()=>client.query(sql,args),kind);
+ const collectionCalls=[];
+ const q=async(sql,args=[],kind=null,observedSql=sql,sqlMeasured=false)=>ledger.sql(async()=>{
+  if(!collectionDiagnostics||ledger.phase!=="providerCollection")return client.query(sql,args);
+  const start=performance.now();
+  const result=await client.query(sql,args);
+  const wallMs=performance.now()-start;
+  collectionCalls.push({kind:googleCollectionCallKind(observedSql),wallMs,sqlMs:sqlMeasured?result.rows[0].payload.sqlMs:null});
+  return result;
+ },kind);
  async function roleQuery(role,sql,args=[]){
   assert.ok(GOOGLE_TIMING_ROLES.includes(role));assert.match(sql,/^select /i);assert.ok(!sql.includes(";"));
   const statement=sql.replace(/\$(\d+)/g,(_m,n)=>`($1->>${Number(n)-1})`);
   try{
-   const result=await q("select pg_temp.eo05_google_role_query($1,$2,$3) as payload",[role,statement,JSON.stringify(args.map(googleTimingParameter))],role==="adstable_refresh_dataset_runner"?"dataset":null);
-   const rows=result.rows[0].payload;
+   const observe=collectionDiagnostics&&ledger.phase==="providerCollection";
+   const parameters=[role,statement,JSON.stringify(args.map(googleTimingParameter))];
+   if(collectionDiagnostics)parameters.push(observe);
+   const result=await q(`select pg_temp.eo05_google_role_query($1,$2,$3${collectionDiagnostics?",$4":""}) as payload`,parameters,role==="adstable_refresh_dataset_runner"?"dataset":null,sql,observe);
+   const rows=observe?result.rows[0].payload.rows:result.rows[0].payload;
    for(const row of rows)for(const k of ["payload_ciphertext","nonce","auth_tag"])if(typeof row[k]==="string"&&row[k].startsWith("\\x"))row[k]=Buffer.from(row[k].slice(2),"hex");
    if(rows[0]?.role===role&&rows[0]?.profile_ready===true)roleChecks++;
    if(rows[0]?.profile_ready===false)failed??={code:"GOOGLE_PROFILE_NOT_READY",message:"Role profile rejected: "+role,operation:"catalogue"};
@@ -142,7 +187,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture}){
  const queue={query:(sql,args)=>roleQuery("adstable_refresh_queue_runner",sql,args)};
  const store=createRefreshWorkRepository({query:(sql,args)=>/operations\.(check_refresh_queue_on_tick|review_refresh_interrupted_work)\(/.test(sql)?queue.query(sql,args):coordinator.query(sql,args)});
  try{
-  await installRoleAdapter(client);
+  await installRoleAdapter(client,collectionDiagnostics);
   const owner=await ownerFixture(client,"google_ads"),day="2026-11-01",window={from:day,to:day},now=Date.now;
   const issued=now(),generation=randomUUID(),operationId=randomUUID(),hash=()=>randomBytes(32).toString("hex"),key=()=>randomBytes(32).toString("base64url");
   const environment={GOOGLE_ADS_DEVELOPER_TOKEN:"SYNTHETIC-ONLY",ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION:"1",ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1:key(),
@@ -216,7 +261,8 @@ export async function googleDailyTimingProbe(client,{ownerFixture}){
   assert.equal((await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",[owner.workspaceId,claimId])).rows[0].status,"completed");
   assert.ok(Math.abs(Object.values(measured.durationsMs).reduce((a,b)=>a+b,0)-measured.totalMs)<0.01);
   return {provider:"google_ads",synthetic:true,rollbackOnly:true,reportRows:1000,nativeRows:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,
-   adstableWallMs:measured.totalMs-measured.postgresCallWallMs,providerNetworkMeasured:false,sqlInnerTimers:false,durableCommitMeasured:false};
+   adstableWallMs:measured.totalMs-measured.postgresCallWallMs,providerNetworkMeasured:false,sqlInnerTimers:collectionDiagnostics,durableCommitMeasured:false,
+   ...(collectionDiagnostics?{collectionBreakdown:summarizeGoogleCollection(collectionCalls,measured.durationsMs.providerCollection)}:{})};
  }catch(error){
   if(failed)throw Object.assign(Error("GOOGLE_TIMING_SQL_STOP "+failed.operation+": "+failed.message),{code:failed.code??"GOOGLE_TIMING_SQL_STOP"});
   throw error;

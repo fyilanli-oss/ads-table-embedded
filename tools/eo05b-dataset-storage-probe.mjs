@@ -85,8 +85,15 @@ export async function datasetStorageProbe(client, connection, environment = proc
       assert.ok(other.sqlTimedCalls>=37);
       assert.equal(transactionControl.calls,roleProfile.sqlTimedCalls*2);
       assert.ok(transactionControl.untimedWallMs>0);
+      const {quotaContext,quotaRoute,quotaReserve,quotaSettle}=proof.collectionBreakdown.quotaDetails;
+      assert.ok(quotaContext.sqlTimedCalls>=37+18*2);
+      assert.equal(quotaRoute.sqlTimedCalls,18*2);
+      assert.equal(quotaReserve.sqlTimedCalls,18);
+      assert.equal(quotaSettle.sqlTimedCalls,18);
+      assert.equal(quota.sqlTimedCalls,quotaContext.sqlTimedCalls+quotaRoute.sqlTimedCalls+quotaReserve.sqlTimedCalls+quotaSettle.sqlTimedCalls);
       console.log("EO05_GOOGLE_COLLECTION_DIAGNOSTICS_PASS",JSON.stringify(Object.fromEntries(
-        Object.entries(proof.collectionBreakdown.groups).map(([kind,value])=>[kind,{calls:value.calls,sqlTimedCalls:value.sqlTimedCalls}]))));
+        Object.entries({...proof.collectionBreakdown.groups,...proof.collectionBreakdown.quotaDetails})
+          .map(([kind,value])=>[kind,{calls:value.calls,sqlTimedCalls:value.sqlTimedCalls}]))));
       console.log("EO05_GOOGLE_COMPLETE_FLOW_PASS",JSON.stringify({rows:proof.reportRows,nativeRows:proof.nativeRows,packages:proof.reportPackages,requests:proof.requests,receipts:proof.receipts,completed:proof.completed,realRoleChecks:proof.roleChecks>0,correctnessOnly:true}));
     }finally{await client.query("rollback to savepoint google_complete_flow");await client.query("release savepoint google_complete_flow");}
     const verificationComparison=[];

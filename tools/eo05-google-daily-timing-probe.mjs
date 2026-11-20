@@ -82,23 +82,29 @@ export async function loadObservedGoogleReader(ledger){
  finally{hooks.deregister();}
 }
 
+const quotaKinds = Object.freeze({
+ load_refresh_quota_context:"quotaContext",
+ resolve_shared_api_quota_route:"quotaRoute",
+ reserve_shared_api_quota:"quotaReserve",
+ settle_shared_api_quota:"quotaSettle",
+});
+
 export function googleCollectionCallKind(sql) {
  if (/^select current_user as role\b/i.test(sql)) return "roleProfile";
- if (/^select operations\.(load_refresh_quota_context|resolve_shared_api_quota_route|reserve_shared_api_quota|settle_shared_api_quota)\(/i.test(sql)) return "quota";
+ const operation=/^select operations\.([a-z_]+)\(/i.exec(sql)?.[1]?.toLowerCase();
+ if(Object.hasOwn(quotaKinds,operation))return quotaKinds[operation];
  if (/^(savepoint |release savepoint |rollback to savepoint |select pg_catalog\.set_config\()/i.test(sql)) return "transactionControl";
  return "other";
 }
 
 export function summarizeGoogleCollection(calls, collectionMs) {
- const groups = Object.fromEntries(["roleProfile", "quota", "transactionControl", "other"].map(kind =>
-  [kind, {calls: 0, wallMs: 0, sqlTimedCalls: 0, sqlMs: 0, residualMs: 0, untimedWallMs: 0}]));
+ const empty = () => ({calls:0,wallMs:0,sqlTimedCalls:0,sqlMs:0,residualMs:0,untimedWallMs:0});
+ const groups = {roleProfile:empty(),quota:empty(),transactionControl:empty(),other:empty()};
+ const quotaDetails = Object.fromEntries(Object.values(quotaKinds).map(kind=>[kind,empty()]));
  let databaseWallMs = 0;
- for (const {kind, wallMs, sqlMs} of calls) {
-  const group = groups[kind];
-  assert.ok(group && Number.isFinite(wallMs) && wallMs >= 0);
+ function add(group,wallMs,sqlMs) {
   group.calls++;
   group.wallMs += wallMs;
-  databaseWallMs += wallMs;
   if (sqlMs === null) {
    group.untimedWallMs += wallMs;
   } else {
@@ -108,8 +114,16 @@ export function summarizeGoogleCollection(calls, collectionMs) {
    group.residualMs += wallMs - sqlMs;
   }
  }
+ for (const {kind, wallMs, sqlMs} of calls) {
+  const detail = quotaDetails[kind];
+  const group = detail ? groups.quota : groups[kind];
+  assert.ok(group && Number.isFinite(wallMs) && wallMs >= 0);
+  add(group,wallMs,sqlMs);
+  if(detail)add(detail,wallMs,sqlMs);
+  databaseWallMs += wallMs;
+ }
  assert.ok(databaseWallMs <= collectionMs + 0.01);
- return {groups, databaseWallMs, outsideDatabaseCallsMs: collectionMs - databaseWallMs};
+ return {groups,quotaDetails,databaseWallMs,outsideDatabaseCallsMs:collectionMs-databaseWallMs};
 }
 
 // An opt-in clock measures execution inside the same temporary invoker. It

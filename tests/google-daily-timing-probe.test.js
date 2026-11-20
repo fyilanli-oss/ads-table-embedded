@@ -35,6 +35,13 @@ test("collection diagnostics partition call wall time without calling the residu
  assert.equal(result.outsideDatabaseCallsMs,6);
  assert.deepEqual(result.groups.roleProfile,{calls:1,wallMs:5,sqlTimedCalls:1,sqlMs:2,residualMs:3,untimedWallMs:0});
  assert.equal(result.groups.quota.residualMs,2);
+ assert.deepEqual(result.quotaDetails.quotaReserve,result.groups.quota);
+ assert.equal(result.quotaDetails.quotaContext.calls,0);
+ for(const [sql,kind] of [
+  ["select operations.load_refresh_quota_context($1)","quotaContext"],
+  ["select operations.resolve_shared_api_quota_route($1)","quotaRoute"],
+  ["select operations.settle_shared_api_quota($1)","quotaSettle"],
+ ]) assert.equal(googleCollectionCallKind(sql),kind);
  assert.equal(result.groups.transactionControl.untimedWallMs,4);
  assert.equal(result.groups.other.residualMs,6);
 });

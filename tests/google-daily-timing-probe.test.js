@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
+import {EventEmitter} from "node:events";
+import {collectComparableReportTiming,installComparableReportTiming} from "../tools/eo05-klaviyo-daily-timing-probe.mjs";
 import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection,summarizeGoogleReportWrite,summarizeGooglePublishTrace,installGoogleFactTriggerTrace,summarizeGoogleFactTriggerTrace,installGoogleWriterPreparationCandidate} from "../tools/eo05-google-daily-timing-probe.mjs";
 
 test("Google measurement refuses production, alternate project/host and unbound users",()=>{
@@ -128,4 +130,44 @@ test("Google writer preparation targets the real package writer and preserves va
  for(const guard of ["DATASET_ROW_SHAPE_INVALID","DATASET_DECIMAL_INVALID","DATASET_PAYLOAD_DIGEST_INVALID","DATASET_NATIVE_CONFLICT"]){
   assert.ok(calls[1].includes(guard));
  }
+});
+
+test("comparable report timers recognize the persisted Google SQL anchors",async()=>{
+ const paths=["20261119112554_eo05_google_daily_packages.sql","20261110191004_eo05d_dataset_reconciliation.sql"];
+ const migrations=paths.map(path=>readFileSync(new URL("../supabase/migrations/"+path,import.meta.url),"utf8").replace(/\r\n/g,"\n")).join("\n");
+ const statements=[];
+ const client={connectionParameters:{host:"127.0.0.1",port:54322},async query(sql,args){
+  if(sql.startsWith("select pg_get_functiondef")){
+   const name=(args?.[0]??"analytics.validate_dataset_fact()").split("(")[0].replace(".","\\.");
+   const definition=migrations.match(new RegExp("create (?:or replace )?function "+name+"\\([\\s\\S]*?end \\$fn\\$;","i"))?.[0];
+   assert.ok(definition,args?.[0]??sql);
+   return {rows:[{definition}]};
+  }
+  statements.push(sql);
+ }};
+ await installComparableReportTiming(client,"google");
+ assert.equal(statements.length,8);
+ assert.ok(statements.some(sql=>sql.includes("EO05_REPORT_COMPARABLE physicalVerification")&&sql.includes("report_comparison_result:=analytics.check_google_daily_report_facts")));
+});
+
+test("comparable report rollup allocates repeated stage checks without double counting",async()=>{
+ const client=new EventEmitter();
+ client.query=async()=>({rows:[{triggerMs:8}]});
+ const timing=collectComparableReportTiming(client);
+ const note=(prefix,phase,value)=>client.emit("notice",{message:`${prefix} ${phase} ${value}`});
+ for(const [phase,value] of Object.entries({publisherAuthority:8,publisherSources:4,publisherWriter:44,publisherReceipt:3,writerSetup:3,writerPackages:30,physicalVerification:7})){
+  note("EO05_REPORT_COMPARABLE",phase,value);
+ }
+ for(const value of [5,2])note("EO05_REPORT_COMPARABLE","stageValidation",value);
+ for(let i=0;i<5;i++)for(const [phase,value] of Object.entries({lookupLock:0.2,packageValidation:1,packageJsonSize:0.4,packageHash:0.2,sourceRetention:0.4,rowValidation:0.1,rowHash:0.3,rowPreparation:0.4,bulkStatement:2,packageReceipt:0.1})){
+  note("EO05_WRITER_TIMING",phase,value);
+ }
+ const r=await timing.result(70,10);
+ assert.equal(r.authorityMs,7);
+ assert.equal(r.packageValidationMs,20);
+ assert.equal(r.physicalVerificationMs,5);
+ assert.equal(r.lookupAndInsertMs,2);
+ assert.ok(Math.abs(r.writerMs+r.authorityMs+r.packageValidationMs+r.sharedSourcesMs+r.physicalVerificationMs+r.receiptMs+r.remainderMs-r.reportWriteMs)<0.001);
+ timing.stop();
+ assert.equal(client.listenerCount("notice"),0);
 });

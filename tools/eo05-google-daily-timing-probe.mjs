@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {randomBytes,randomUUID,createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
+import {collectComparableReportTiming,installComparableReportTiming} from "./eo05-klaviyo-daily-timing-probe.mjs";
 import {registerHooks} from "node:module";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {createRefreshEntitlementVerifier} from "../app/lib/refresh/entitlement-check.server.js";
@@ -558,7 +559,7 @@ export function summarizeGooglePublishTrace(notices) {
  return {...publish,...writer,writerBoundaryOverheadMs};
 }
 
-export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false,factTriggerTrace=false,writerPreparationCandidate=false}){
+export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false,factTriggerTrace=false,writerPreparationCandidate=false,comparableReport=false}){
  const target=assertGoogleTimingTarget(client.connectionParameters);
  if(quotaClaimComparison)assert.equal(target,"local");
  assert.ok(!combinedCandidate||!quotaClaimComparison);
@@ -567,8 +568,9 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  assert.ok(!publishTrace||(target==="local"&&reportBreakdown&&!collectionDiagnostics));
  assert.ok(!factTriggerTrace||publishTrace);
  assert.ok(!writerPreparationCandidate||(target==="local"&&combinedCandidate&&!reportCandidate));
+ assert.ok(!comparableReport||(target==="local"&&reportBreakdown&&!publishTrace&&!collectionDiagnostics&&!writerPreparationCandidate));
  const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger,combinedCandidate);
- let ordinal=0,failed,reader,roleChecks=0;
+ let ordinal=0,failed,reader,roleChecks=0,comparable;
  const publishNotices=[];
  const observePublish=notice=>{
   const message=notice.message;
@@ -634,6 +636,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   if(reportCandidate)await installGoogleReportCandidate(client);
   if(publishTrace){await installGooglePublishTrace(client);client.on("notice",observePublish);}
   if(factTriggerTrace)await installGoogleFactTriggerTrace(client);
+  if(comparableReport){await installComparableReportTiming(client,"google");comparable=collectComparableReportTiming(client);}
   await installRoleAdapter(client,collectionDiagnostics);
   const owner=await ownerFixture(client,"google_ads"),day="2026-11-01",window={from:day,to:day},now=Date.now;
   const issued=now(),generation=randomUUID(),operationId=randomUUID(),hash=()=>randomBytes(32).toString("hex"),key=()=>randomBytes(32).toString("base64url");
@@ -725,8 +728,10 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
    (await client.query("select current_setting($1)::jsonb as trace",[triggerTraceSetting])).rows[0].trace,
    receipts[0].receipt.rowCount,publishDetails.physicalWriteMs,
   ):null;
+  const reportComparison=comparable?await comparable.result(reportWriteBreakdown.reportWriteMs,reportWriteBreakdown.stageCallWallMs):undefined;
   return {provider:"google_ads",synthetic:true,rollbackOnly:true,combinedCandidate,reportCandidate,reportRows:1000,nativeRows:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,
-   adstableWallMs:measured.totalMs-measured.postgresCallWallMs,providerNetworkMeasured:false,sqlInnerTimers:collectionDiagnostics||publishTrace,durableCommitMeasured:false,
+   adstableWallMs:measured.totalMs-measured.postgresCallWallMs,providerNetworkMeasured:false,sqlInnerTimers:collectionDiagnostics||publishTrace||comparableReport,durableCommitMeasured:false,
+   ...(reportComparison?{reportComparison}:{}),
    ...(reportWriteBreakdown?{reportWriteBreakdown}:{}),
    ...(publishDetails?{publishTrace:publishDetails}:{}),
    ...(triggerDetails?{factTriggerTrace:triggerDetails}:{}),
@@ -734,5 +739,5 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  }catch(error){
   if(failed)throw Object.assign(Error("GOOGLE_TIMING_SQL_STOP "+failed.operation+": "+failed.message),{code:failed.code??"GOOGLE_TIMING_SQL_STOP"});
   throw error;
- }finally{try{await reader?.close();}finally{if(publishTrace)client.off("notice",observePublish);delete globalThis[observationKey];}}
+ }finally{try{await reader?.close();}finally{if(publishTrace)client.off("notice",observePublish);comparable?.stop();delete globalThis[observationKey];}}
 }

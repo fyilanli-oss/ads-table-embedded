@@ -147,6 +147,25 @@ export async function datasetStorageProbe(client, connection, environment = proc
     }));
     assert.ok(reportOnly.every(result=>result.completed&&result.stageCalls===5&&result.publishCalls===1));
     console.log("EO05_GOOGLE_REPORT_ONLY_COMPARISON_PASS",JSON.stringify({reference:reportOnly[0],writer:reportOnly[1]}));
+    const deepReport={};
+    for(const provider of ["google","klaviyo"]){
+      await client.query("savepoint matched_report_comparison");
+      try{
+        if(provider==="google")await prepareGoogleTimingLocalRoles(client);
+        const options={ownerFixture,comparableReport:true};
+        const result=provider==="google"
+          ?await googleDailyTimingProbe(client,{...options,combinedCandidate:true,reportBreakdown:true})
+          :await klaviyoDailyTimingProbe(client,{...options,connection,environment,mode:"retention-boundary",retentionVariant:"cached",
+            combinedVerification:true,reduceReportRepeats:true,reportWriteCleanup:true,phaseCandidate:"ordered-json",
+            reuseStagedCanonical:true,reuseCanonicalRows:true,endToEnd:true,sharedDaySources:true,matchedTransport:"quota"});
+        assert.deepEqual([result.reportRows,result.reportPackages,result.receipts],[1000,5,1]);
+        deepReport[provider]=result.reportComparison;
+      }finally{
+        await client.query("rollback to savepoint matched_report_comparison");
+        await client.query("release savepoint matched_report_comparison");
+      }
+    }
+    console.log("EO05_STANDARD_REPORT_COMPARISON_PASS",JSON.stringify(deepReport));
     const verificationComparison=[];
     for(const variant of [{}, {combinedVerification:true}, {combinedVerification:true,reduceReportRepeats:true}]) {
       await client.query("savepoint klaviyo_daily_timing");

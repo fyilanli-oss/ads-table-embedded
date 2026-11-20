@@ -898,7 +898,7 @@ async function installTriggerPhaseTimers(client) {
 
 const writerPhases=["lookupLock","packageValidation","packageHash","sourceRetention","rowValidation","rowHash","rowPreparation","bulkStatement","packageReceipt"];
 
-async function installWriterTimers(client,{capturePlans,reportWriteCleanup=false,measureBulkPreparation=false,reuseCanonicalRows=false}) {
+async function installWriterTimers(client,{capturePlans,reportWriteCleanup=false,measureBulkPreparation=false,reuseCanonicalRows=false,google=false}) {
   if(capturePlans) await client.query(`create temp table eo05_bulk_plan_inputs (
     ordinal bigint generated always as identity, fact_table text, columns text,
     payload jsonb, check_retention boolean
@@ -908,14 +908,16 @@ async function installWriterTimers(client,{capturePlans,reportWriteCleanup=false
     language plpgsql set search_path='' as $measure$
     declare started timestamptz:=clock_timestamp(); canonical text;
     begin
-      canonical:=analytics.dataset_json(p);
+      canonical:=analytics.${google?"google_daily_json":"dataset_json"}(p);
       raise notice 'EO05_WRITER_TIMING packageJsonSize %',1000*extract(epoch from clock_timestamp()-started);
       return canonical;
     end $measure$`);
   const {rows:[{definition}]}=await client.query(
-    "select pg_get_functiondef('analytics.commit_dataset_storage(jsonb,jsonb)'::regprocedure) definition");
+    "select pg_get_functiondef($1::regprocedure) definition",
+    [`analytics.${google?"commit_google_daily_package":"commit_dataset_storage"}(jsonb,jsonb)`]);
   let sql=definition;
-  const packageSize=reportWriteCleanup?"canonical_package:=analytics.dataset_json(p)":"octet_length(analytics.dataset_json(p))";
+  const serializer=google?"analytics.google_daily_json":"analytics.dataset_json";
+  const packageSize=reportWriteCleanup?`canonical_package:=${serializer}(p)`:`octet_length(${serializer}(p))`;
   if(reuseCanonicalRows) {
     const fallback="case when canonical_rows is null then analytics.dataset_json(p)";
     assert.equal(sql.split(fallback).length,2);
@@ -934,7 +936,7 @@ async function installWriterTimers(client,{capturePlans,reportWriteCleanup=false
     sql=sql.replace(reused,"else analytics.eo05_timed_reused_package(p,canonical_rows) end;");
   } else {
     assert.equal(sql.split(packageSize).length,2);
-    sql=sql.replace(packageSize,packageSize.replace("analytics.dataset_json","analytics.eo05_timed_package_json"));
+    sql=sql.replace(packageSize,packageSize.replace(serializer,"analytics.eo05_timed_package_json"));
   }
   function before(anchor,instrumentation) {
     assert.equal(sql.split(anchor).length,2,`writer timing anchor: ${anchor}`);
@@ -948,7 +950,7 @@ async function installWriterTimers(client,{capturePlans,reportWriteCleanup=false
   before(" perform evidence.assert_source_owner", finish("lookupLock"));
   before(" select * into strict b from evidence.source_batches", finish("packageValidation"));
   before(" if b.authority is distinct", finish("lookupLock"));
-  before(reportWriteCleanup?" h:=encode(sha256(convert_to(canonical_package":" h:=analytics.dataset_digest(p)", finish("packageValidation"));
+  before(reportWriteCleanup?" h:=encode(sha256(convert_to(canonical_package":` h:=analytics.${google?"google_daily_digest":"dataset_digest"}(p)`, finish("packageValidation"));
   before(" if prior is not null then", finish("packageHash"));
   before(" if p->'policy'->>'version'='report-source-3y-v1' then",finish("packageValidation"));
   before(" if (select count(*) from jsonb_array_elements(p->'rows'))",finish("sourceRetention"));
@@ -957,15 +959,16 @@ async function installWriterTimers(client,{capturePlans,reportWriteCleanup=false
   before("  row_input:=r-array",finish("rowValidation"));
   before("  injected:=r||jsonb_build_object",finish("rowHash"));
   before("   continue;",finish("rowPreparation"));
+  const staged=google?"staged_google":"staged_klaviyo";
   if(measureBulkPreparation) {
-    before("\n if staged_klaviyo then\n  -- Table names", " eo05_bulk_preparation_start:=clock_timestamp();");
+    before(`\n if ${staged} then\n  -- Table names`, " eo05_bulk_preparation_start:=clock_timestamp();");
   }
   const capture=capturePlans?`   insert into pg_temp.eo05_bulk_plan_inputs(fact_table,columns,payload,check_retention)
      values(name,cols,bulk_rows->name,p->'policy'->>'version'='report-source-3y-v1');\n`:"";
   before("   for stored in execute format($bulk$",`${capture}   eo05_bulk_measured:=false; eo05_started:=clock_timestamp();`);
   before("    if stored.native_conflict",`    if not eo05_bulk_measured then\n${finish("bulkStatement")}\n     eo05_bulk_measured:=true;\n    end if;`);
   before(" result:=jsonb_build_object('status','stored'", `${measureBulkPreparation?`
- if staged_klaviyo then
+ if ${staged} then
    eo05_timing_rowPreparation:=eo05_timing_rowPreparation+
      1000*extract(epoch from clock_timestamp()-eo05_bulk_preparation_start)-eo05_timing_bulkStatement;
  end if;`:""}
@@ -986,6 +989,101 @@ async function installSalesTriggerTimer(client) {
  return new;`);
   await client.query("set local eo05.sales_trigger_ms='0'");
   await client.query(sql);
+}
+
+const comparableReportPrefix=/^EO05_(WRITER_TIMING|REPORT_COMPARABLE) ([a-zA-Z]+) ([\d.eE+-]+)$/;
+
+// These boundaries wrap the already installed, unchanged reference definitions.
+export async function installComparableReportTiming(client,provider) {
+  assert.equal(client.connectionParameters.host,"127.0.0.1");
+  assert.equal(Number(client.connectionParameters.port),54322);
+  assert.ok(["google","klaviyo"].includes(provider));
+  const google=provider==="google",signature="jsonb,jsonb,timestamptz,uuid,jsonb,jsonb";
+  const note=label=>`raise notice 'EO05_REPORT_COMPARABLE ${label} %',1000*extract(epoch from clock_timestamp()-report_comparison_started);`;
+  const restart="report_comparison_started:=clock_timestamp();";
+  const rewrite=async(name,args,transform)=>{
+    const {rows:[{definition}]}=await client.query("select pg_get_functiondef($1::regprocedure) definition",[`analytics.${name}(${args})`]);
+    let sql=definition;
+    const change=(from,to)=>{
+      assert.equal(sql.split(from).length,2,`report comparison anchor ${name}: ${from}`);
+      sql=sql.replace(from,()=>to);
+    };
+    transform(change);
+    await client.query(sql);
+  };
+  const start=(change,extra="")=>change("\nbegin\n",`\n report_comparison_started timestamptz;${extra}\nbegin\n ${restart}\n`);
+  const mark=(change,anchor,label)=>change(anchor,`${note(label)}\n ${restart}\n ${anchor}`);
+  await rewrite(`publish_${provider}_staged_report_day`,signature,change=>{
+    start(change);
+    mark(change,"perform analytics.assert_report_source_context","publisherAuthority");
+    mark(change,google?"proof:=analytics.write_google_staged_first_report_day":"revision:=(c->>'expectedRevision')","publisherSources");
+    mark(change,"receipt:=jsonb_build_object","publisherWriter");
+    mark(change,"return receipt;","publisherReceipt");
+  });
+  await rewrite(`verify_${provider}_daily_report_stage`,signature,change=>{
+    start(change);
+    mark(change,"return summary||jsonb_build_object","stageValidation");
+  });
+  await rewrite(google?"write_google_staged_first_report_day":"eo05_first_day_before_shared",
+    google?signature:signature+",jsonb",change=>{
+      start(change," report_comparison_result jsonb;");
+      mark(change,`for s in select body from pg_temp.adstable_${provider}_daily_report_stage`,"writerSetup");
+      const readback=google?"analytics.check_google_daily_report_facts(o,c,d,operation,policy,digests)":
+        "analytics.check_klaviyo_daily_report_facts_verified(o,c,d,operation,policy,digests,verified_summary)";
+      change(`return ${readback};`,`${note("writerPackages")}
+       ${restart}
+       report_comparison_result:=${readback};
+       ${note("physicalVerification")}
+       return report_comparison_result;`);
+  });
+  if(!google)await rewrite("write_klaviyo_staged_first_report_day_verified",signature+",jsonb",change=>{
+    change("declare result jsonb;begin","declare result jsonb; report_comparison_started timestamptz;begin "+restart);
+    mark(change,"result:=analytics.eo05_first_day_before_shared","sharedWriterSources");
+  });
+  await installWriterTimers(client,{capturePlans:false,measureBulkPreparation:true,
+    google,reportWriteCleanup:!google,reuseCanonicalRows:!google});
+  await client.query(`revoke all on function analytics.eo05_timed_package_json(jsonb)${google?"":",analytics.eo05_timed_reused_package(jsonb,text)"}
+    from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner`);
+}
+
+export function collectComparableReportTiming(client) {
+  const phases={},counts={},stageChecks=[];
+  const record=({message})=>{
+    const match=comparableReportPrefix.exec(message);
+    if(!match)return;
+    const [,family,phase,duration]=match,key=family==="WRITER_TIMING"?`writer_${phase}`:phase;
+    phases[key]=(phases[key]??0)+Number(duration);
+    counts[key]=(counts[key]??0)+1;
+    if(key==="stageValidation")stageChecks.push(Number(duration));
+  };
+  client.on("notice",record);
+  return {
+    stop(){client.off("notice",record);},
+    async result(reportWriteMs,stageCallWallMs) {
+      const {rows:[{triggerMs}]}=await client.query("select current_setting('eo05.sales_trigger_ms')::float8 as \"triggerMs\"");
+      for(const key of ["publisherAuthority","publisherSources","publisherWriter","publisherReceipt","writerSetup","writerPackages","physicalVerification"])assert.equal(counts[key],1,key);
+      for(const key of [...writerPhases,"packageJsonSize"])assert.equal(counts[`writer_${key}`],5,key);
+      assert.ok(counts.stageValidation===1||counts.stageValidation===2);
+      assert.ok(Object.values(phases).every(ms=>Number.isFinite(ms)&&ms>=0));
+      assert.ok(Number.isFinite(triggerMs)&&triggerMs>=0&&triggerMs<=phases.writer_bulkStatement);
+      const readbackStageMs=stageChecks[1]??0;
+      const writerPackageValidationMs=phases.writer_packageValidation-phases.writer_packageJsonSize;
+      const packageValidationMs=stageCallWallMs+phases.stageValidation+writerPackageValidationMs;
+      const sharedSourcesMs=phases.publisherSources+(phases.sharedWriterSources??0)+phases.writer_sourceRetention;
+      const authorityMs=phases.publisherAuthority-(phases.stageValidation-readbackStageMs)+phases.writerSetup+phases.writer_lookupLock;
+      const physicalVerificationMs=phases.physicalVerification-readbackStageMs;
+      const receiptMs=phases.publisherReceipt+phases.writer_packageReceipt;
+      const writerMs=phases.writerPackages-phases.writer_lookupLock-writerPackageValidationMs-phases.writer_sourceRetention-phases.writer_packageReceipt;
+      const rowChecksMs=phases.writer_rowValidation+phases.writer_rowPreparation;
+      const jsonAndHashMs=phases.writer_packageJsonSize+phases.writer_packageHash+phases.writer_rowHash;
+      const lookupAndInsertMs=phases.writer_bulkStatement-triggerMs;
+      const writerRemainderMs=writerMs-rowChecksMs-jsonAndHashMs-lookupAndInsertMs-triggerMs;
+      const remainderMs=reportWriteMs-authorityMs-packageValidationMs-sharedSourcesMs-writerMs-physicalVerificationMs-receiptMs;
+      assert.ok(authorityMs>=0&&physicalVerificationMs>=0&&writerRemainderMs>=-0.01&&remainderMs>=-0.01);
+      return {phases,counts,reportWriteMs,triggerMs,packageValidationMs,sharedSourcesMs,authorityMs,writerMs,
+        rowChecksMs,jsonAndHashMs,lookupAndInsertMs,writerRemainderMs,physicalVerificationMs,receiptMs,remainderMs};
+    },
+  };
 }
 
 function explainBulkTiming(root) {
@@ -1301,12 +1399,13 @@ async function installHostedReportClocks(client) {
     end $clock$;`);
 }
 
-async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,repeat,revisionPermit=false,verifyRevisionPermit=false,matchedTransport}) {
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,repeat,revisionPermit=false,verifyRevisionPermit=false,matchedTransport,comparableReport=false}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
   const detailed=mode==="detailed",reportOnly=mode==="report",measureReport=detailed||reportOnly;
   if(matchedTransport!==undefined) assert.ok(["quota","direct","authority"].includes(matchedTransport)&&!hosted&&!repeat&&endToEnd&&reportBoundary);
+  if(comparableReport)assert.ok(matchedTransport==="quota"&&sharedDaySources&&reuseCanonicalRows);
   const fullAuthority=matchedTransport==="authority";
   if(retentionOnly||retentionWall) assert.ok(["current","cached"].includes(retentionVariant));
   if(!repeat) await installExactBulkWriter(client);
@@ -1366,6 +1465,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     assert.ok(endToEnd&&sharedDaySources);
     await installMultipartRevisionPermit(client,{verify:verifyRevisionPermit});
   }
+  if(comparableReport)await installComparableReportTiming(client,"klaviyo");
   if(hostedDetail) {
     assert.ok(hosted&&reduceReportRepeats);
     await installPublishTimers(client,{reportOnly:true,optimized:true});
@@ -1423,6 +1523,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     }
   };
   let failed,phase="start",requests=0,claimId,reportReceipt,reportWriteMs,reportCpuStart,sharedDayChecks=0;
+  let comparableStageMs=0,comparableStageCalls=0;
   let reportQueueCallsMs=0;
   let timingStep="queueEnqueue";
   const callTimings=[];
@@ -1485,6 +1586,13 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
       }
       const bucket=sql===KLAVIYO_DAILY_STAGE_SQL?"reportStage":sql===KLAVIYO_DAILY_PUBLISH_SQL?"reportPublish":
         sql===KLAVIYO_DAILY_INSPECT_SQL?"reportReadback":sql===KLAVIYO_DAILY_FINISH_SQL?"jobClose":"reportSourceRead";
+      if(comparableReport&&sql===KLAVIYO_DAILY_STAGE_SQL){
+        const started=performance.now();
+        const result=await timedQuery(bucket,sql,args);
+        comparableStageMs+=performance.now()-started;
+        comparableStageCalls++;
+        return result;
+      }
       return timedQuery(bucket,sql,args);
     },
     async transaction(run) {
@@ -1504,6 +1612,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     },
   };
   const start=reportOnly||retentionOnly?null:performance.now();
+  const comparable=comparableReport?collectComparableReportTiming(client):null;
   if (measureReport||retentionOnly||hostedDetail) client.on("notice",onNotice);
   try {
     await store.checkQueueFromAuthority({expectedRevision:(await store.readQueueCheck()).revision});
@@ -1660,8 +1769,10 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
         count(*) filter(where settled)::int as settled from operations.api_quota_debits where policy_id=$1`,[matchedQuota.policy])).rows[0]:null;
       if(matchedQuota) assert.deepEqual(quotaDebits,{reserved:requests,settled:requests});
       if(fullAuthority) assert.ok(authorityChecks>=2*requests);
+      if(comparable)assert.equal(comparableStageCalls,5);
+      const reportComparison=comparable?await comparable.result(reportWriteMs,comparableStageMs):undefined;
       const reportSourceRead=databaseTimings.reportSourceRead,receiptReadback=databaseTimings.reportReadback,jobClose=databaseTimings.jobClose;
-      return {...summary,matchedTransport,quotaDebits,authorityChecks,totalMs:ended-start,durationsMs:{
+      return {...summary,matchedTransport,quotaDebits,authorityChecks,reportComparison,totalMs:ended-start,durationsMs:{
         queueEnqueue:durations.queueEnqueue,queueAndAdmission:durations.queueAndAdmission,
         providerCollection:durations.providerCollection,rawStore:durations.rawStore,handoff:durations.handoff,
         reportSourceRead,reportPreparation:durations.reportFlow-reportSourceRead-reportWriteMs-receiptReadback-jobClose,
@@ -1748,6 +1859,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     throw error;
   } finally {
     if (measureReport||retentionOnly||hostedDetail) client.off("notice",onNotice);
+    comparable?.stop();
     await matchedQuota?.database.close();
   }
 }

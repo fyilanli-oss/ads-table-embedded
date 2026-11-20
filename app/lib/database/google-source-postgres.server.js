@@ -76,6 +76,10 @@ export function createGoogleSourcePostgresClient({environment,poolFactory=config
  const requiredSignatures=historyMode?[...new Set([...GOOGLE_DATASET_SOURCE_RPC,...GOOGLE_PMAX_HISTORY_RPC].map(x=>x[1]))]
   :datasetMode?[...new Set(rpc.map(x=>x[1]))]:signatures;
  const c=readGoogleSourceDatabaseConfig(environment);let pool;
+  // The validated integer is server configuration, never a query argument.
+  const datasetBegin=datasetMode
+   ? `begin; set local statement_timeout = '${c.timeoutMs}ms'; set local lock_timeout = '${c.timeoutMs}ms'`
+   : null;
  try{pool=poolFactory({connectionString:c.connectionString,ssl:c.ssl,max:1,query_timeout:c.timeoutMs,
   connectionTimeoutMillis:c.timeoutMs,idleTimeoutMillis:10000,allowExitOnIdle:true,application_name:"adstable-google-source"});}
  catch{throw failure();}
@@ -88,8 +92,13 @@ export function createGoogleSourcePostgresClient({environment,poolFactory=config
    // Detach before the first asynchronous pool acquisition.
    let args;try{args=structuredClone(parameters);}catch{throw failure();}busy=true;let client,broken=false;
    try{
-    client=await pool.connect();if(stopped||closed)throw failure();await client.query("begin");
-    await client.query("select pg_catalog.set_config('statement_timeout',$1,true),pg_catalog.set_config('lock_timeout',$1,true)",[`${c.timeoutMs}ms`]);
+    client=await pool.connect();if(stopped||closed)throw failure();
+    if(datasetBegin){
+     await client.query(datasetBegin);
+    }else{
+     await client.query("begin");
+     await client.query("select pg_catalog.set_config('statement_timeout',$1,true),pg_catalog.set_config('lock_timeout',$1,true)",[`${c.timeoutMs}ms`]);
+    }
     const identity=(await client.query(GOOGLE_SOURCE_ROLE_CHECK_SQL,[requiredSignatures])).rows;
     if(stopped||closed||identity?.length!==1||identity[0].role!==GOOGLE_SOURCE_ROLE||identity[0].profile_ready!==true)throw failure();
     const result=await client.query(sql,args);await client.query("commit");return result;

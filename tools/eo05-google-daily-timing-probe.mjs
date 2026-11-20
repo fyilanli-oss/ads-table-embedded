@@ -120,6 +120,9 @@ export async function googleDailyTimingProbe(client,{ownerFixture}){
   const name="google_rpc_"+(++ordinal),connected=performance.now();let open=false,report=false;
   return {release(){if(report&&ledger.phase==="reportWrite")ledger.phaseAt("reportPreparation");},async query(sql,args=[]){
    if(sql==="begin"){open=true;return q("savepoint "+name,[],role==="adstable_refresh_dataset_runner"?"dataset":null);}
+   if(role==="adstable_google_source_runner"&&sql.startsWith("begin; set local statement_timeout = ")){
+    open=true;return q("savepoint "+name+sql.slice("begin".length));
+   }
    if(sql==="commit"){assert.ok(open);open=false;return q("release savepoint "+name,[],role==="adstable_refresh_dataset_runner"?"dataset":null);}
    if(sql==="rollback"){if(open){await q("rollback to savepoint "+name);open=false;return q("release savepoint "+name);}return {rows:[]};}
    // Keep transaction-local deadlines outside the invoker function's GUC scope.

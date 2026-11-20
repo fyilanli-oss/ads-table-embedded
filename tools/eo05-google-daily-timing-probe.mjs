@@ -65,18 +65,39 @@ export function createGoogleTimingLedger(clock=()=>performance.now()){
  };
 }
 
-// Only two outer storage-boundary observations are inserted into a fresh module
-// instance. No branch, guard, credential logic or SQL is replaced.
-export async function loadObservedGoogleReader(ledger){
+const rawStoreUrl=new URL("../app/lib/database/google-dataset-source-store.server.js",import.meta.url);
+
+export function googleCombinedReadbackSource(source) {
+ let result=replaceOnce(source,'let cursor="0",seen=0;','let cursor="0",seen=0,checkedEnd=false;');
+ result=replaceOnce(result,'  const stored=await repository.readPages({owner,attemptId,ordinal,after:cursor,limit:Math.min(100,write.body.pages.length-seen)});',
+  `  const remaining=write.body.pages.length-seen;
+  const limit=Math.min(100,remaining+1);
+  const stored=await repository.readPages({owner,attemptId,ordinal,after:cursor,limit});
+  if(stored.length>remaining)fail();
+  checkedEnd=limit>remaining&&stored.length===remaining;`);
+ return replaceOnce(result,' const extra=await repository.readPages({owner,attemptId,ordinal,after:cursor,limit:1});if(extra.length)fail();',
+  ' if(!checkedEnd){const extra=await repository.readPages({owner,attemptId,ordinal,after:cursor,limit:1});if(extra.length)fail();}');
+}
+
+// Both modes use the same outer observations. Only the approved candidate
+// loads a fresh raw-store module with the bounded final page check combined.
+export async function loadObservedGoogleReader(ledger,combinedCandidate=false){
  assert.equal(globalThis[observationKey],undefined);globalThis[observationKey]=ledger;
  const original=readFileSync(sourceUrl,"utf8");
  const start="const save=async(dataset,pages,complete,reason=null)=>{";
  const end="datasets[dataset]={status:complete?\"stored\":\"unavailable\",reason,recordCount:complete?recordCount:null,empty:complete?recordCount===0:null,...receipt};";
  assert.equal(original.split(start).length,2);assert.equal(original.split(end).length,2);
- const transformed=original.replace(start,()=>start+'globalThis[Symbol.for("adstable.google.nano.stage-observer")].raw(true);')
+ let transformed=original.replace(start,()=>start+'globalThis[Symbol.for("adstable.google.nano.stage-observer")].raw(true);')
   .replace(end,()=>end+'globalThis[Symbol.for("adstable.google.nano.stage-observer")].raw(false);');
  const id=randomUUID();
- const hooks=registerHooks({load(url,context,next){if(url===sourceUrl.href+"?googleTiming="+id)return {format:"module",source:transformed,shortCircuit:true};return next(url,context);}});
+ const storeCandidateUrl=rawStoreUrl.href+"?googleTiming="+id;
+ if(combinedCandidate)transformed=replaceOnce(transformed,'"../database/google-dataset-source-store.server.js"',JSON.stringify(storeCandidateUrl));
+ const storeSource=combinedCandidate?googleCombinedReadbackSource(readFileSync(rawStoreUrl,"utf8")):null;
+ const hooks=registerHooks({load(url,context,next){
+  if(url===sourceUrl.href+"?googleTiming="+id)return {format:"module",source:transformed,shortCircuit:true};
+  if(storeSource&&url===storeCandidateUrl)return {format:"module",source:storeSource,shortCircuit:true};
+  return next(url,context);
+ }});
  try{return (await import(sourceUrl.href+"?googleTiming="+id)).createGoogleRawDatasetReader;}
  catch(error){delete globalThis[observationKey];throw error;}
  finally{hooks.deregister();}
@@ -156,9 +177,12 @@ function replaceOnce(text, anchor, replacement) {
  return text.replace(anchor,()=>replacement);
 }
 
-async function compareGoogleQuotaClaimReuse(client,{claim,window,entitlementReceipt}) {
- assert.equal(assertGoogleTimingTarget(client.connectionParameters),"local");
- const definition=async(signature)=>(await client.query("select pg_get_functiondef($1::regprocedure) definition",[signature])).rows[0].definition;
+const functionDefinition=async(client,signature)=>(await client.query(
+ "select pg_get_functiondef($1::regprocedure) definition",[signature])).rows[0].definition;
+
+async function installGoogleQuotaClaimReuse(client,combinedCandidate=false) {
+ assertGoogleTimingTarget(client.connectionParameters);
+ const definition=signature=>functionDefinition(client,signature);
  const sqlBody=async(name,signature)=>{
   const body=(await definition(`operations.${name}(${signature})`)).split("$function$");
   assert.equal(body.length,3,"GOOGLE_QUOTA_COMPARISON_BODY_CHANGED");
@@ -190,15 +214,31 @@ async function compareGoogleQuotaClaimReuse(client,{claim,window,entitlementRece
       and b.deadline_at_ms>floor(extract(epoch from clock_timestamp())*1000)::bigint) then return null; end if;
   return jsonb_build_object('provider',cfg.provider`);
  assert.equal(base.split(currentClaim).length,2);
- let outer=replaceOnce(await definition("operations.load_refresh_quota_context"+signature),
-  "FUNCTION operations.load_refresh_quota_context(",`FUNCTION ${tempOuter}(`);
- outer=replaceOnce(outer,"SECURITY DEFINER","SECURITY INVOKER");
- outer=replaceOnce(outer,baseName,tempBase);
+ let outer=await definition("operations.load_refresh_quota_context"+signature);
+ if(combinedCandidate){
+  const originalCall=`base:=${baseName}(p_workspace,p_generation,p_provider,p_account,p_job,p_fence,p_from,p_to,p_target,p_observed);`;
+  outer=replaceOnce(outer,originalCall,`if p_provider='google_ads' and p_target='google_ads' then
+    ${originalCall.replace(baseName,tempBase)}
+  else
+    ${originalCall}
+  end if;`);
+ }else{
+  outer=replaceOnce(outer,"FUNCTION operations.load_refresh_quota_context(",`FUNCTION ${tempOuter}(`);
+  outer=replaceOnce(outer,"SECURITY DEFINER","SECURITY INVOKER");
+  outer=replaceOnce(outer,baseName,tempBase);
+ }
+ await client.query(base);
+ await client.query(outer);
+ const restricted=combinedCandidate?`${tempBase}${signature}`:`${tempBase}${signature}, ${tempOuter}${signature}`;
+ await client.query(`revoke all on function ${restricted} from public,anon,authenticated,service_role`);
+ return tempOuter;
+}
+
+async function compareGoogleQuotaClaimReuse(client,{claim,window,entitlementReceipt}) {
+ assert.equal(assertGoogleTimingTarget(client.connectionParameters),"local");
  await client.query("savepoint google_quota_comparison");
  try{
-  await client.query(base);
-  await client.query(outer);
-  await client.query(`revoke all on function ${tempBase}${signature}, ${tempOuter}${signature} from public,anon,authenticated,service_role`);
+  const tempOuter=await installGoogleQuotaClaimReuse(client);
   const args=[claim.workspaceId,claim.installGeneration,"google_ads",claim.accountId,claim.id,String(claim.fence),
    window.from,window.to,"google_ads",entitlementReceipt.observedAt];
   const placeholders=quotaSignature.split(",").map((type,i)=>`$${i+1}::${type}`).join(",");
@@ -237,10 +277,48 @@ async function compareGoogleQuotaClaimReuse(client,{claim,window,entitlementRece
  }
 }
 
-export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false}){
+export async function installGoogleCombinedCandidate(client) {
+ assertGoogleTimingTarget(client.connectionParameters);
+ const encoding=(await client.query("show server_encoding")).rows[0].server_encoding;
+ assert.equal(encoding,"UTF8");
+ await installGoogleQuotaClaimReuse(client,true);
+ let stage=await functionDefinition(client,"analytics.stage_google_daily_report_package(jsonb,jsonb,jsonb,timestamptz,integer,integer)");
+ stage=replaceOnce(stage,"  package_digest text;","  package_digest text;\n  package_bytes bytea;");
+ stage=replaceOnce(stage,"  row_count:=jsonb_array_length(p->'rows');",
+  "  row_count:=jsonb_array_length(p->'rows');\n  package_bytes:=convert_to(analytics.google_daily_json(jsonb_build_object('write',p,'context',c)),'UTF8');");
+ stage=replaceOnce(stage,"octet_length(analytics.google_daily_json(jsonb_build_object('write',p,'context',c)))","octet_length(package_bytes)");
+ stage=replaceOnce(stage,"package_digest:=analytics.google_daily_digest(jsonb_build_object('write',p,'context',c));",
+  "package_digest:=encode(sha256(package_bytes),'hex');");
+ await client.query(stage);
+ let write=await functionDefinition(client,"analytics.write_google_staged_first_report_day(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)");
+ const verify="  perform analytics.verify_google_daily_report_stage(o,c,d,operation,policy,digests);";
+ write=replaceOnce(write,"  has_facts boolean;",`  has_facts boolean;
+  verified_binding text:=analytics.google_daily_digest(jsonb_build_object(
+    'owner',o,'context',c,'deadline',d,'operationId',operation,'policy',policy,'packageCount',jsonb_array_length(digests)));`);
+ // The publisher verifies and locks before setting this owner-only flag.
+ // The post-write physical verification still independently rechecks stage.
+ write=replaceOnce(write,verify,`  if pg_catalog.to_regclass('pg_temp.adstable_google_daily_report_stage') is null then
+${verify}
+  elsif not exists(select 1 from pg_catalog.pg_class
+    where oid=pg_catalog.to_regclass('pg_temp.adstable_google_daily_report_stage')
+      and relnamespace=pg_catalog.pg_my_temp_schema() and relowner=current_user::regrole
+      and relpersistence='t' and relkind='r') then
+${verify}
+  elsif (select count(*) from pg_temp.adstable_google_daily_report_stage) is distinct from jsonb_array_length(digests)::bigint
+    or exists(select 1 from pg_temp.adstable_google_daily_report_stage s
+      where s.daily_sources_verified is distinct from true
+        or s.digest is distinct from digests->>s.package_ordinal
+        or s.day_binding is distinct from verified_binding) then
+${verify}
+  end if;`);
+ await client.query(write);
+}
+
+export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false}){
  const target=assertGoogleTimingTarget(client.connectionParameters);
  if(quotaClaimComparison)assert.equal(target,"local");
- const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger);
+ assert.ok(!combinedCandidate||!quotaClaimComparison);
+ const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger,combinedCandidate);
  let ordinal=0,failed,reader,roleChecks=0;
  const collectionCalls=[];
  const q=async(sql,args=[],kind=null,observedSql=sql,sqlMeasured=false)=>ledger.sql(async()=>{
@@ -292,6 +370,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  const queue={query:(sql,args)=>roleQuery("adstable_refresh_queue_runner",sql,args)};
  const store=createRefreshWorkRepository({query:(sql,args)=>/operations\.(check_refresh_queue_on_tick|review_refresh_interrupted_work)\(/.test(sql)?queue.query(sql,args):coordinator.query(sql,args)});
  try{
+  if(combinedCandidate)await installGoogleCombinedCandidate(client);
   await installRoleAdapter(client,collectionDiagnostics);
   const owner=await ownerFixture(client,"google_ads"),day="2026-11-01",window={from:day,to:day},now=Date.now;
   const issued=now(),generation=randomUUID(),operationId=randomUUID(),hash=()=>randomBytes(32).toString("hex"),key=()=>randomBytes(32).toString("base64url");
@@ -373,7 +452,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   assert.equal(receipts.length,1);assert.equal(receipts[0].receipt.rowCount,1000);assert.deepEqual(receipts[0].receipt.packages.map(p=>p.rowCount),[200,200,200,200,200]);
   assert.equal((await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",[owner.workspaceId,claimId])).rows[0].status,"completed");
   assert.ok(Math.abs(Object.values(measured.durationsMs).reduce((a,b)=>a+b,0)-measured.totalMs)<0.01);
-  return {provider:"google_ads",synthetic:true,rollbackOnly:true,reportRows:1000,nativeRows:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,
+  return {provider:"google_ads",synthetic:true,rollbackOnly:true,combinedCandidate,reportRows:1000,nativeRows:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,
    adstableWallMs:measured.totalMs-measured.postgresCallWallMs,providerNetworkMeasured:false,sqlInnerTimers:collectionDiagnostics,durableCommitMeasured:false,
    ...(collectionDiagnostics?{collectionBreakdown:summarizeGoogleCollection(collectionCalls,measured.durationsMs.providerCollection)}:{})};
  }catch(error){

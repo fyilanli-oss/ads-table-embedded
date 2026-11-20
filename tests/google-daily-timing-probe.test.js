@@ -51,3 +51,12 @@ test("storage observations load a fresh module without changing production sourc
  const reader=await loadObservedGoogleReader({raw(){}});assert.equal(typeof reader,"function");
  assert.deepEqual(readFileSync(p),before);delete globalThis[Symbol.for("adstable.google.nano.stage-observer")];
 });
+
+test("combined candidate loads its alternate raw store without editing tracked source",async()=>{
+ const p=new URL("../app/lib/database/google-dataset-source-store.server.js",import.meta.url),before=readFileSync(p);
+ try{
+  const reader=await loadObservedGoogleReader({raw(){}},true);
+  assert.equal(typeof reader,"function");
+  assert.deepEqual(readFileSync(p),before);
+ }finally{delete globalThis[Symbol.for("adstable.google.nano.stage-observer")];}
+});

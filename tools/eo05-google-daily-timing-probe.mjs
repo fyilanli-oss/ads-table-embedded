@@ -305,10 +305,10 @@ ${verify}
       and relpersistence='t' and relkind='r') then
 ${verify}
   elsif (select count(*) from pg_temp.adstable_google_daily_report_stage) is distinct from jsonb_array_length(digests)::bigint
-    or exists(select 1 from pg_temp.adstable_google_daily_report_stage s
-      where s.daily_sources_verified is distinct from true
-        or s.digest is distinct from digests->>s.package_ordinal
-        or s.day_binding is distinct from verified_binding) then
+    or exists(select 1 from pg_temp.adstable_google_daily_report_stage staged
+      where staged.daily_sources_verified is distinct from true
+        or staged.digest is distinct from digests->>staged.package_ordinal
+        or staged.day_binding is distinct from verified_binding) then
 ${verify}
   end if;`);
  await client.query(write);

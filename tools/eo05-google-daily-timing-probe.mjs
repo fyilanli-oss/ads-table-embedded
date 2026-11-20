@@ -385,6 +385,71 @@ const writerTracePrefix="EO05_GOOGLE_WRITER_TRACE ";
 const publisherTracePrefix="EO05_GOOGLE_PUBLISH_TRACE ";
 const elapsedSql=(from,to)=>`(extract(epoch from (${to}-${from}))*1000)::double precision`;
 
+const triggerTraceSetting="adstable_probe.google_fact_trace";
+
+// Keep one transaction-local aggregate instead of emitting a notice for every row.
+export async function installGoogleFactTriggerTrace(client) {
+ assert.equal(assertGoogleTimingTarget(client.connectionParameters),"local");
+ let definition=await functionDefinition(client,"analytics.validate_dataset_fact()");
+ definition=replaceOnce(definition,"permit jsonb;",`permit jsonb;
+  trace_start timestamptz;
+  trace_owner_ms double precision;
+  trace_binding_ms double precision:=0;
+  trace_source_ms double precision:=0;
+  trace_refs integer;
+  trace_counts jsonb;`);
+ const start="\n select * into strict b from evidence.source_batches where workspace_id=new.workspace_id";
+ definition=replaceOnce(definition,start,`\n trace_start:=clock_timestamp();
+${start}`);
+ const owner=" o:=b.authority; perform evidence.assert_source_owner(o);";
+ definition=replaceOnce(definition,owner,`${owner}
+  trace_owner_ms:=${elapsedSql("trace_start","clock_timestamp()")};`);
+ const binding="  select source into original_source from operations.refresh_work_bindings";
+ definition=replaceOnce(definition,binding,`   trace_start:=clock_timestamp();
+${binding}`);
+ const manifests="  for ref in select value from jsonb_array_elements(new.provenance->'sources') loop";
+ definition=replaceOnce(definition,manifests,`   trace_binding_ms:=${elapsedSql("trace_start","clock_timestamp()")};
+   trace_start:=clock_timestamp();
+${manifests}`);
+ const fx=" if new.provenance ? 'reporting_currency' or new.fx_engine_version=";
+ definition=replaceOnce(definition,"  end loop;\n end if;\n"+fx,`  end loop;
+   trace_source_ms:=${elapsedSql("trace_start","clock_timestamp()")};
+ end if;
+${fx}`);
+ const sourceLoop=" for ref in select value from jsonb_array_elements(new.provenance->'sources') loop\n  perform analytics.assert_dataset_source";
+ definition=replaceOnce(definition,sourceLoop,`  trace_start:=clock_timestamp();
+${sourceLoop}`);
+ const completeness=" if new.source_completeness is distinct from";
+ definition=replaceOnce(definition,completeness,`  trace_source_ms:=trace_source_ms+${elapsedSql("trace_start","clock_timestamp()")};
+${completeness}`);
+ definition=replaceOnce(definition," return new;",` if tg_op='INSERT' and new.platform='google_ads' then
+  trace_refs:=jsonb_array_length(new.provenance->'sources');
+  trace_counts:=coalesce(nullif(current_setting('${triggerTraceSetting}',true),'')::jsonb,'{}'::jsonb);
+  perform set_config('${triggerTraceSetting}',jsonb_build_object(
+   'rows',coalesce((trace_counts->>'rows')::int,0)+1,
+   'bindings',coalesce((trace_counts->>'bindings')::int,0)+(case when context is null then 0 else 1 end),
+   'references',coalesce((trace_counts->>'references')::int,0)+trace_refs,
+   'ownerMs',coalesce((trace_counts->>'ownerMs')::double precision,0)+trace_owner_ms,
+   'bindingMs',coalesce((trace_counts->>'bindingMs')::double precision,0)+trace_binding_ms,
+   'sourceMs',coalesce((trace_counts->>'sourceMs')::double precision,0)+trace_source_ms)::text,true);
+ end if;
+ return new;`);
+ await client.query(definition);
+ await client.query("select set_config($1,'{}',true)",[triggerTraceSetting]);
+}
+
+export function summarizeGoogleFactTriggerTrace(trace, rows, physicalWriteMs) {
+ assert.deepEqual(Object.keys(trace).sort(),["bindingMs","bindings","ownerMs","references","rows","sourceMs"]);
+ assert.equal(trace.rows,rows);
+ assert.equal(trace.bindings,rows);
+ assert.ok(Number.isInteger(trace.references)&&trace.references>=rows);
+ const times=[trace.ownerMs,trace.bindingMs,trace.sourceMs];
+ assert.ok(times.every(ms=>Number.isFinite(ms)&&ms>=0));
+ const measuredMs=times.reduce((a,b)=>a+b,0);
+ assert.ok(measuredMs<=physicalWriteMs+0.01);
+ return {...trace,measuredMs};
+}
+
 async function installGooglePublishTrace(client) {
  assert.equal(assertGoogleTimingTarget(client.connectionParameters),"local");
  const signature="(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)";
@@ -451,13 +516,14 @@ export function summarizeGooglePublishTrace(notices) {
  return {...publish,...writer,writerBoundaryOverheadMs};
 }
 
-export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false}){
+export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false,factTriggerTrace=false}){
  const target=assertGoogleTimingTarget(client.connectionParameters);
  if(quotaClaimComparison)assert.equal(target,"local");
  assert.ok(!combinedCandidate||!quotaClaimComparison);
  assert.ok(!reportCandidate||combinedCandidate);
  assert.ok(!reportBreakdown||(combinedCandidate&&!reportCandidate));
  assert.ok(!publishTrace||(target==="local"&&reportBreakdown&&!collectionDiagnostics));
+ assert.ok(!factTriggerTrace||publishTrace);
  const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger,combinedCandidate);
  let ordinal=0,failed,reader,roleChecks=0;
  const publishNotices=[];
@@ -523,6 +589,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   if(combinedCandidate)await installGoogleCombinedCandidate(client);
   if(reportCandidate)await installGoogleReportCandidate(client);
   if(publishTrace){await installGooglePublishTrace(client);client.on("notice",observePublish);}
+  if(factTriggerTrace)await installGoogleFactTriggerTrace(client);
   await installRoleAdapter(client,collectionDiagnostics);
   const owner=await ownerFixture(client,"google_ads"),day="2026-11-01",window={from:day,to:day},now=Date.now;
   const issued=now(),generation=randomUUID(),operationId=randomUUID(),hash=()=>randomBytes(32).toString("hex"),key=()=>randomBytes(32).toString("base64url");
@@ -609,10 +676,16 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
    assert.equal(reportWriteBreakdown.stageCalls,5);
    assert.equal(reportWriteBreakdown.publishCalls,1);
   }
+  const publishDetails=publishTrace?summarizeGooglePublishTrace(publishNotices):null;
+  const triggerDetails=factTriggerTrace?summarizeGoogleFactTriggerTrace(
+   (await client.query("select current_setting($1)::jsonb as trace",[triggerTraceSetting])).rows[0].trace,
+   receipts[0].receipt.rowCount,publishDetails.physicalWriteMs,
+  ):null;
   return {provider:"google_ads",synthetic:true,rollbackOnly:true,combinedCandidate,reportCandidate,reportRows:1000,nativeRows:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,
    adstableWallMs:measured.totalMs-measured.postgresCallWallMs,providerNetworkMeasured:false,sqlInnerTimers:collectionDiagnostics||publishTrace,durableCommitMeasured:false,
    ...(reportWriteBreakdown?{reportWriteBreakdown}:{}),
-   ...(publishTrace?{publishTrace:summarizeGooglePublishTrace(publishNotices)}:{}),
+   ...(publishDetails?{publishTrace:publishDetails}:{}),
+   ...(triggerDetails?{factTriggerTrace:triggerDetails}:{}),
    ...(collectionDiagnostics?{collectionBreakdown:summarizeGoogleCollection(collectionCalls,measured.durationsMs.providerCollection)}:{})};
  }catch(error){
   if(failed)throw Object.assign(Error("GOOGLE_TIMING_SQL_STOP "+failed.operation+": "+failed.message),{code:failed.code??"GOOGLE_TIMING_SQL_STOP"});

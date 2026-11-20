@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection,summarizeGoogleReportWrite,summarizeGooglePublishTrace} from "../tools/eo05-google-daily-timing-probe.mjs";
+import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection,summarizeGoogleReportWrite,summarizeGooglePublishTrace,installGoogleFactTriggerTrace,summarizeGoogleFactTriggerTrace} from "../tools/eo05-google-daily-timing-probe.mjs";
 
 test("Google measurement refuses production, alternate project/host and unbound users",()=>{
  assert.equal(assertGoogleTimingTarget({host:"127.0.0.1",port:54322}),"local");
@@ -85,4 +85,30 @@ test("publication trace partitions nested writer time without double counting",(
  assert.equal(result.physicalWriteMs,30);
  assert.throws(()=>summarizeGooglePublishTrace([writer,publish,writer]));
  assert.throws(()=>summarizeGooglePublishTrace([writer,publish.replace('"publishSqlMs":60','"publishSqlMs":58')]));
+});
+
+test("fact trigger trace checks row coverage and reconciles with the enclosing write",()=>{
+ const trace={rows:1000,bindings:1000,references:1300,ownerMs:200,bindingMs:120,sourceMs:950};
+ assert.deepEqual(summarizeGoogleFactTriggerTrace(trace,1000,5800),{...trace,measuredMs:1270});
+ assert.throws(()=>summarizeGoogleFactTriggerTrace({...trace,bindings:999},1000,5800));
+ assert.throws(()=>summarizeGoogleFactTriggerTrace({...trace,references:999},1000,5800));
+ assert.throws(()=>summarizeGoogleFactTriggerTrace(trace,1000,1200));
+});
+
+test("fact trigger diagnostics match the real validator and refuse hosted installation",async()=>{
+ const migration=readFileSync(new URL("../supabase/migrations/20261110191004_eo05d_dataset_reconciliation.sql",import.meta.url),"utf8").replace(/\r\n/g,"\n");
+ const definition=migration.match(/create or replace function analytics\.validate_dataset_fact\(\)[\s\S]*?end \$fn\$;/)[0];
+ const calls=[];
+ const client={connectionParameters:{host:"127.0.0.1",port:54322},async query(sql){
+  calls.push(sql);
+  return {rows:[{definition}]};
+ }};
+ await installGoogleFactTriggerTrace(client);
+ assert.equal(calls.length,3);
+ assert.match(calls[1],/trace_source_ms:=trace_source_ms\+/);
+ assert.match(calls[1],/select source into original_source from operations\.refresh_work_bindings/);
+ await assert.rejects(installGoogleFactTriggerTrace({...client,connectionParameters:{
+  host:"aws-1-eu-central-1.pooler.supabase.com",port:5432,user:"adstable_benchmark_google_r1.lxphenczjmueblnonklm",
+ }}));
+ assert.equal(calls.length,3);
 });

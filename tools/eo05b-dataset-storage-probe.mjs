@@ -141,13 +141,14 @@ export async function datasetStorageProbe(client, connection, environment = proc
       provider,matchedTransport,quotaDebits,authorityChecks,reportRows,reportPackages,requests,receipts,durationsMs,totalMs,
     },index)=>({variant:["google","klaviyoQuota","klaviyoAuthority","googleWriter"][index],
       provider,matchedTransport,quotaDebits,authorityChecks,reportRows,reportPackages,requests,receipts,durationsMs,totalMs}))));
-    const [reference,,,writer]=matched;
+    const [reference,,klaviyoAuthority,writer]=matched;
     const reportOnly=[reference,writer].map(({reportRows,reportPackages,receipts,completed,reportWriteBreakdown})=>({
       reportRows,reportPackages,receipts,completed,...reportWriteBreakdown,
     }));
     assert.ok(reportOnly.every(result=>result.completed&&result.stageCalls===5&&result.publishCalls===1));
     console.log("EO05_GOOGLE_REPORT_ONLY_COMPARISON_PASS",JSON.stringify({reference:reportOnly[0],writer:reportOnly[1]}));
     const packageReuseComparison=[];
+    let googlePackageFlow;
     for(const writerPreparationCandidate of [false,true]){
       await client.query("savepoint google_package_reuse_comparison");
       try{
@@ -157,9 +158,26 @@ export async function datasetStorageProbe(client, connection, environment = proc
         });
         assert.deepEqual([result.reportRows,result.reportPackages,result.receipts,result.completed],[1000,5,1,true]);
         packageReuseComparison.push(result.reportWriteBreakdown);
+        if(!writerPreparationCandidate)googlePackageFlow=result;
       }finally{await client.query("rollback to savepoint google_package_reuse_comparison");await client.query("release savepoint google_package_reuse_comparison");}
     }
     const [reused,combinedWriter]=packageReuseComparison;
+    assert.equal(googlePackageFlow.sqlInnerTimers,false);
+    assert.equal(googlePackageFlow.durationsMs.reportWrite,reused.reportWriteMs);
+    assert.equal(klaviyoAuthority.matchedTransport,"authority");
+    assert.ok(klaviyoAuthority.authorityChecks>=2*klaviyoAuthority.requests);
+    assert.deepEqual(klaviyoAuthority.quotaDebits,{reserved:klaviyoAuthority.requests,settled:klaviyoAuthority.requests});
+    const queueToClose=[googlePackageFlow,klaviyoAuthority].map(result=>{
+      const {provider,reportRows,reportPackages,requests,receipts,durationsMs,totalMs}=result;
+      assert.deepEqual(Object.keys(durationsMs),Object.keys(reference.durationsMs));
+      assert.ok(Object.values(durationsMs).every(ms=>Number.isFinite(ms)&&ms>=0));
+      assert.ok(Math.abs(Object.values(durationsMs).reduce((a,b)=>a+b,0)-totalMs)<0.01);
+      return {provider,reportRows,reportPackages,requests,receipts,durationsMs,totalMs,completed:true};
+    });
+    console.log("EO05_GOOGLE_PACKAGE_KLAVIYO_AUTHORITY_QUEUE_TO_CLOSE_PASS",JSON.stringify({
+      google:queueToClose[0],klaviyo:queueToClose[1],klaviyoAuthorityChecks:klaviyoAuthority.authorityChecks,
+      klaviyoQuotaDebits:klaviyoAuthority.quotaDebits,
+    }));
     await client.query("savepoint google_package_reuse_correctness");
     try{
       await installGoogleCombinedCandidate(client);

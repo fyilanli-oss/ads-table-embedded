@@ -178,6 +178,26 @@ export async function datasetStorageProbe(client, connection, environment = proc
       google:queueToClose[0],klaviyo:queueToClose[1],klaviyoAuthorityChecks:klaviyoAuthority.authorityChecks,
       klaviyoQuotaDebits:klaviyoAuthority.quotaDebits,
     }));
+    const sharedDiagnostics={};
+    for(const provider of ["google","klaviyo"]){
+      await client.query("savepoint eo05_four_phase_diagnostics");
+      try{
+        if(provider==="google")await prepareGoogleTimingLocalRoles(client);
+        const options={ownerFixture,fourPhaseDiagnostics:true};
+        const measured=provider==="google"
+          ?await googleDailyTimingProbe(client,{...options,combinedCandidate:true,reportBreakdown:true,packageReuseCandidate:true})
+          :await klaviyoDailyTimingProbe(client,{...options,connection,environment,mode:"retention-boundary",retentionVariant:"cached",
+            combinedVerification:true,reduceReportRepeats:true,reportWriteCleanup:true,phaseCandidate:"ordered-json",
+            reuseStagedCanonical:true,reuseCanonicalRows:true,endToEnd:true,sharedDaySources:true,matchedTransport:"authority"});
+        assert.deepEqual([measured.reportRows,measured.reportPackages,measured.receipts],[1000,5,1]);
+        assert.ok(Math.abs(Object.values(measured.durationsMs).reduce((a,b)=>a+b,0)-measured.totalMs)<0.01);
+        sharedDiagnostics[provider]={
+          durationsMs:measured.durationsMs,totalMs:measured.totalMs,requests:measured.requests,
+          ...measured.fourPhaseDiagnostics,
+        };
+      }finally{await client.query("rollback to savepoint eo05_four_phase_diagnostics");await client.query("release savepoint eo05_four_phase_diagnostics");}
+    }
+    console.log("EO05_FOUR_PHASE_COMPARISON_PASS",JSON.stringify(sharedDiagnostics));
     await client.query("savepoint google_package_reuse_correctness");
     try{
       await installGoogleCombinedCandidate(client);

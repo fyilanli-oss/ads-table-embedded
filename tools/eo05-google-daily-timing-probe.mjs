@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {randomBytes,randomUUID,createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
 import {collectComparableReportTiming,installComparableReportTiming} from "./eo05-klaviyo-daily-timing-probe.mjs";
+import {createFourPhaseDiagnostics} from "./eo05-four-phase-diagnostics.mjs";
 import {registerHooks} from "node:module";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {createRefreshEntitlementVerifier} from "../app/lib/refresh/entitlement-check.server.js";
@@ -655,7 +656,7 @@ export function summarizeGooglePublishTrace(notices) {
  return {...publish,...writer,writerBoundaryOverheadMs};
 }
 
-export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false,factTriggerTrace=false,writerPreparationCandidate=false,comparableReport=false,packageReuseCandidate=false}){
+export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false,factTriggerTrace=false,writerPreparationCandidate=false,comparableReport=false,packageReuseCandidate=false,fourPhaseDiagnostics=false}){
  const target=assertGoogleTimingTarget(client.connectionParameters);
  if(quotaClaimComparison)assert.equal(target,"local");
  assert.ok(!combinedCandidate||!quotaClaimComparison);
@@ -666,8 +667,9 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  assert.ok(!writerPreparationCandidate||(target==="local"&&combinedCandidate&&!reportCandidate));
  assert.ok(!packageReuseCandidate||(target==="local"&&reportBreakdown&&!comparableReport&&(!publishTrace||factTriggerTrace)));
  assert.ok(!comparableReport||(target==="local"&&reportBreakdown&&!publishTrace&&!collectionDiagnostics&&!writerPreparationCandidate));
+ assert.ok(!fourPhaseDiagnostics||(target==="local"&&packageReuseCandidate&&!writerPreparationCandidate&&!publishTrace&&!collectionDiagnostics&&!comparableReport));
  const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger,combinedCandidate);
- let ordinal=0,failed,reader,roleChecks=0,comparable;
+ let ordinal=0,failed,reader,roleChecks=0,comparable,fourPhase;
  const publishNotices=[];
  const observePublish=notice=>{
   const message=notice.message;
@@ -682,7 +684,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   collectionCalls.push({kind:googleCollectionCallKind(observedSql),wallMs,sqlMs:sqlMeasured?result.rows[0].payload.sqlMs:null});
   return result;
  },kind);
- async function roleQuery(role,sql,args=[]){
+ async function queryAsRole(role,sql,args=[]){
   assert.ok(GOOGLE_TIMING_ROLES.includes(role));assert.match(sql,/^select /i);assert.ok(!sql.includes(";"));
   const statement=sql.replace(/\$(\d+)/g,(_m,n)=>`($1->>${Number(n)-1})`);
   try{
@@ -702,6 +704,8 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
    return {rows,rowCount:rows.length};
   }catch(error){failed??={code:error.code,message:error.message,operation:sql.match(/(?:operations|integrations|evidence|analytics)\.[a-z_]+/)?.[0]};throw error;}
  }
+ const roleQuery=(role,sql,args=[])=>
+  fourPhase?fourPhase.query(ledger.phase,sql,args,()=>queryAsRole(role,sql,args)):queryAsRole(role,sql,args);
  function poolFactory(role){return ()=>({on(){},async end(){},async connect(){
   const name="google_rpc_"+(++ordinal),connected=performance.now();let open=false,report=false;
   return {release(){if(report&&ledger.phase==="reportWrite")ledger.phaseAt("reportPreparation");},async query(sql,args=[]){
@@ -736,6 +740,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   if(publishTrace){await installGooglePublishTrace(client,{packageReuse:packageReuseCandidate});client.on("notice",observePublish);}
   if(factTriggerTrace)await installGoogleFactTriggerTrace(client);
   if(comparableReport){await installComparableReportTiming(client,"google");comparable=collectComparableReportTiming(client);}
+  if(fourPhaseDiagnostics)fourPhase=await createFourPhaseDiagnostics(client,"google");
   await installRoleAdapter(client,collectionDiagnostics);
   const owner=await ownerFixture(client,"google_ads"),day="2026-11-01",window={from:day,to:day},now=Date.now;
   const issued=now(),generation=randomUUID(),operationId=randomUUID(),hash=()=>randomBytes(32).toString("hex"),key=()=>randomBytes(32).toString("base64url");
@@ -831,6 +836,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   return {provider:"google_ads",synthetic:true,rollbackOnly:true,combinedCandidate,reportCandidate,reportRows:1000,nativeRows:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,
    adstableWallMs:measured.totalMs-measured.postgresCallWallMs,providerNetworkMeasured:false,sqlInnerTimers:collectionDiagnostics||publishTrace||comparableReport,durableCommitMeasured:false,
    ...(reportComparison?{reportComparison}:{}),
+   ...(fourPhase?{fourPhaseDiagnostics:fourPhase.result(measured.durationsMs,requests)}:{}),
    ...(reportWriteBreakdown?{reportWriteBreakdown}:{}),
    ...(publishDetails?{publishTrace:publishDetails}:{}),
    ...(triggerDetails?{factTriggerTrace:triggerDetails}:{}),
@@ -838,5 +844,5 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  }catch(error){
   if(failed)throw Object.assign(Error("GOOGLE_TIMING_SQL_STOP "+failed.operation+": "+failed.message),{code:failed.code??"GOOGLE_TIMING_SQL_STOP"});
   throw error;
- }finally{try{await reader?.close();}finally{if(publishTrace)client.off("notice",observePublish);comparable?.stop();delete globalThis[observationKey];}}
+ }finally{try{await reader?.close();}finally{if(publishTrace)client.off("notice",observePublish);comparable?.stop();fourPhase?.close();delete globalThis[observationKey];}}
 }

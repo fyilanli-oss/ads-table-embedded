@@ -17,6 +17,7 @@ import {collectKlaviyoRawDatasets} from "../app/lib/refresh/klaviyo-raw-collecti
 import {createRefreshEntitlementVerifier} from "../app/lib/refresh/entitlement-check.server.js";
 import {runScheduledRefreshCheck} from "../app/lib/refresh/scheduled-queue-check.server.js";
 import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
+import {createFourPhaseDiagnostics} from "./eo05-four-phase-diagnostics.mjs";
 
 const productEvents=1000;
 const pageSize=200;
@@ -1234,7 +1235,7 @@ function syntheticResponse(endpoint,owner,day,changedEvents=0) {
   });
 }
 
-async function prepareMatchedKlaviyoTransport(client,context,{fullAuthority}) {
+async function prepareMatchedKlaviyoTransport(client,context,{fullAuthority,measureQuery=(sql,args)=>client.query(sql,args)}) {
   await client.query("set local role postgres");
   if (!(await client.query("select to_regrole('adstable_klaviyo_source_runner') is not null as present")).rows[0].present) {
     const sql=readFileSync(new URL("./sql/eo05-klaviyo-source-role-install.sql",import.meta.url),"utf8");
@@ -1277,7 +1278,7 @@ async function prepareMatchedKlaviyoTransport(client,context,{fullAuthority}) {
         await client.query("rollback to savepoint klaviyo_matched_source_rpc");
         return client.query("release savepoint klaviyo_matched_source_rpc");
       }
-      return client.query(sql,args);
+      return measureQuery(sql,args);
     }};}}),
   });
   return {database,policy};
@@ -1399,7 +1400,7 @@ async function installHostedReportClocks(client) {
     end $clock$;`);
 }
 
-async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,repeat,revisionPermit=false,verifyRevisionPermit=false,matchedTransport,comparableReport=false}) {
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,repeat,revisionPermit=false,verifyRevisionPermit=false,matchedTransport,comparableReport=false,fourPhaseDiagnostics=false}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
@@ -1407,6 +1408,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   if(matchedTransport!==undefined) assert.ok(["quota","direct","authority"].includes(matchedTransport)&&!hosted&&!repeat&&endToEnd&&reportBoundary);
   if(comparableReport)assert.ok(matchedTransport==="quota"&&sharedDaySources&&reuseCanonicalRows);
   const fullAuthority=matchedTransport==="authority";
+  if(fourPhaseDiagnostics)assert.ok(fullAuthority&&!comparableReport&&!callBreakdown);
   if(retentionOnly||retentionWall) assert.ok(["current","cached"].includes(retentionVariant));
   if(!repeat) await installExactBulkWriter(client);
   // The enclosing rehearsal savepoint restores the inherited timeout.
@@ -1417,7 +1419,9 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   const cipher=createSourceEvidenceCipher({keys:new Map([[1,randomBytes(32)]]),activeVersion:1,forbiddenKeys:[]});
   const policy=sourceStoreFixture().input.policy;
   // The second pass reuses exactly the SQL installed for its seed.
-  let matchedQuota,createReadAuthority,authorityChecks=0;
+  let matchedQuota,createReadAuthority,authorityChecks=0,fourPhase;
+  let timingStep="queueEnqueue";
+  const measureFourPhase=(phase,sql,args,run)=>fourPhase?fourPhase.query(phase,sql,args,run):run();
   if(!repeat) {
   // The enclosing savepoint is rolled back, including these diagnostics.
   if (measureReport) {
@@ -1494,7 +1498,9 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     (workspace_id,install_generation,provider,installation_id,connection_id,connection_version,account_id,client_scope_key,connection_scope_key,connection_epoch,api_version,enabled)
     values ($1,$2,'klaviyo',$3,$4,$5,$6,$7,$8,1,'2026-10-15',true)`,
   [owner.workspaceId,owner.generation,owner.installationId,owner.connectionId,owner.connectionVersion,owner.accountId,context.clientScopeKey,context.connectionScopeKey]);
-  if(matchedTransport==="quota"||fullAuthority) matchedQuota=await prepareMatchedKlaviyoTransport(client,context,{fullAuthority});
+  if(matchedTransport==="quota"||fullAuthority) matchedQuota=await prepareMatchedKlaviyoTransport(client,context,{fullAuthority,
+    measureQuery:(sql,args)=>measureFourPhase(timingStep,sql,args,()=>client.query(sql,args)),
+  });
   if(fullAuthority)createReadAuthority=await prepareKlaviyoReadAuthority(client,owner,matchedQuota.database,now);
   }
   const cost={requests:21,dbWrites:4000,connections:3,rows:2000,bytes:4000000};
@@ -1525,7 +1531,6 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   let failed,phase="start",requests=0,claimId,reportReceipt,reportWriteMs,reportCpuStart,sharedDayChecks=0;
   let comparableStageMs=0,comparableStageCalls=0;
   let reportQueueCallsMs=0;
-  let timingStep="queueEnqueue";
   const callTimings=[];
   async function executeMeasured(sql,args=[],bucket) {
     if(!callBreakdown) return client.query(sql,args);
@@ -1554,10 +1559,10 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   }
   const hostedReportMs=[];
   const durations={queueEnqueue:0,queueAndAdmission:0,providerCollection:0,providerFixture:0,rawStore:0,handoff:0,reportFlow:0};
-  async function timedQuery(bucket,sql,args) {
+  async function timedQuery(bucket,sql,args,diagnosticPhase=null) {
     if (!endToEnd&&!detailed&&(!reportOnly||!["reportStage","reportPublish"].includes(bucket))) return client.query(sql,args);
     const start=performance.now();
-    try {return await executeMeasured(sql,args,bucket);}
+    try {return await measureFourPhase(diagnosticPhase,sql,args,()=>executeMeasured(sql,args,bucket));}
     catch(error) {failed??=error;throw error;}
     finally {
       const elapsed=performance.now()-start;
@@ -1567,7 +1572,8 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   }
   const store=createRefreshWorkRepository({query:(sql,args)=>timedQuery("queue",sql,args)});
   const quotaWorkStore=matchedQuota?createRefreshWorkRepository(matchedQuota.database):store;
-  const rawDatabase={query:(sql,args)=>timedQuery(sql.includes("commit_klaviyo_dataset_source(")?"rawWrite":"rawReadback",sql,args)};
+  const rawDatabase={query:(sql,args)=>measureFourPhase("rawStore",sql,args,()=>
+    timedQuery(sql.includes("commit_klaviyo_dataset_source(")?"rawWrite":"rawReadback",sql,args))};
   const reportDatabase={
     async query(sql,args) {
       if(hosted&&(sql===KLAVIYO_DAILY_STAGE_SQL||sql===KLAVIYO_DAILY_PUBLISH_SQL)) {
@@ -1593,7 +1599,8 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
         comparableStageCalls++;
         return result;
       }
-      return timedQuery(bucket,sql,args);
+      const measuredPhase=bucket==="reportReadback"?"receiptReadback":bucket==="jobClose"?"jobClose":null;
+      return timedQuery(bucket,sql,args,measuredPhase);
     },
     async transaction(run) {
       const reportStart=reportBoundary?performance.now():null;
@@ -1611,6 +1618,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
       }
     },
   };
+  if(fourPhaseDiagnostics)fourPhase=await createFourPhaseDiagnostics(client,"klaviyo");
   const start=reportOnly||retentionOnly?null:performance.now();
   const comparable=comparableReport?collectComparableReportTiming(client):null;
   if (measureReport||retentionOnly||hostedDetail) client.on("notice",onNotice);
@@ -1772,12 +1780,14 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
       if(comparable)assert.equal(comparableStageCalls,5);
       const reportComparison=comparable?await comparable.result(reportWriteMs,comparableStageMs):undefined;
       const reportSourceRead=databaseTimings.reportSourceRead,receiptReadback=databaseTimings.reportReadback,jobClose=databaseTimings.jobClose;
-      return {...summary,matchedTransport,quotaDebits,authorityChecks,reportComparison,totalMs:ended-start,durationsMs:{
+      const durationsMs={
         queueEnqueue:durations.queueEnqueue,queueAndAdmission:durations.queueAndAdmission,
         providerCollection:durations.providerCollection,rawStore:durations.rawStore,handoff:durations.handoff,
         reportSourceRead,reportPreparation:durations.reportFlow-reportSourceRead-reportWriteMs-receiptReadback-jobClose,
         reportWrite:reportWriteMs,receiptReadback,jobClose,
-      }};
+      };
+      return {...summary,matchedTransport,quotaDebits,authorityChecks,reportComparison,totalMs:ended-start,durationsMs,
+        ...(fourPhase?{fourPhaseDiagnostics:fourPhase.result(durationsMs,requests)}:{})};
     }
     if(retentionOnly) {
       const {rows:[{calls}]}=await client.query("select current_setting('eo05.retention_calls')::int calls");
@@ -1860,6 +1870,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   } finally {
     if (measureReport||retentionOnly||hostedDetail) client.off("notice",onNotice);
     comparable?.stop();
+    fourPhase?.close();
     await matchedQuota?.database.close();
   }
 }

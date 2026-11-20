@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {EventEmitter} from "node:events";
+import {createFourPhaseDiagnostics} from "../tools/eo05-four-phase-diagnostics.mjs";
 import {collectComparableReportTiming,installComparableReportTiming} from "../tools/eo05-klaviyo-daily-timing-probe.mjs";
 import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection,summarizeGoogleReportWrite,summarizeGooglePublishTrace,installGoogleFactTriggerTrace,summarizeGoogleFactTriggerTrace,installGoogleWriterPreparationCandidate,installGooglePackageReuseCandidate,installGooglePublishTrace} from "../tools/eo05-google-daily-timing-probe.mjs";
 
@@ -228,4 +229,47 @@ test("Google package reuse keeps the audited stage, private writer and physical 
  await installGooglePublishTrace(client,{packageReuse:true});
  assert.match(installed.at(-2),/trace_checked:=analytics\.eo05_google_check_verified_facts/);
  assert.match(installed.at(-1),/trace_call_writer:=clock_timestamp\(\);\n proof:=analytics\.eo05_google_write_verified_day/);
+});
+
+test("four phase diagnostics measure nested closure work and empty-page checks in both providers",async()=>{
+ for(const [provider,file] of [
+  ["google","20261119112554_eo05_google_daily_packages.sql"],
+  ["klaviyo","20261117183725_eo05_klaviyo_report_package_staging.sql"],
+ ]){
+  const migration=readFileSync(new URL("../supabase/migrations/"+file,import.meta.url),"utf8").replace(/\r\n/g,"\n");
+  const client=new EventEmitter(),installed=[];
+  client.connectionParameters={host:"127.0.0.1",port:54322};
+  client.query=async(sql,args)=>{
+   if(!sql.startsWith("select pg_get_functiondef")){installed.push(sql);return;}
+   const name=args[0].split("(")[0];
+   const definition=migration.match(new RegExp(`create function ${name.replace(".","\\.")}\\([\\s\\S]*?end \\$fn\\$;`))?.[0];
+   assert.ok(definition,name);
+   return {rows:[{definition}]};
+  };
+  const timing=await createFourPhaseDiagnostics(client,provider);
+  assert.equal(installed.length,2);
+  const sample=async()=>({rows:[{result:[1]}]});
+  const empty=async()=>({rows:[{result:[]}]});
+  await timing.query("providerCollection","select current_user as role",[],sample);
+  for(const op of ["reserve","settle"])await timing.query("providerCollection",`select operations.${op}_shared_api_quota($1)`,[],sample);
+  await timing.query("rawStore",`select evidence.commit_${provider}_dataset_source($1)`,[],sample);
+  const pages="select evidence.read_source_pages($1)";
+  await timing.query("rawStore",pages,[null,null,null,"0",1],sample);
+  await timing.query("rawStore",pages,[null,null,null,"1",1],empty);
+  for(const phase of ["receiptReadback","jobClose"]){
+   const op=phase==="receiptReadback"?`inspect_${provider}_daily_report`:`finish_${provider}_daily_report_job`;
+   await timing.query(phase,`select analytics.${op}($1)`,[],async()=>{
+    const notes=phase==="receiptReadback"?{receiptLookup:0,fingerprint:0}:
+      {lockAcquisition:0,repeatedInspection:0,receiptLookup:0,fingerprint:0,finalUpdate:0};
+    for(const [key,value] of Object.entries(notes))client.emit("notice",{message:`EO05_FOUR_PHASE ${key} ${value}`});
+    return sample();
+   });
+  }
+  const result=timing.result({providerCollection:500,rawStore:500,receiptReadback:500,jobClose:500},1);
+  assert.equal(result.calls.rawStore.pages.count,1);
+  assert.equal(result.calls.rawStore.extraPage.count,1);
+  assert.equal(result.calls.providerCollection.quota.count,2);
+  timing.close();
+  assert.equal(client.listenerCount("notice"),0);
+ }
 });

@@ -381,14 +381,90 @@ export async function proveGoogleReportCanonicalParity(client) {
  return {identical:valid.length,rejected:invalid.length};
 }
 
-export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false}){
+const writerTracePrefix="EO05_GOOGLE_WRITER_TRACE ";
+const publisherTracePrefix="EO05_GOOGLE_PUBLISH_TRACE ";
+const elapsedSql=(from,to)=>`(extract(epoch from (${to}-${from}))*1000)::double precision`;
+
+async function installGooglePublishTrace(client) {
+ assert.equal(assertGoogleTimingTarget(client.connectionParameters),"local");
+ const signature="(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)";
+ let writer=await functionDefinition(client,"analytics.write_google_staged_first_report_day"+signature);
+ writer=replaceOnce(writer,"  has_facts boolean;",`  has_facts boolean;
+  trace_writer_start timestamptz;
+  trace_write_start timestamptz;
+  trace_verify_start timestamptz;
+  trace_writer_end timestamptz;
+  trace_checked jsonb;`);
+ const lock="  perform 1 from operations.refresh_control where singleton for update;";
+ writer=replaceOnce(writer,lock,"  trace_writer_start:=clock_timestamp();\n"+lock);
+ const loop="  for s in select body from pg_temp.adstable_google_daily_report_stage order by package_ordinal loop";
+ writer=replaceOnce(writer,loop,"  trace_write_start:=clock_timestamp();\n"+loop);
+ writer=replaceOnce(writer,"  return analytics.check_google_daily_report_facts(o,c,d,operation,policy,digests);",`
+  trace_verify_start:=clock_timestamp();
+  trace_checked:=analytics.check_google_daily_report_facts(o,c,d,operation,policy,digests);
+  trace_writer_end:=clock_timestamp();
+  raise notice '${writerTracePrefix}%',jsonb_build_object(
+    'writerSetupMs',${elapsedSql("trace_writer_start","trace_write_start")},
+    'physicalWriteMs',${elapsedSql("trace_write_start","trace_verify_start")},
+    'physicalVerificationMs',${elapsedSql("trace_verify_start","trace_writer_end")});
+  return trace_checked;`);
+ await client.query(writer);
+ let publish=await functionDefinition(client,"analytics.publish_google_staged_report_day"+signature);
+ publish=replaceOnce(publish,"completed timestamptz;groups integer:=0;",`completed timestamptz;groups integer:=0;
+ trace_publish_start timestamptz;
+ trace_source_start timestamptz;
+ trace_call_writer timestamptz;
+ trace_receipt_start timestamptz;
+ trace_publish_end timestamptz;`);
+ const publishLock=" "+lock.trimStart();
+ publish=replaceOnce(publish,"\n"+publishLock,"\n trace_publish_start:=clock_timestamp();\n"+publishLock);
+ const source=" perform analytics.assert_report_source_context(o,c->'sourceContext',(policy->>'until')::timestamptz,c->'sources');";
+ publish=replaceOnce(publish,source," trace_source_start:=clock_timestamp();\n"+source);
+ const call=" proof:=analytics.write_google_staged_first_report_day(o,c,d,operation,policy,digests);";
+ publish=replaceOnce(publish,call," trace_call_writer:=clock_timestamp();\n"+call+"\n trace_receipt_start:=clock_timestamp();");
+ publish=replaceOnce(publish," return receipt;",` trace_publish_end:=clock_timestamp();
+ raise notice '${publisherTracePrefix}%',jsonb_build_object(
+   'scopeAndStageMs',${elapsedSql("trace_publish_start","trace_source_start")},
+   'sourcesAndRetentionMs',${elapsedSql("trace_source_start","trace_call_writer")},
+   'writerCallMs',${elapsedSql("trace_call_writer","trace_receipt_start")},
+   'receiptAndHandoffMs',${elapsedSql("trace_receipt_start","trace_publish_end")},
+   'publishSqlMs',${elapsedSql("trace_publish_start","trace_publish_end")});
+ return receipt;`);
+ await client.query(publish);
+}
+
+export function summarizeGooglePublishTrace(notices) {
+ const read=(prefix,keys)=>{
+  const matching=notices.filter(message=>message.startsWith(prefix));
+  assert.equal(matching.length,1);
+  const value=JSON.parse(matching[0].slice(prefix.length));
+  assert.deepEqual(Object.keys(value).sort(),[...keys].sort());
+  assert.ok(Object.values(value).every(ms=>Number.isFinite(ms)&&ms>=0));
+  return value;
+ };
+ const writer=read(writerTracePrefix,["writerSetupMs","physicalWriteMs","physicalVerificationMs"]);
+ const publish=read(publisherTracePrefix,["scopeAndStageMs","sourcesAndRetentionMs","writerCallMs","receiptAndHandoffMs","publishSqlMs"]);
+ const writerTotalMs=Object.values(writer).reduce((a,b)=>a+b,0);
+ const writerBoundaryOverheadMs=publish.writerCallMs-writerTotalMs;
+ assert.ok(writerBoundaryOverheadMs>=-0.01);
+ assert.ok(Math.abs(publish.scopeAndStageMs+publish.sourcesAndRetentionMs+publish.writerCallMs+publish.receiptAndHandoffMs-publish.publishSqlMs)<0.01);
+ return {...publish,...writer,writerBoundaryOverheadMs};
+}
+
+export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false}){
  const target=assertGoogleTimingTarget(client.connectionParameters);
  if(quotaClaimComparison)assert.equal(target,"local");
  assert.ok(!combinedCandidate||!quotaClaimComparison);
  assert.ok(!reportCandidate||combinedCandidate);
  assert.ok(!reportBreakdown||(combinedCandidate&&!reportCandidate));
+ assert.ok(!publishTrace||(target==="local"&&reportBreakdown&&!collectionDiagnostics));
  const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger,combinedCandidate);
  let ordinal=0,failed,reader,roleChecks=0;
+ const publishNotices=[];
+ const observePublish=notice=>{
+  const message=notice.message;
+  if(message?.startsWith(writerTracePrefix)||message?.startsWith(publisherTracePrefix))publishNotices.push(message);
+ };
  const collectionCalls=[];
  const q=async(sql,args=[],kind=null,observedSql=sql,sqlMeasured=false)=>ledger.sql(async()=>{
   if(!collectionDiagnostics||ledger.phase!=="providerCollection")return client.query(sql,args);
@@ -446,6 +522,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  try{
   if(combinedCandidate)await installGoogleCombinedCandidate(client);
   if(reportCandidate)await installGoogleReportCandidate(client);
+  if(publishTrace){await installGooglePublishTrace(client);client.on("notice",observePublish);}
   await installRoleAdapter(client,collectionDiagnostics);
   const owner=await ownerFixture(client,"google_ads"),day="2026-11-01",window={from:day,to:day},now=Date.now;
   const issued=now(),generation=randomUUID(),operationId=randomUUID(),hash=()=>randomBytes(32).toString("hex"),key=()=>randomBytes(32).toString("base64url");
@@ -533,11 +610,12 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
    assert.equal(reportWriteBreakdown.publishCalls,1);
   }
   return {provider:"google_ads",synthetic:true,rollbackOnly:true,combinedCandidate,reportCandidate,reportRows:1000,nativeRows:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,
-   adstableWallMs:measured.totalMs-measured.postgresCallWallMs,providerNetworkMeasured:false,sqlInnerTimers:collectionDiagnostics,durableCommitMeasured:false,
+   adstableWallMs:measured.totalMs-measured.postgresCallWallMs,providerNetworkMeasured:false,sqlInnerTimers:collectionDiagnostics||publishTrace,durableCommitMeasured:false,
    ...(reportWriteBreakdown?{reportWriteBreakdown}:{}),
+   ...(publishTrace?{publishTrace:summarizeGooglePublishTrace(publishNotices)}:{}),
    ...(collectionDiagnostics?{collectionBreakdown:summarizeGoogleCollection(collectionCalls,measured.durationsMs.providerCollection)}:{})};
  }catch(error){
   if(failed)throw Object.assign(Error("GOOGLE_TIMING_SQL_STOP "+failed.operation+": "+failed.message),{code:failed.code??"GOOGLE_TIMING_SQL_STOP"});
   throw error;
- }finally{try{await reader?.close();}finally{delete globalThis[observationKey];}}
+ }finally{try{await reader?.close();}finally{if(publishTrace)client.off("notice",observePublish);delete globalThis[observationKey];}}
 }

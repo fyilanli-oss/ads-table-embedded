@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection,summarizeGoogleReportWrite} from "../tools/eo05-google-daily-timing-probe.mjs";
+import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection,summarizeGoogleReportWrite,summarizeGooglePublishTrace} from "../tools/eo05-google-daily-timing-probe.mjs";
 
 test("Google measurement refuses production, alternate project/host and unbound users",()=>{
  assert.equal(assertGoogleTimingTarget({host:"127.0.0.1",port:54322}),"local");
@@ -72,4 +72,17 @@ test("report breakdown counts only stage and publish, leaving connection overhea
  assert.deepEqual(summarizeGoogleReportWrite(calls,26),{
   stageCalls:2,stageCallWallMs:9,publishCalls:1,publishCallWallMs:14,otherReportWriteMs:3,reportWriteMs:26,
  });
+});
+
+test("publication trace partitions nested writer time without double counting",()=>{
+ const writer="EO05_GOOGLE_WRITER_TRACE "+JSON.stringify({writerSetupMs:5,physicalWriteMs:30,physicalVerificationMs:10});
+ const publish="EO05_GOOGLE_PUBLISH_TRACE "+JSON.stringify({
+  scopeAndStageMs:7,sourcesAndRetentionMs:3,writerCallMs:46,receiptAndHandoffMs:4,publishSqlMs:60,
+ });
+ const result=summarizeGooglePublishTrace([writer,publish]);
+ assert.equal(result.publishSqlMs,60);
+ assert.equal(result.writerBoundaryOverheadMs,1);
+ assert.equal(result.physicalWriteMs,30);
+ assert.throws(()=>summarizeGooglePublishTrace([writer,publish,writer]));
+ assert.throws(()=>summarizeGooglePublishTrace([writer,publish.replace('"publishSqlMs":60','"publishSqlMs":58')]));
 });

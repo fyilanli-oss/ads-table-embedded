@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {EventEmitter} from "node:events";
 import {collectComparableReportTiming,installComparableReportTiming} from "../tools/eo05-klaviyo-daily-timing-probe.mjs";
-import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection,summarizeGoogleReportWrite,summarizeGooglePublishTrace,installGoogleFactTriggerTrace,summarizeGoogleFactTriggerTrace,installGoogleWriterPreparationCandidate,installGooglePackageReuseCandidate} from "../tools/eo05-google-daily-timing-probe.mjs";
+import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection,summarizeGoogleReportWrite,summarizeGooglePublishTrace,installGoogleFactTriggerTrace,summarizeGoogleFactTriggerTrace,installGoogleWriterPreparationCandidate,installGooglePackageReuseCandidate,installGooglePublishTrace} from "../tools/eo05-google-daily-timing-probe.mjs";
 
 test("Google measurement refuses production, alternate project/host and unbound users",()=>{
  assert.equal(assertGoogleTimingTarget({host:"127.0.0.1",port:54322}),"local");
@@ -90,11 +90,12 @@ test("publication trace partitions nested writer time without double counting",(
 });
 
 test("fact trigger trace checks row coverage and reconciles with the enclosing write",()=>{
- const trace={rows:1000,bindings:1000,references:1300,ownerMs:200,bindingMs:120,sourceMs:950};
- assert.deepEqual(summarizeGoogleFactTriggerTrace(trace,1000,5800),{...trace,measuredMs:1270});
+ const trace={rows:1000,bindings:1000,references:1300,ownerMs:200,bindingMs:120,sourceMs:950,triggerMs:1850};
+ assert.deepEqual(summarizeGoogleFactTriggerTrace(trace,1000,5800),{...trace,measuredMs:1270,otherTriggerMs:580});
  assert.throws(()=>summarizeGoogleFactTriggerTrace({...trace,bindings:999},1000,5800));
  assert.throws(()=>summarizeGoogleFactTriggerTrace({...trace,references:999},1000,5800));
  assert.throws(()=>summarizeGoogleFactTriggerTrace(trace,1000,1200));
+ assert.throws(()=>summarizeGoogleFactTriggerTrace({...trace,triggerMs:1100},1000,5800));
 });
 
 test("fact trigger diagnostics match the real validator and refuse hosted installation",async()=>{
@@ -183,6 +184,10 @@ test("Google package reuse keeps the audited stage, private writer and physical 
  const client={connectionParameters:{host:"127.0.0.1",port:54322},async query(sql,args){
   if(!sql.startsWith("select pg_get_functiondef")){installed.push(sql);return;}
   const name=args[0].split("(")[0].slice("analytics.".length);
+  if(name==="eo05_google_write_verified_day"||name==="publish_google_staged_report_day"){
+   const previous=installed.findLast(sql=>sql.includes(`FUNCTION analytics.${name}(`)||sql.startsWith(`create function analytics.${name}(`));
+   if(previous)return {rows:[{definition:previous}]};
+  }
   const fn=new RegExp("create function analytics\\."+name+"\\([\\s\\S]*?end \\$fn\\$;","i");
   let definition=migration.match(fn)?.[0];
   assert.ok(definition,name);
@@ -220,4 +225,7 @@ test("Google package reuse keeps the audited stage, private writer and physical 
  assert.match(combined,/jsonb_agg\(body order by ordinal\)/);
  assert.match(combined,/eo05_google_package_from_rows\(p,verified_rows,0\)/);
  assert.match(combined,/DATASET_DECIMAL_INVALID/);
+ await installGooglePublishTrace(client,{packageReuse:true});
+ assert.match(installed.at(-2),/trace_checked:=analytics\.eo05_google_check_verified_facts/);
+ assert.match(installed.at(-1),/trace_call_writer:=clock_timestamp\(\);\n proof:=analytics\.eo05_google_write_verified_day/);
 });

@@ -171,6 +171,18 @@ export async function datasetStorageProbe(client, connection, environment = proc
       }));
       console.log("EO05_GOOGLE_COMBINED_WRITER_COMPARISON_PASS",JSON.stringify({reused,combinedWriter,cases}));
     }finally{await client.query("rollback to savepoint google_package_reuse_correctness");await client.query("release savepoint google_package_reuse_correctness");}
+    await client.query("savepoint google_combined_trigger_comparison");
+    try{
+      await prepareGoogleTimingLocalRoles(client);
+      const result=await googleDailyTimingProbe(client,{
+        ownerFixture,combinedCandidate:true,reportBreakdown:true,
+        packageReuseCandidate:true,writerPreparationCandidate:true,publishTrace:true,factTriggerTrace:true,
+      });
+      assert.deepEqual([result.reportRows,result.reportPackages,result.receipts,result.completed],[1000,5,1,true]);
+      console.log("EO05_GOOGLE_COMBINED_TRIGGER_TRACE_PASS",JSON.stringify({
+        reference:combinedWriter,result:result.reportWriteBreakdown,write:result.publishTrace,factTrigger:result.factTriggerTrace,
+      }));
+    }finally{await client.query("rollback to savepoint google_combined_trigger_comparison");await client.query("release savepoint google_combined_trigger_comparison");}
     const deepReport={};
     for(const provider of ["google","klaviyo"]){
       await client.query("savepoint matched_report_comparison");

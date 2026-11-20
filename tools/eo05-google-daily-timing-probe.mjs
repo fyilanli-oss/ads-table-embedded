@@ -522,12 +522,14 @@ const triggerTraceSetting="adstable_probe.google_fact_trace";
 export async function installGoogleFactTriggerTrace(client) {
  assert.equal(assertGoogleTimingTarget(client.connectionParameters),"local");
  let definition=await functionDefinition(client,"analytics.validate_dataset_fact()");
+ definition=replaceOnce(definition,"\ndeclare j jsonb:=", "\ndeclare trace_trigger_started timestamptz:=clock_timestamp(); j jsonb:=");
  definition=replaceOnce(definition,"permit jsonb;",`permit jsonb;
   trace_start timestamptz;
   trace_owner_ms double precision;
   trace_binding_ms double precision:=0;
   trace_source_ms double precision:=0;
   trace_refs integer;
+  trace_trigger_ms double precision;
   trace_counts jsonb;`);
  const start="\n select * into strict b from evidence.source_batches where workspace_id=new.workspace_id";
  definition=replaceOnce(definition,start,`\n trace_start:=clock_timestamp();
@@ -554,6 +556,7 @@ ${sourceLoop}`);
  definition=replaceOnce(definition,completeness,`  trace_source_ms:=trace_source_ms+${elapsedSql("trace_start","clock_timestamp()")};
 ${completeness}`);
  definition=replaceOnce(definition," return new;",` if tg_op='INSERT' and new.platform='google_ads' then
+  trace_trigger_ms:=${elapsedSql("trace_trigger_started","clock_timestamp()")};
   trace_refs:=jsonb_array_length(new.provenance->'sources');
   trace_counts:=coalesce(nullif(current_setting('${triggerTraceSetting}',true),'')::jsonb,'{}'::jsonb);
   perform set_config('${triggerTraceSetting}',jsonb_build_object(
@@ -562,7 +565,8 @@ ${completeness}`);
    'references',coalesce((trace_counts->>'references')::int,0)+trace_refs,
    'ownerMs',coalesce((trace_counts->>'ownerMs')::double precision,0)+trace_owner_ms,
    'bindingMs',coalesce((trace_counts->>'bindingMs')::double precision,0)+trace_binding_ms,
-   'sourceMs',coalesce((trace_counts->>'sourceMs')::double precision,0)+trace_source_ms)::text,true);
+   'sourceMs',coalesce((trace_counts->>'sourceMs')::double precision,0)+trace_source_ms,
+   'triggerMs',coalesce((trace_counts->>'triggerMs')::double precision,0)+trace_trigger_ms)::text,true);
  end if;
  return new;`);
  await client.query(definition);
@@ -570,21 +574,24 @@ ${completeness}`);
 }
 
 export function summarizeGoogleFactTriggerTrace(trace, rows, physicalWriteMs) {
- assert.deepEqual(Object.keys(trace).sort(),["bindingMs","bindings","ownerMs","references","rows","sourceMs"]);
+ assert.deepEqual(Object.keys(trace).sort(),["bindingMs","bindings","ownerMs","references","rows","sourceMs","triggerMs"]);
  assert.equal(trace.rows,rows);
  assert.equal(trace.bindings,rows);
  assert.ok(Number.isInteger(trace.references)&&trace.references>=rows);
  const times=[trace.ownerMs,trace.bindingMs,trace.sourceMs];
  assert.ok(times.every(ms=>Number.isFinite(ms)&&ms>=0));
  const measuredMs=times.reduce((a,b)=>a+b,0);
- assert.ok(measuredMs<=physicalWriteMs+0.01);
- return {...trace,measuredMs};
+ assert.ok(Number.isFinite(trace.triggerMs)&&trace.triggerMs>=measuredMs-0.01&&trace.triggerMs<=physicalWriteMs+0.01);
+ return {...trace,measuredMs,otherTriggerMs:trace.triggerMs-measuredMs};
 }
 
-async function installGooglePublishTrace(client) {
+export async function installGooglePublishTrace(client,{packageReuse=false}={}) {
  assert.equal(assertGoogleTimingTarget(client.connectionParameters),"local");
  const signature="(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)";
- let writer=await functionDefinition(client,"analytics.write_google_staged_first_report_day"+signature);
+ const writerName=packageReuse?"eo05_google_write_verified_day":"write_google_staged_first_report_day";
+ const writerSignature=packageReuse?signature.slice(0,-1)+",jsonb)":signature;
+ const writerArgs=packageReuse?"o,c,d,operation,policy,digests,verified_summary":"o,c,d,operation,policy,digests";
+ let writer=await functionDefinition(client,"analytics."+writerName+writerSignature);
  writer=replaceOnce(writer,"  has_facts boolean;",`  has_facts boolean;
   trace_writer_start timestamptz;
   trace_write_start timestamptz;
@@ -593,11 +600,12 @@ async function installGooglePublishTrace(client) {
   trace_checked jsonb;`);
  const lock="  perform 1 from operations.refresh_control where singleton for update;";
  writer=replaceOnce(writer,lock,"  trace_writer_start:=clock_timestamp();\n"+lock);
- const loop="  for s in select body from pg_temp.adstable_google_daily_report_stage order by package_ordinal loop";
+ const loop=`  for s in select body${packageReuse?",canonical_rows":""} from pg_temp.adstable_google_daily_report_stage order by package_ordinal loop`;
  writer=replaceOnce(writer,loop,"  trace_write_start:=clock_timestamp();\n"+loop);
- writer=replaceOnce(writer,"  return analytics.check_google_daily_report_facts(o,c,d,operation,policy,digests);",`
+ const readback=`analytics.${packageReuse?"eo05_google_check_verified_facts":"check_google_daily_report_facts"}(${writerArgs})`;
+ writer=replaceOnce(writer,`  return ${readback};`,`
   trace_verify_start:=clock_timestamp();
-  trace_checked:=analytics.check_google_daily_report_facts(o,c,d,operation,policy,digests);
+  trace_checked:=${readback};
   trace_writer_end:=clock_timestamp();
   raise notice '${writerTracePrefix}%',jsonb_build_object(
     'writerSetupMs',${elapsedSql("trace_writer_start","trace_write_start")},
@@ -616,7 +624,7 @@ async function installGooglePublishTrace(client) {
  publish=replaceOnce(publish,"\n"+publishLock,"\n trace_publish_start:=clock_timestamp();\n"+publishLock);
  const source=" perform analytics.assert_report_source_context(o,c->'sourceContext',(policy->>'until')::timestamptz,c->'sources');";
  publish=replaceOnce(publish,source," trace_source_start:=clock_timestamp();\n"+source);
- const call=" proof:=analytics.write_google_staged_first_report_day(o,c,d,operation,policy,digests);";
+ const call=` proof:=analytics.${writerName}(${writerArgs});`;
  publish=replaceOnce(publish,call," trace_call_writer:=clock_timestamp();\n"+call+"\n trace_receipt_start:=clock_timestamp();");
  publish=replaceOnce(publish," return receipt;",` trace_publish_end:=clock_timestamp();
  raise notice '${publisherTracePrefix}%',jsonb_build_object(
@@ -656,7 +664,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  assert.ok(!publishTrace||(target==="local"&&reportBreakdown&&!collectionDiagnostics));
  assert.ok(!factTriggerTrace||publishTrace);
  assert.ok(!writerPreparationCandidate||(target==="local"&&combinedCandidate&&!reportCandidate));
- assert.ok(!packageReuseCandidate||(target==="local"&&reportBreakdown&&!publishTrace&&!comparableReport));
+ assert.ok(!packageReuseCandidate||(target==="local"&&reportBreakdown&&!comparableReport&&(!publishTrace||factTriggerTrace)));
  assert.ok(!comparableReport||(target==="local"&&reportBreakdown&&!publishTrace&&!collectionDiagnostics&&!writerPreparationCandidate));
  const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger,combinedCandidate);
  let ordinal=0,failed,reader,roleChecks=0,comparable;
@@ -725,7 +733,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   if(writerPreparationCandidate)await installGoogleWriterPreparationCandidate(client);
   if(packageReuseCandidate)await installGooglePackageReuseCandidate(client);
   if(reportCandidate)await installGoogleReportCandidate(client);
-  if(publishTrace){await installGooglePublishTrace(client);client.on("notice",observePublish);}
+  if(publishTrace){await installGooglePublishTrace(client,{packageReuse:packageReuseCandidate});client.on("notice",observePublish);}
   if(factTriggerTrace)await installGoogleFactTriggerTrace(client);
   if(comparableReport){await installComparableReportTiming(client,"google");comparable=collectComparableReportTiming(client);}
   await installRoleAdapter(client,collectionDiagnostics);

@@ -367,6 +367,94 @@ export async function installGoogleWriterPreparationCandidate(client) {
  await client.query(writer);
 }
 
+export async function installGooglePackageReuseCandidate(client) {
+ assert.equal(assertGoogleTimingTarget(client.connectionParameters),"local");
+ const dailyArgs="jsonb,jsonb,timestamptz,uuid,jsonb,jsonb";
+ const read=(name,args)=>functionDefinition(client,`analytics.${name}(${args})`);
+ const canonical="analytics.google_daily_json";
+ const hash=text=>`encode(sha256(convert_to(${text},'UTF8')),'hex')`;
+ const privateRoles="public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner";
+ const definitions=[];
+ const privateCopy=(sql,from,to,param,after)=>{
+  sql=replaceOnce(sql,`FUNCTION analytics.${from}(`,`FUNCTION analytics.${to}(`);
+  sql=replaceOnce(sql,after,after.slice(0,-1)+`, ${param})`);
+  return replaceOnce(sql," SECURITY DEFINER"," SECURITY INVOKER");
+ };
+ await client.query(`create function analytics.eo05_google_package_from_rows(p jsonb, rows_text text, depth integer)
+  returns text language sql immutable strict set search_path='' as $fn$
+   select '{"operationId":'||${canonical}(p->'operationId',depth+1)||
+     ',"policy":'||${canonical}(p->'policy',depth+1)||',"rows":'||rows_text||
+     ',"version":'||${canonical}(p->'version',depth+1)||'}'
+  $fn$;
+  revoke all on function analytics.eo05_google_package_from_rows(jsonb,text,integer) from ${privateRoles}`);
+ const envelope=(body,rows)=>`'{"context":'||${canonical}(c,1)||',"write":'||analytics.eo05_google_package_from_rows(${body},${rows},1)||'}'`;
+ let stage=await read("stage_google_daily_report_package","jsonb,jsonb,jsonb,timestamptz,integer,integer");
+ stage=replaceOnce(stage,"  package_bytes bytea;","  package_bytes bytea;\n  canonical_rows text;");
+ stage=replaceOnce(stage,"  package_bytes:=convert_to(analytics.google_daily_json(jsonb_build_object('write',p,'context',c)),'UTF8');",`
+  if p ?& array['operationId','policy','rows','version'] and (select count(*) from jsonb_object_keys(p))=4 then
+    canonical_rows:=${canonical}(p->'rows',2);
+    package_bytes:=convert_to(${envelope("p","canonical_rows")},'UTF8');
+    if octet_length(package_bytes)>1048576 then raise exception 'DATASET_JSON_BOUNDS';end if;
+  else
+    package_bytes:=convert_to(${canonical}(jsonb_build_object('write',p,'context',c)),'UTF8');
+  end if;`);
+ stage=replaceOnce(stage,"      body jsonb not null,","      body jsonb not null,\n      canonical_payload text not null,\n      canonical_rows text,");
+ stage=replaceOnce(stage,"(package_ordinal,day_binding,body,digest)\n  values (ordinal,binding,p,package_digest);",`
+    (package_ordinal,day_binding,body,canonical_payload,canonical_rows,digest)
+  values (ordinal,binding,p,convert_from(package_bytes,'UTF8'),canonical_rows,package_digest);`);
+ definitions.push(stage);
+ let verify=await read("verify_google_daily_report_stage",dailyArgs);
+ verify=replaceOnce(verify,"or s.digest is distinct from analytics.google_daily_digest(jsonb_build_object('write',s.body,'context',c))",`or s.digest is distinct from ${hash("s.canonical_payload")}
+        or jsonb_send(s.canonical_payload::jsonb) is distinct from jsonb_send(jsonb_build_object('write',s.body,'context',c))
+        or (s.canonical_rows is not null and s.canonical_payload collate "C" is distinct from
+          (${envelope("s.body","s.canonical_rows")}) collate "C")`);
+ definitions.push(verify);
+
+ let commit=privateCopy(await read("commit_google_daily_package","jsonb,jsonb"),"commit_google_daily_package",
+  "eo05_google_commit_verified_package","verified_rows text","(o jsonb, p jsonb)");
+ commit=replaceOnce(commit," bulk_rows jsonb:='{}';"," canonical_package text;\n bulk_rows jsonb:='{}';");
+ commit=replaceOnce(commit," or octet_length(analytics.google_daily_json(p))>1048576 then raise exception 'DATASET_INPUT_INVALID';end if;",` then raise exception 'DATASET_INPUT_INVALID';end if;
+ canonical_package:=case when verified_rows is null then ${canonical}(p)
+   else analytics.eo05_google_package_from_rows(p,verified_rows,0) end;
+ if octet_length(canonical_package)>1048576 then raise exception 'DATASET_JSON_BOUNDS';end if;`);
+ commit=replaceOnce(commit,"h:=analytics.google_daily_digest(p);",`h:=${hash("canonical_package")};`);
+ definitions.push(commit);
+
+ const args=" digests jsonb)";
+ let checker=privateCopy(await read("check_google_daily_report_facts",dailyArgs),"check_google_daily_report_facts",
+  "eo05_google_check_verified_facts","verified_summary jsonb",args);
+ checker=replaceOnce(checker,"summary:=analytics.verify_google_daily_report_stage(o,c,d,operation,policy,digests);","summary:=verified_summary;");
+ definitions.push(checker);
+ let writer=privateCopy(await read("write_google_staged_first_report_day",dailyArgs),"write_google_staged_first_report_day",
+  "eo05_google_write_verified_day","verified_summary jsonb",args);
+ const bindingStart=writer.indexOf("  verified_binding text:=");
+ const bindingEnd=writer.indexOf("  day date :=",bindingStart);
+ assert.ok(bindingStart>=0&&bindingEnd>bindingStart);
+ writer=replaceOnce(writer,writer.slice(bindingStart,bindingEnd),"");
+ const guardStart=writer.indexOf("  if pg_catalog.to_regclass('pg_temp.adstable_google_daily_report_stage') is null then");
+ const guardEnd=writer.indexOf("  if c->'expectedRevision' is distinct from",guardStart);
+ assert.ok(guardStart>=0&&guardEnd>guardStart);
+ writer=replaceOnce(writer,writer.slice(guardStart,guardEnd),"");
+ writer=replaceOnce(writer,"for s in select body from pg_temp.adstable_google_daily_report_stage","for s in select body,canonical_rows from pg_temp.adstable_google_daily_report_stage");
+ writer=replaceOnce(writer,"analytics.commit_google_daily_package(o,s.body||jsonb_build_object('operationId',gen_random_uuid()))",
+  "analytics.eo05_google_commit_verified_package(o,s.body||jsonb_build_object('operationId',gen_random_uuid()),s.canonical_rows)");
+ writer=replaceOnce(writer,"analytics.check_google_daily_report_facts(o,c,d,operation,policy,digests)",
+  "analytics.eo05_google_check_verified_facts(o,c,d,operation,policy,digests,verified_summary)");
+ definitions.push(writer);
+
+ let publish=await read("publish_google_staged_report_day",dailyArgs);
+ publish=replaceOnce(publish,"groups integer:=0;","groups integer:=0; verified_summary jsonb;");
+ publish=replaceOnce(publish,"perform analytics.verify_google_daily_report_stage(o,c,d,operation,policy,digests);",
+  "verified_summary:=analytics.verify_google_daily_report_stage(o,c,d,operation,policy,digests);");
+ publish=replaceOnce(publish,"proof:=analytics.write_google_staged_first_report_day(o,c,d,operation,policy,digests);",
+  "proof:=analytics.eo05_google_write_verified_day(o,c,d,operation,policy,digests,verified_summary);");
+ for(const sql of definitions)await client.query(sql);
+ await client.query(`revoke all on function analytics.eo05_google_commit_verified_package(jsonb,jsonb,text),
+  analytics.eo05_google_check_verified_facts(${dailyArgs},jsonb),
+  analytics.eo05_google_write_verified_day(${dailyArgs},jsonb) from ${privateRoles}`);
+ await client.query(publish);
+}
+
 export async function installGoogleReportCandidate(client) {
  assertGoogleTimingTarget(client.connectionParameters);
  const canonical="analytics.google_daily_json(v,depth+1)";
@@ -559,7 +647,7 @@ export function summarizeGooglePublishTrace(notices) {
  return {...publish,...writer,writerBoundaryOverheadMs};
 }
 
-export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false,factTriggerTrace=false,writerPreparationCandidate=false,comparableReport=false}){
+export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false,factTriggerTrace=false,writerPreparationCandidate=false,comparableReport=false,packageReuseCandidate=false}){
  const target=assertGoogleTimingTarget(client.connectionParameters);
  if(quotaClaimComparison)assert.equal(target,"local");
  assert.ok(!combinedCandidate||!quotaClaimComparison);
@@ -568,6 +656,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  assert.ok(!publishTrace||(target==="local"&&reportBreakdown&&!collectionDiagnostics));
  assert.ok(!factTriggerTrace||publishTrace);
  assert.ok(!writerPreparationCandidate||(target==="local"&&combinedCandidate&&!reportCandidate));
+ assert.ok(!packageReuseCandidate||(target==="local"&&reportBreakdown&&!writerPreparationCandidate&&!publishTrace&&!comparableReport));
  assert.ok(!comparableReport||(target==="local"&&reportBreakdown&&!publishTrace&&!collectionDiagnostics&&!writerPreparationCandidate));
  const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger,combinedCandidate);
  let ordinal=0,failed,reader,roleChecks=0,comparable;
@@ -632,6 +721,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  const store=createRefreshWorkRepository({query:(sql,args)=>/operations\.(check_refresh_queue_on_tick|review_refresh_interrupted_work)\(/.test(sql)?queue.query(sql,args):coordinator.query(sql,args)});
  try{
   if(combinedCandidate)await installGoogleCombinedCandidate(client);
+  if(packageReuseCandidate)await installGooglePackageReuseCandidate(client);
   if(writerPreparationCandidate)await installGoogleWriterPreparationCandidate(client);
   if(reportCandidate)await installGoogleReportCandidate(client);
   if(publishTrace){await installGooglePublishTrace(client);client.on("notice",observePublish);}

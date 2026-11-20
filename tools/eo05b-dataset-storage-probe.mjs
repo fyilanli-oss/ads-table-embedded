@@ -14,7 +14,7 @@ import {reconciliationProbe} from "./eo05d-reconciliation-probe.mjs";
 import {klaviyoDailyTimingProbe} from "./eo05-klaviyo-daily-timing-probe.mjs";
 import {observabilityProbe} from "./eo05e-observability-probe.mjs";
 import {googleDailyPackagesProbe} from "./eo05-google-daily-packages-probe.mjs";
-import {googleDailyTimingProbe,prepareGoogleTimingLocalRoles,installGoogleCombinedCandidate,installGoogleWriterPreparationCandidate,proveGoogleReportCanonicalParity} from "./eo05-google-daily-timing-probe.mjs";
+import {googleDailyTimingProbe,prepareGoogleTimingLocalRoles,installGoogleCombinedCandidate,installGoogleWriterPreparationCandidate,installGooglePackageReuseCandidate,proveGoogleReportCanonicalParity} from "./eo05-google-daily-timing-probe.mjs";
 
 async function rejected(client, action, pattern) {
   await client.query("savepoint dataset_expected_failure"); let error;
@@ -147,6 +147,22 @@ export async function datasetStorageProbe(client, connection, environment = proc
     }));
     assert.ok(reportOnly.every(result=>result.completed&&result.stageCalls===5&&result.publishCalls===1));
     console.log("EO05_GOOGLE_REPORT_ONLY_COMPARISON_PASS",JSON.stringify({reference:reportOnly[0],writer:reportOnly[1]}));
+    await client.query("savepoint google_package_reuse_comparison");
+    let reused;
+    try{
+      await prepareGoogleTimingLocalRoles(client);
+      reused=await googleDailyTimingProbe(client,{ownerFixture,combinedCandidate:true,reportBreakdown:true,packageReuseCandidate:true});
+      assert.deepEqual([reused.reportRows,reused.reportPackages,reused.receipts,reused.completed],[1000,5,1,true]);
+    }finally{await client.query("rollback to savepoint google_package_reuse_comparison");await client.query("release savepoint google_package_reuse_comparison");}
+    await client.query("savepoint google_package_reuse_correctness");
+    try{
+      await installGoogleCombinedCandidate(client);
+      await installGooglePackageReuseCandidate(client);
+      const cases=await googleDailyPackagesProbe(client,{ownerFixture,verifyPackageReuse:true});
+      console.log("EO05_GOOGLE_PACKAGE_REUSE_COMPARISON_PASS",JSON.stringify({
+        reference:reference.reportWriteBreakdown,reused:reused.reportWriteBreakdown,cases,
+      }));
+    }finally{await client.query("rollback to savepoint google_package_reuse_correctness");await client.query("release savepoint google_package_reuse_correctness");}
     const deepReport={};
     for(const provider of ["google","klaviyo"]){
       await client.query("savepoint matched_report_comparison");

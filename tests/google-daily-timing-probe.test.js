@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {EventEmitter} from "node:events";
 import {collectComparableReportTiming,installComparableReportTiming} from "../tools/eo05-klaviyo-daily-timing-probe.mjs";
-import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection,summarizeGoogleReportWrite,summarizeGooglePublishTrace,installGoogleFactTriggerTrace,summarizeGoogleFactTriggerTrace,installGoogleWriterPreparationCandidate} from "../tools/eo05-google-daily-timing-probe.mjs";
+import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection,summarizeGoogleReportWrite,summarizeGooglePublishTrace,installGoogleFactTriggerTrace,summarizeGoogleFactTriggerTrace,installGoogleWriterPreparationCandidate,installGooglePackageReuseCandidate} from "../tools/eo05-google-daily-timing-probe.mjs";
 
 test("Google measurement refuses production, alternate project/host and unbound users",()=>{
  assert.equal(assertGoogleTimingTarget({host:"127.0.0.1",port:54322}),"local");
@@ -170,4 +170,43 @@ test("comparable report rollup allocates repeated stage checks without double co
  assert.ok(Math.abs(r.writerMs+r.authorityMs+r.packageValidationMs+r.sharedSourcesMs+r.physicalVerificationMs+r.receiptMs+r.remainderMs-r.reportWriteMs)<0.001);
  timing.stop();
  assert.equal(client.listenerCount("notice"),0);
+});
+
+test("Google package reuse keeps the audited stage, private writer and physical check connected",async()=>{
+ const migration=readFileSync(new URL("../supabase/migrations/20261119112554_eo05_google_daily_packages.sql",import.meta.url),"utf8").replace(/\r\n/g,"\n");
+ const signatures={
+  commit_google_daily_package:"o jsonb, p jsonb",
+  check_google_daily_report_facts:"o jsonb, c jsonb, d timestamp with time zone, operation uuid, policy jsonb, digests jsonb",
+  write_google_staged_first_report_day:"o jsonb, c jsonb, d timestamp with time zone, operation uuid, policy jsonb, digests jsonb",
+ };
+ const installed=[];
+ const client={connectionParameters:{host:"127.0.0.1",port:54322},async query(sql,args){
+  if(!sql.startsWith("select pg_get_functiondef")){installed.push(sql);return;}
+  const name=args[0].split("(")[0].slice("analytics.".length);
+  const fn=new RegExp("create function analytics\\."+name+"\\([\\s\\S]*?end \\$fn\\$;","i");
+  let definition=migration.match(fn)?.[0];
+  assert.ok(definition,name);
+  if(signatures[name]){
+   definition=definition.replace(/^create function [^(]+\([^)]*\)/,`CREATE OR REPLACE FUNCTION analytics.${name}(${signatures[name]})`)
+    .replace(/language plpgsql security definer/i,"LANGUAGE plpgsql\n SECURITY DEFINER");
+  }
+  if(name==="stage_google_daily_report_package"){
+   definition=definition.replace("  package_digest text;","  package_digest text;\n  package_bytes bytea;")
+    .replace("  row_count:=jsonb_array_length(p->'rows');","  row_count:=jsonb_array_length(p->'rows');\n  package_bytes:=convert_to(analytics.google_daily_json(jsonb_build_object('write',p,'context',c)),'UTF8');");
+  }
+  if(name==="write_google_staged_first_report_day"){
+   definition=definition.replace("  has_facts boolean;","  has_facts boolean;\n  verified_binding text:='fixture';")
+    .replace("  perform analytics.verify_google_daily_report_stage(o,c,d,operation,policy,digests);",`  if pg_catalog.to_regclass('pg_temp.adstable_google_daily_report_stage') is null then
+   perform analytics.verify_google_daily_report_stage(o,c,d,operation,policy,digests);
+  end if;`);
+  }
+  return {rows:[{definition}]};
+ }};
+ await installGooglePackageReuseCandidate(client);
+ const publish=installed.at(-1), checker=installed.find(sql=>sql.includes("FUNCTION analytics.eo05_google_check_verified_facts"));
+ assert.match(publish,/verified_summary:=analytics\.verify_google_daily_report_stage/);
+ assert.match(publish,/proof:=analytics\.eo05_google_write_verified_day/);
+ assert.match(checker,/summary:=verified_summary/);
+ assert.match(checker,/GOOGLE_REPORT_FACT_READBACK_MISMATCH/);
+ assert.match(installed.at(-2),/revoke all on function.*eo05_google_commit_verified_package/);
 });

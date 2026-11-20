@@ -9,7 +9,7 @@ import {GOOGLE_DAILY_STAGE_SQL,GOOGLE_DAILY_PUBLISH_SQL,GOOGLE_DAILY_INSPECT_SQL
 
 // Synthetic source fixtures, real AEAD/readback, physical facts and daily RPCs.
 // Caller owns the outer rollback transaction; no native HTTP or durable data.
-export async function googleDailyPackagesProbe(client,{ownerFixture,verifyWriterPreparation=false}) {
+export async function googleDailyPackagesProbe(client,{ownerFixture,verifyWriterPreparation=false,verifyPackageReuse=false}) {
  assert.equal(client.connectionParameters.host,"127.0.0.1");
  assert.equal(Number(client.connectionParameters.port),54322);
  const cases=[];
@@ -81,10 +81,29 @@ export async function googleDailyPackagesProbe(client,{ownerFixture,verifyWriter
    }
    for(let i=0;i<writes.length;i++){
     const receipt=(await rpc(GOOGLE_DAILY_STAGE_SQL,[args[0],JSON.stringify(writes[i]),args[1],deadline,i,writes.length])).rows[0].result;
+    if(verifyPackageReuse){
+     const {rows:[baseline]}=await client.query(`select
+       analytics.google_daily_digest(jsonb_build_object('write',$1::jsonb,'context',$2::jsonb)) digest,
+       analytics.google_daily_json($1::jsonb) collate "C" = analytics.eo05_google_package_from_rows(
+         $1::jsonb,analytics.google_daily_json(($1::jsonb)->'rows',2),0) collate "C" as identical`,[JSON.stringify(writes[i]),args[1]]);
+     assert.equal(receipt.digest,baseline.digest);
+     assert.equal(baseline.identical,true);
+    }
     digests.push(receipt.digest);
     if(i<writes.length-1){await reject(publish);assert.equal((await client.query("select count(*)::int n from analytics.cpd_product_sales_facts where installation_id=$1",[owner.installationId])).rows[0].n,0);}
    }
    await reject(()=>client.query("update pg_temp.adstable_google_daily_report_stage set digest=repeat('0',64);" ).then(publish));
+   if(verifyPackageReuse&&scenario.rows===1000){
+    for(const mutation of [
+     "canonical_payload=canonical_payload||' '",
+     "canonical_rows='[]'",
+     "body=jsonb_set(body,'{version}',to_jsonb('tampered'::text))",
+    ])await reject(()=>client.query(`update pg_temp.adstable_google_daily_report_stage set ${mutation} where package_ordinal=0`).then(publish),
+     /GOOGLE_REPORT_PACKAGE_VERIFICATION_FAILED/);
+    const privateAccess=await client.query(`select has_function_privilege('adstable_refresh_dataset_runner',
+     'analytics.eo05_google_write_verified_day(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb,jsonb)','execute') allowed`);
+    assert.equal(privateAccess.rows[0].allowed,false);
+   }
    const result=(await publish()).rows[0].result;
    assert.equal(result.version,"google-daily-receipt-v1");assert.equal(result.rowCount,rows.length);assert.equal(result.packages.length,writes.length);
    assert.deepEqual((await rpc(GOOGLE_DAILY_INSPECT_SQL,[args[0],operationId])).rows[0].result,result);

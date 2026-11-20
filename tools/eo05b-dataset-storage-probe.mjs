@@ -56,7 +56,7 @@ async function sourceFixture(client, owner, sourceState = "complete") {
 }
 
 /** Real PostgreSQL, synthetic owner/native envelopes only, always rollback. */
-export async function datasetStorageProbe(client, connection, environment = process.env) {
+export async function datasetStorageProbe(client, connection, environment = process.env, {finalSynthetic=false} = {}) {
   assert.equal(environment.GITHUB_ACTIONS, "true"); assert.ok(environment.RUNNER_TEMP);
   assert.equal(connection.host, "127.0.0.1"); assert.equal(connection.port, 54322);
   await client.query("begin");
@@ -203,7 +203,7 @@ export async function datasetStorageProbe(client, connection, environment = proc
       await client.query("savepoint eo05_single_close_comparison");
       try{
         if(provider==="google")await prepareGoogleTimingLocalRoles(client);
-        const options={ownerFixture,singleReportClose:true};
+        const options={ownerFixture,singleReportClose:true,finalSynthetic};
         const candidate=provider==="google"
           ?await googleDailyTimingProbe(client,{...options,combinedCandidate:true,reportBreakdown:true,packageReuseCandidate:true})
           :await klaviyoDailyTimingProbe(client,{...options,connection,environment,mode:"retention-boundary",retentionVariant:"cached",
@@ -214,13 +214,15 @@ export async function datasetStorageProbe(client, connection, environment = proc
         assert.deepEqual(Object.keys(durationsMs),Object.keys(queueToClose[i].durationsMs));
         assert.ok(Object.values(durationsMs).every(ms=>Number.isFinite(ms)&&ms>=0));
         assert.ok(Math.abs(Object.values(durationsMs).reduce((a,b)=>a+b,0)-totalMs)<0.01);
-        singleReportCloseComparison[provider]={control:queueToClose[i],candidate:{reportRows,reportPackages,requests,receipts,durationsMs,totalMs}};
+        singleReportCloseComparison[provider]={control:queueToClose[i],candidate:{reportRows,reportPackages,requests,receipts,durationsMs,totalMs},
+          ...(finalSynthetic&&provider==="google"?{profileReuses:candidate.profileReuses}:{}),
+          ...(finalSynthetic&&provider==="klaviyo"?{authorityChecks:candidate.authorityChecks,quotaDebits:candidate.quotaDebits}:{})};
       }finally{
         await client.query("rollback to savepoint eo05_single_close_comparison");
         await client.query("release savepoint eo05_single_close_comparison");
       }
     }
-    console.log("EO05_SINGLE_REPORT_CLOSE_COMPARISON_PASS",JSON.stringify(singleReportCloseComparison));
+    console.log(finalSynthetic?"EO05_FINAL_SYNTHETIC_COMPARISON_PASS":"EO05_SINGLE_REPORT_CLOSE_COMPARISON_PASS",JSON.stringify(singleReportCloseComparison));
     await client.query("savepoint google_package_reuse_correctness");
     try{
       await installGoogleCombinedCandidate(client);

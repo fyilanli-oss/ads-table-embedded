@@ -474,7 +474,9 @@ async function main() {
     if ([...manifest.forward_migrations, ...manifest.pending_migrations].some(entry => entry.name === "a6tech01_privacy_workspace_fk_indexes")) {
       await assertPrivacyIndexes(client);
     }
-    if (manifest.prepared_migrations.some(entry => entry.name === "eo05b_dataset_storage")) await datasetStorageProbe(client,replayConnection);
+    if (manifest.prepared_migrations.some(entry => entry.name === "eo05b_dataset_storage")) {
+      await datasetStorageProbe(client,replayConnection,process.env,{finalSynthetic:mode==="staged"});
+    }
     await credentialReplacementRegression(client);
     if ([...manifest.forward_migrations,...manifest.pending_migrations].some(entry => entry.name === "eo05a_refresh_work_tracking")) {
       await refreshWorkTrackingProbe(client, replayConnection);

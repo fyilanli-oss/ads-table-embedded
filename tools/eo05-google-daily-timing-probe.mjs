@@ -4,6 +4,7 @@ import {readFileSync} from "node:fs";
 import {collectComparableReportTiming,installComparableReportTiming} from "./eo05-klaviyo-daily-timing-probe.mjs";
 import {createFourPhaseDiagnostics} from "./eo05-four-phase-diagnostics.mjs";
 import {loadSingleReportCloseCandidate, verifySingleReportCloseRejections} from "./eo05-single-report-close-probe.mjs";
+import {reuseGoogleProfileOids,reuseVerifiedRawHash} from "./eo05-final-synthetic-candidate.mjs";
 import {registerHooks} from "node:module";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {createRefreshEntitlementVerifier} from "../app/lib/refresh/entitlement-check.server.js";
@@ -94,7 +95,7 @@ export function googleCombinedReadbackSource(source) {
 
 // Both modes use the same outer observations. Only the approved candidate
 // loads a fresh raw-store module with the bounded final page check combined.
-export async function loadObservedGoogleReader(ledger,combinedCandidate=false){
+export async function loadObservedGoogleReader(ledger,combinedCandidate=false,verifiedRawHash=false){
  assert.equal(globalThis[observationKey],undefined);globalThis[observationKey]=ledger;
  const original=readFileSync(sourceUrl,"utf8");
  const start="const save=async(dataset,pages,complete,reason=null)=>{";
@@ -106,9 +107,10 @@ export async function loadObservedGoogleReader(ledger,combinedCandidate=false){
  const storeCandidateUrl=rawStoreUrl.href+"?googleTiming="+id;
  if(combinedCandidate)transformed=replaceOnce(transformed,'"../database/google-dataset-source-store.server.js"',JSON.stringify(storeCandidateUrl));
  const storeSource=combinedCandidate?googleCombinedReadbackSource(readFileSync(rawStoreUrl,"utf8")):null;
+ const candidateSource=verifiedRawHash?reuseVerifiedRawHash(storeSource):storeSource;
  const hooks=registerHooks({load(url,context,next){
   if(url===sourceUrl.href+"?googleTiming="+id)return {format:"module",source:transformed,shortCircuit:true};
-  if(storeSource&&url===storeCandidateUrl)return {format:"module",source:storeSource,shortCircuit:true};
+  if(candidateSource&&url===storeCandidateUrl)return {format:"module",source:candidateSource,shortCircuit:true};
   return next(url,context);
  }});
  try{return (await import(sourceUrl.href+"?googleTiming="+id)).createGoogleRawDatasetReader;}
@@ -657,7 +659,7 @@ export function summarizeGooglePublishTrace(notices) {
  return {...publish,...writer,writerBoundaryOverheadMs};
 }
 
-export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false,factTriggerTrace=false,writerPreparationCandidate=false,comparableReport=false,packageReuseCandidate=false,fourPhaseDiagnostics=false,singleReportClose=false}){
+export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false,factTriggerTrace=false,writerPreparationCandidate=false,comparableReport=false,packageReuseCandidate=false,fourPhaseDiagnostics=false,singleReportClose=false,finalSynthetic=false}){
  const target=assertGoogleTimingTarget(client.connectionParameters);
  if(quotaClaimComparison)assert.equal(target,"local");
  assert.ok(!combinedCandidate||!quotaClaimComparison);
@@ -670,9 +672,10 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  assert.ok(!comparableReport||(target==="local"&&reportBreakdown&&!publishTrace&&!collectionDiagnostics&&!writerPreparationCandidate));
  assert.ok(!fourPhaseDiagnostics||(target==="local"&&packageReuseCandidate&&!writerPreparationCandidate&&!publishTrace&&!collectionDiagnostics&&!comparableReport));
  assert.ok(!singleReportClose||(target==="local"&&packageReuseCandidate&&!writerPreparationCandidate&&!publishTrace&&!collectionDiagnostics&&!comparableReport&&!fourPhaseDiagnostics));
+ assert.ok(!finalSynthetic||(singleReportClose&&combinedCandidate));
  const runScheduled=singleReportClose?(await loadSingleReportCloseCandidate(client,"google")).runScheduledRefreshWithDataset:runScheduledRefreshWithDataset;
- const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger,combinedCandidate);
- let ordinal=0,failed,reader,roleChecks=0,comparable,fourPhase,closeArgs,reportPublished=false;
+ const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger,combinedCandidate,finalSynthetic);
+ let ordinal=0,failed,reader,roleChecks=0,comparable,fourPhase,closeArgs,reportPublished=false,profileReuses=0;
  const publishNotices=[];
  const observePublish=notice=>{
   const message=notice.message;
@@ -689,7 +692,10 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  },kind);
  async function queryAsRole(role,sql,args=[]){
   assert.ok(GOOGLE_TIMING_ROLES.includes(role));assert.match(sql,/^select /i);assert.ok(!sql.includes(";"));
-  const statement=sql.replace(/\$(\d+)/g,(_m,n)=>`($1->>${Number(n)-1})`);
+  const checkedSql=finalSynthetic&&ledger.phase==="providerCollection"&&sql.startsWith("select current_user as role")
+    ?reuseGoogleProfileOids(sql):sql;
+  if(checkedSql!==sql)profileReuses++;
+  const statement=checkedSql.replace(/\$(\d+)/g,(_m,n)=>`($1->>${Number(n)-1})`);
   try{
    const observe=collectionDiagnostics&&ledger.phase==="providerCollection";
    const parameters=[role,statement,JSON.stringify(args.map(googleTimingParameter))];
@@ -826,6 +832,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   }});
   const measured=ledger.stop();if(failed)throw Object.assign(Error(failed.message),failed);
   assert.equal(run.work?.status,"completed",JSON.stringify(run));assert.equal(requests,18);assert.equal(measured.rawDatasets,3);assert.ok(roleChecks>0);
+  if(finalSynthetic)assert.ok(profileReuses>0&&profileReuses<=roleChecks);
   const rows=(await client.query(`select (select count(*)::int from analytics.pd_facts where installation_id=$1) pd,
    (select count(*)::int from analytics.cpd_product_performance_facts where installation_id=$1) performance,
    (select count(*)::int from analytics.cpd_product_sales_facts where installation_id=$1) sales`,[owner.installationId])).rows[0];
@@ -852,6 +859,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   ):null;
   const reportComparison=comparable?await comparable.result(reportWriteBreakdown.reportWriteMs,reportWriteBreakdown.stageCallWallMs):undefined;
   return {provider:"google_ads",synthetic:true,rollbackOnly:true,combinedCandidate,reportCandidate,reportRows:1000,nativeRows:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,
+   ...(finalSynthetic?{profileReuses}:{}),
    adstableWallMs:measured.totalMs-measured.postgresCallWallMs,providerNetworkMeasured:false,sqlInnerTimers:collectionDiagnostics||publishTrace||comparableReport,durableCommitMeasured:false,
    ...(reportComparison?{reportComparison}:{}),
    ...(fourPhase?{fourPhaseDiagnostics:fourPhase.result(measured.durationsMs,requests)}:{}),

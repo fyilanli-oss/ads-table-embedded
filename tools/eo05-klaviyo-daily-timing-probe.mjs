@@ -19,6 +19,7 @@ import {runScheduledRefreshCheck} from "../app/lib/refresh/scheduled-queue-check
 import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
 import {createFourPhaseDiagnostics} from "./eo05-four-phase-diagnostics.mjs";
 import {loadSingleReportCloseCandidate, verifySingleReportCloseRejections} from "./eo05-single-report-close-probe.mjs";
+import {installKlaviyoQuotaCandidate,loadKlaviyoRawHashCandidate} from "./eo05-final-synthetic-candidate.mjs";
 
 const productEvents=1000;
 const pageSize=200;
@@ -1401,7 +1402,7 @@ async function installHostedReportClocks(client) {
     end $clock$;`);
 }
 
-async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,repeat,revisionPermit=false,verifyRevisionPermit=false,matchedTransport,comparableReport=false,fourPhaseDiagnostics=false,singleReportClose=false}) {
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,repeat,revisionPermit=false,verifyRevisionPermit=false,matchedTransport,comparableReport=false,fourPhaseDiagnostics=false,singleReportClose=false,finalSynthetic=false}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
@@ -1412,6 +1413,9 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   if(fourPhaseDiagnostics)assert.ok(fullAuthority&&!comparableReport&&!callBreakdown);
   if(singleReportClose)assert.ok(fullAuthority&&!comparableReport&&!fourPhaseDiagnostics&&!callBreakdown&&!optimizeReadback);
   const runScheduled=singleReportClose?(await loadSingleReportCloseCandidate(client,"klaviyo")).runScheduledRefreshCheck:runScheduledRefreshCheck;
+  assert.ok(!finalSynthetic||singleReportClose);
+  const rawStore=finalSynthetic?await loadKlaviyoRawHashCandidate():{storeKlaviyoRawDataset,storeKlaviyoRawProductPackages};
+  if(finalSynthetic)await installKlaviyoQuotaCandidate(client);
   let closeArgs;
   if(retentionOnly||retentionWall) assert.ok(["current","cached"].includes(retentionVariant));
   if(!repeat) await installExactBulkWriter(client);
@@ -1706,11 +1710,11 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
               const read={jobId:claim.id,fence:String(claim.fence),window,operationId,quotaContext,
                 observedAt:entitlementReceipt.observedAt,completedAt:stamp,deadlineAt:new Date(limits.deadlineAt).toISOString(),coverage};
               if (dataset==="product_performance") {
-                const stored=await storeKlaviyoRawProductPackages({database:rawDatabase,owner,attemptId,pages,read,cipher,
+                const stored=await rawStore.storeKlaviyoRawProductPackages({database:rawDatabase,owner,attemptId,pages,read,cipher,
                   policy,limits:storageLimits,now:stamp,maxPackages:20,guard});
                 batches.push(...stored.map(({ordinal})=>({attemptId,ordinal})));
               } else {
-                const stored=await storeKlaviyoRawDataset({database:rawDatabase,owner,attemptId,dataset,pages,complete,
+                const stored=await rawStore.storeKlaviyoRawDataset({database:rawDatabase,owner,attemptId,dataset,pages,complete,
                   read,cipher,policy,limits:storageLimits,now:stamp});
                 assert.equal(stored.contentVerified,true);
                 batches.push({attemptId,ordinal:0});

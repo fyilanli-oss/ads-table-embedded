@@ -4,6 +4,9 @@ import {readFileSync} from "node:fs";
 import {EventEmitter} from "node:events";
 import {createFourPhaseDiagnostics} from "../tools/eo05-four-phase-diagnostics.mjs";
 import {loadSingleReportCloseCandidate,singleReportCloseSql,singleReportCloseSource} from "../tools/eo05-single-report-close-probe.mjs";
+import {klaviyoQuotaContextSource,klaviyoQuotaProfileSource,reuseGoogleProfileOids,reuseVerifiedRawHash,loadKlaviyoRawHashCandidate} from "../tools/eo05-final-synthetic-candidate.mjs";
+import {GOOGLE_SOURCE_ROLE_CHECK_SQL} from "../app/lib/database/google-source-postgres.server.js";
+import {GOOGLE_ACCEPTANCE_COORDINATOR_ROLE_CHECK_SQL} from "../app/lib/database/google-acceptance-coordinator-postgres.server.js";
 import {collectComparableReportTiming,installComparableReportTiming} from "../tools/eo05-klaviyo-daily-timing-probe.mjs";
 import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection,summarizeGoogleReportWrite,summarizeGooglePublishTrace,installGoogleFactTriggerTrace,summarizeGoogleFactTriggerTrace,installGoogleWriterPreparationCandidate,installGooglePackageReuseCandidate,installGooglePublishTrace} from "../tools/eo05-google-daily-timing-probe.mjs";
 
@@ -24,6 +27,34 @@ test("single-close rehearsal keeps the locked inspection and compares the exact 
   assert.equal(typeof (await loadSingleReportCloseCandidate(client,provider)).runScheduledRefreshWithDataset,"function");
  }
  await assert.rejects(loadSingleReportCloseCandidate({connectionParameters:{host:"remote",port:54322}},"google"));
+});
+
+test("final candidate keeps fresh profile, quota, and authenticated raw content checks",async()=>{
+ for(const profile of [GOOGLE_SOURCE_ROLE_CHECK_SQL,GOOGLE_ACCEPTANCE_COORDINATOR_ROLE_CHECK_SQL]){
+  const candidate=reuseGoogleProfileOids(profile);
+  assert.match(candidate,/required_rpc as materialized/);
+  assert.equal(candidate.match(/to_regprocedure\(s\.signature\)/g)?.length,1);
+  assert.match(candidate,/s\.oid is null or not coalesce\(has_function_privilege\(current_user,s\.oid,'EXECUTE'\),false\)/);
+  assert.match(candidate,/has_table_privilege/);
+ }
+ const read=path=>readFileSync(new URL(path,import.meta.url),"utf8").replaceAll("\r\n","\n");
+ const context=read("../supabase/migrations/20261028132721_eo05a_admin_quota_context.sql");
+ const changedContext=klaviyoQuotaContextSource(context);
+ assert.match(changedContext,/p_target='klaviyo' and p_provider='klaviyo'/);
+ assert.match(changedContext,/p\.fence=p_fence and p\.stage='request_intent'/);
+ assert.equal(changedContext.match(/not operations\.refresh_entitlement_is_current/g)?.length,1);
+ const route=read("../supabase/migrations/20261020152516_eo05a_quota_scope_resolver.sql");
+ const changedRoute=klaviyoQuotaProfileSource(route,route);
+ assert.match(changedRoute,/having count\(\*\) between 1 and 16 and bool_and\(q.provider=op.provider\)/);
+ assert.match(changedRoute,/p\.quota_fingerprint=encode\(sha256\(convert_to\(string_agg\(/);
+ assert.match(changedRoute,/API_QUOTA_ROUTE_CHANGED/);
+ for(const provider of ["google","klaviyo"]){
+  const before=read(`../app/lib/database/${provider}-dataset-source-store.server.js`);
+  const after=reuseVerifiedRawHash(before);
+  assert.equal(after,before.replace("const payload=cipher.open","cipher.open").replace("sourcePayloadHash(payload)!==sourcePayloadHash(plain)","expected.payloadHash!==sourcePayloadHash(plain)"));
+  assert.match(after,/if\(extra.length\)fail\(\)/);
+ }
+ assert.equal(typeof (await loadKlaviyoRawHashCandidate()).storeKlaviyoRawProductPackages,"function");
 });
 
 test("Google measurement refuses production, alternate project/host and unbound users",()=>{

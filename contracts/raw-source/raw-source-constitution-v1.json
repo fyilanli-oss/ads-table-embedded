@@ -864,7 +864,7 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "6575f6f48b6c3cfd71eb3cd20325aeffd73ba2c09090d1d87a67dd7dee3ab478",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "23d92098de2bc7a0dca69eb63488d9eab4a1f0dedd8f1df03822d94013377aba",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "20c8edd2d3ae7191a87bf55c6c0a6e8bb0fa436ff4664ea6415f8d9161ac4921",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -1111,7 +1111,7 @@
       "tests/fixtures/verified-mapping-fixture.js": "eddf0c215df64311f84c97cc99fad2567336ecf848a06e0b0ac9539678af4db1",
       "tests/google-acceptance.test.js": "4f5758592bc8056ee5f0f1a49a434c011f77cba09137961b3d3b03e2d1ff42ee",
       "tests/google-daily-packages.test.js": "9965be7d2a63cb5cf6fa0fc948408c73336194c636eeec8a696496115168a116",
-      "tests/google-daily-timing-probe.test.js": "d4bf0f18954b8208963bdbad49788c81ba818a306c5f7a3a18823ba0529a360d",
+      "tests/google-daily-timing-probe.test.js": "24721bdb6636252fad238d77d30ff305de3d45b42f7fe364f1e93be1395ce2ec",
       "tests/google-identity-collection.test.js": "2a140381e16aa50470f15af7854c83a0c9a620aa9be227f205281a55e5b9160a",
       "tests/google-identity-credential-lifecycle.test.js": "653b984b00b8cd57f5efd9c17702eed2661fed4f4dd722b924dea71003037462",
       "tests/google-identity-renewal-receipt.test.js": "40410f673166acc0dff0056631ceaf3bdbc691cf2914a22e57e0cb98264a6027",
@@ -1234,10 +1234,11 @@
       "tools/eo05-admin-cost-feedback-probe.mjs": "3929e29a7ddeef23acb87a7d361289ead0dcd52f7b89e64399c372fba6071071",
       "tools/eo05-admin-quota-context-probe.mjs": "e67525499cd3d2042298076e17ea2d84618c74781d78bd93fbbe44cfa827e0f9",
       "tools/eo05-customer-source-privacy-probe.mjs": "df854e763301a99f8ae21212bb84d5dca379647f735c51db4910bf1fc517e20d",
+      "tools/eo05-final-synthetic-candidate.mjs": "f39563923c239b9d47f6ccba810ffddd544d434b8f416373cb94e92a7dd8343c",
       "tools/eo05-four-phase-diagnostics.mjs": "c95afca832e974a24f69f819813a4eb003dd2cded579856f6a0923f7de6b29b9",
       "tools/eo05-google-acceptance-probe.mjs": "6895c9f7f2180de717b27e2c86572cfcd79967bb7b84c0b0f1c450ffcf372797",
       "tools/eo05-google-daily-packages-probe.mjs": "06303e6a0e0bdef025d847c1e78b928e122a70e76c1340b756e3e90e59a1b5f0",
-      "tools/eo05-google-daily-timing-probe.mjs": "e98ecc26276adfbd2184971f7c3029e3cfb0863a9de0b98d2835d71396cfcc7c",
+      "tools/eo05-google-daily-timing-probe.mjs": "47905ce906a158b0e0836fa958aff72ab0cf10f9b89b586570668d8207347e42",
       "tools/eo05-google-hosted-benchmark.mjs": "2724b75f248a74a447108afb0a35b804be8c13bee98f1da3ba43b8bd26fbd77e",
       "tools/eo05-google-identity-renewal-probe.mjs": "2f429c983600225ccdc9cadeede2611de9d48522dc575d5cb583b324b6f07fd1",
       "tools/eo05-google-mapping-flow-probe.mjs": "4cbdd4f19fb6db6ae199daa1ffcc5921ec885e467d45a1ec4abf2e6e14650d2d",
@@ -1248,7 +1249,7 @@
       "tools/eo05-google-source-role-probe.mjs": "fba96de648dd50a099dae4cdfd1e17807e5eb250cbc139d967a3f6e96b8ad19a",
       "tools/eo05-identity-authority-snapshot-probe.mjs": "0136e8dc5a5720b78d1cb4dca081f19e8b473812b6d66129b94f64fd5edf672c",
       "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
-      "tools/eo05-klaviyo-daily-timing-probe.mjs": "3434542c9b2099bcfbab96a4307ac548b2e7ee36a2791c0a5d1e6a7502011815",
+      "tools/eo05-klaviyo-daily-timing-probe.mjs": "9dc22e88991317ed875a672d12abd6e2381987e1b4de728811080907bd63bf47",
       "tools/eo05-klaviyo-hosted-benchmark.mjs": "1a21a53113d2a87cebc4426d3d8ef5f99b9e746a399ab088dc48381766e77dd9",
       "tools/eo05-klaviyo-raw-datasets-probe.mjs": "e7d504cd848ad8380575fa8a9dd6755fc95354d9a208db4d7f1a40693cc50888",
       "tools/eo05-klaviyo-source-capture-probe.mjs": "c9b9f604a72611fb0f39a8e6a178dadd72fcc6ee2f340a4396d0d6058bbaf5ab",
@@ -1288,7 +1289,7 @@
       "tools/eo05-source-rule-probe.mjs": "bdba143e69a0ac680687dfbfce815bf8c97c7fa2228179e22cc5d5d4626477ab",
       "tools/eo05-verified-mapping-probe.mjs": "875aadd0c47e64d66f5fef187b2a803cd9716ff04b0ac0871f17cc97f84f88eb",
       "tools/eo05b-dataset-server-probe.mjs": "d6177954ab377f697209d5753651f7403e82b1c1349e0425405187ce33c3b02c",
-      "tools/eo05b-dataset-storage-probe.mjs": "025d755732d0aa8cddff510c5069e41f6c640941288c43137ddf0a019613455f",
+      "tools/eo05b-dataset-storage-probe.mjs": "12aa0f1e88f5270bd8fce2dc99e3fc58a7f29d48313ffc4760e8d24394928f9d",
       "tools/eo05b-demo-fixture.mjs": "c91cf0e2b82ae6bb4db46d4dfa4ffbc0e1415877075995a5bf5cbc1f30afdd73",
       "tools/eo05b-fx-reporting-currency-probe.mjs": "c5decd13fad2a1aebccacbdf6229bcfec590c429db8ab3380008c318c479a9d5",
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
@@ -1296,7 +1297,7 @@
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
       "tools/eo05d-reconciliation-probe.mjs": "cfa524d612e31a13ec495f884c65110df1386cc068c9d5101e2ffcb8038d6476",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
-      "tools/f01-database-replay.mjs": "11e8736bc46f76dd3476a79fae8d18d21d19d375e4c8534c4ad67eccf6f5a98b",
+      "tools/f01-database-replay.mjs": "b23e14a8236a2ea276b15b2a016996082a4078ef401d9ed92139f5055cd36a2a",
       "tools/f01-identity-oauth-rollout.mjs": "5894b9ae54363fcf31372ed0a1abf39d3c0e1dfea428190232a0420b0b11f787",
       "tools/f01-live-readiness-plan.mjs": "d4eb8e8ca9d80d6e99cea8c9cf475b388db46a756e2e7a631c5c245e8e7bb25b",
       "tools/f01-live-readiness-rehearsal.mjs": "d5d2b8510551b7f99e7669a37072636bab135a6bef90b0da51bf9ef185aac17e",
@@ -2533,6 +2534,7 @@
         "tests/google-source-server.test.js",
         "tests/report-retention.test.js",
         "tests/source-evidence-store.test.js",
+        "tools/eo05-final-synthetic-candidate.mjs",
         "tools/eo05-four-phase-diagnostics.mjs",
         "tools/eo05-google-acceptance-probe.mjs",
         "tools/eo05-google-daily-packages-probe.mjs",
@@ -2541,7 +2543,8 @@
         "tools/eo05-klaviyo-daily-timing-probe.mjs",
         "tools/eo05-klaviyo-hosted-benchmark.mjs",
         "tools/eo05-single-report-close-probe.mjs",
-        "tools/eo05b-dataset-storage-probe.mjs"
+        "tools/eo05b-dataset-storage-probe.mjs",
+        "tools/f01-database-replay.mjs"
       ],
       "artifact_paths": [
         ".github/workflows/database-integrity.yml",
@@ -2823,6 +2826,26 @@
           "https://www.postgresql.org/docs/17/tutorial-transactions.html",
           "https://www.postgresql.org/docs/17/explicit-locking.html",
           "https://supabase.com/docs/guides/database/query-optimization"
+        ]
+      },
+      "final_paired_synthetic_refresh_2026_11_20": {
+        "explicit_owner_approval": "Tamam onaylıyorum.",
+        "scope": "Owner approved the three specified optimizations followed by one final paired rollback-only 1,000-report-row synthetic comparison, regardless of timing. Materialize Google mandatory RPC OIDs once per fresh profile statement during collection without caching privileges or omitting checks. In the same Klaviyo quota context read, keep request intent and the existing current-entitlement/active-installation checks while eliminating the redundant installation JSON read. In the existing route guard combine the canonical fingerprint, binding count and provider checks into one scan with unchanged reservation, dispatch recheck, feedback and settlement. Both raw stores use the authenticated expected page hash instead of hashing the same opened payload again, retaining the current plain-payload comparison, ciphertext metadata, completeness, and receipt checks. Combine with the previously proved single report closure/readback. Staged F01 environment only for the final comparison; preserve the second replay's earlier correctness baseline. No runtime, shipped SQL, OAuth setup/token behavior, hosted access, merge or deployment.",
+        "paths": [
+          "tests/google-daily-timing-probe.test.js",
+          "tools/eo05-final-synthetic-candidate.mjs",
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05-klaviyo-daily-timing-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs",
+          "tools/f01-database-replay.mjs"
+        ],
+        "local_tests_passed": 98,
+        "official_checked_at": "2026-11-20",
+        "references": [
+          "https://www.postgresql.org/docs/17/transaction-iso.html",
+          "https://supabase.com/docs/guides/database/query-optimization",
+          "https://developers.google.com/google-ads/api/docs/best-practices/quotas",
+          "https://developers.klaviyo.com/en/docs/rate_limits_and_error_handling"
         ]
       }
     }

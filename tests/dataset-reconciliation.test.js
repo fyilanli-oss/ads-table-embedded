@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {randomUUID} from "node:crypto";
 import {datasetSourceBindingFixture} from "./fixtures/dataset-source-binding-fixture.js";
+import {datasetStorageFixture} from "./fixtures/dataset-storage-fixture.js";
 import {sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
 import {reconcileStoredDatasetSources, canonicalDatasetEventTime, prepareDailyDatasetPackages, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL, SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
 import {readStoredDatasetSources} from "../app/lib/database/dataset-source-reader.server.js";
@@ -90,11 +91,14 @@ for (const provider of ["google_ads", "meta", "klaviyo"]) test("reconciliation p
   assert.equal(f.request().write.rows.length, provider === "google_ads" ? 3 : provider === "meta" ? 0 : 2);
 });
 
+const sharedShopifyInstallation=datasetStorageFixture().owner;
 for (const provider of ["google_ads", "klaviyo"]) test(`${provider} synthetic report binds a verified Shopify mapping at the Dataset write seam`, async () => {
   const reconcile=await loadSyntheticMappingReconciliation();
+  const owner={...sharedShopifyInstallation,provider,connectionId:randomUUID(),credentialId:randomUUID(),
+    accountId:provider==="google_ads"?"123":"account-1",selectionEpoch:provider==="google_ads"?"1":null};
   for (const mode of ["matched","wrong_shop","wrong_variant_parent","missing","missing_shopify_evidence",
     ...(provider==="google_ads"?["split_sale","ambiguous_link"]:[])]){
-    const f=await fixture(provider,{shopifyMapping:mode==="split_sale"?"split_sale":true});
+    const f=await fixture(provider,{owner,shopifyMapping:mode==="split_sale"?"split_sale":true});
     const mapping=verifiedMappingFixture(provider,{owner:f.owner,cipher:f.cipher,context:provider==="klaviyo"?{metric_id:"product"}:{}});
     const actualShop=mode==="wrong_shop"?{...f.owner,shopId:"gid://shopify/Shop/900",shopDomain:"foreign-fixture.myshopify.com"}:f.owner;
     const node=(type,id)=>({id:`gid://shopify/${type}/${id}`,legacyResourceId:id});

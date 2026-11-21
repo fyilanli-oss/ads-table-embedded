@@ -1705,7 +1705,7 @@
       "supabase/migrations/20261117174509_eo05_klaviyo_daily_raw_packages.sql": "e89ac6971d103e739b6ddf78df960b08d96951147c4da80f1040c1f3868263e4",
       "supabase/migrations/20261117183725_eo05_klaviyo_report_package_staging.sql": "1daf432e1232088ba74c86b2036c184b55aa36c00203160cfb413570d205ee6d",
       "supabase/migrations/20261119112554_eo05_google_daily_packages.sql": "4926f56467c5c0d5d0c212074c9d9f5bb25ad3cdeb837c07df19377ddfbd612b",
-      "tests/a6-docs-01-turkish-standardization.test.js": "5dcaa387ca679f75339510ca9d9856fcfb98eadf2510e31f94afd0599c9f870d",
+      "tests/a6-docs-01-turkish-standardization.test.js": "abd2eb68bf09dc651ed6f63c4604bf724a22d491111151c86972ef703643d0a4",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
       "tests/eo-03a-oauth-transaction-boundary.test.js": "b364193460356370d1128000e6c0b61e975b2d79b896135d97ce648bc30a7747",
@@ -4541,6 +4541,7 @@
         "app/lib/refresh/scheduled-queue-check.server.js",
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "supabase/migrations/20261119112554_eo05_google_daily_packages.sql",
+        "tests/a6-docs-01-turkish-standardization.test.js",
         "tests/google-raw-datasets-permission.test.js",
         "tools/eo05-final-synthetic-candidate.mjs",
         "tools/eo05-four-phase-diagnostics.mjs",
@@ -4964,13 +4965,15 @@
         "scope": "Documentation-only consolidation of the approved closed-day refresh decision and the existing isolated shared-queue evidence. Describe inputs, authority and quota, raw evidence, Dataset projection, Shopify mapping, packages, PostgreSQL fact write, isolated timing, receipt, checkpoint, completion and open decisions. No OAuth behavior, raw-source implementation, runtime, SQL, live provider or database, merge or deployment change.",
         "paths": [
           "contracts/eo-05a-global-refresh-design-v1.json",
-          "docs/EO_05A_REFRESH_CONTRACT.md"
+          "docs/EO_05A_REFRESH_CONTRACT.md",
+          "tests/a6-docs-01-turkish-standardization.test.js"
         ],
         "verification": [
           "relative_links_and_14_sections",
           "phase_evidence_consistency",
           "oauth_and_raw_source_guards",
-          "focused_refresh_and_reconciliation_regressions"
+          "focused_refresh_and_reconciliation_regressions",
+          "append_new_document_to_later_inventory_preserve_historical_baseline"
         ],
         "official_checked_at": "2026-11-21",
         "official_sources": [

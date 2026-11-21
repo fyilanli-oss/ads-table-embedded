@@ -16,6 +16,7 @@ import {observabilityProbe} from "./eo05e-observability-probe.mjs";
 import {googleDailyPackagesProbe} from "./eo05-google-daily-packages-probe.mjs";
 import {googleDailyTimingProbe,prepareGoogleTimingLocalRoles,installGoogleCombinedCandidate,installGoogleWriterPreparationCandidate,installGooglePackageReuseCandidate,proveGoogleReportCanonicalParity} from "./eo05-google-daily-timing-probe.mjs";
 import {metaShopifyRefreshProbe} from "./eo05-meta-shopify-refresh-probe.mjs";
+import {createSharedRefreshProbe} from "./eo05-shared-refresh-probe.mjs";
 
 async function rejected(client, action, pattern) {
   await client.query("savepoint dataset_expected_failure"); let error;
@@ -201,46 +202,53 @@ export async function datasetStorageProbe(client, connection, environment = proc
       }finally{await client.query("rollback to savepoint eo05_four_phase_diagnostics");await client.query("release savepoint eo05_four_phase_diagnostics");}
     }
     console.log("EO05_FOUR_PHASE_COMPARISON_PASS",JSON.stringify(sharedDiagnostics));
+    if(finalSynthetic){
+      await client.query("savepoint shared_shopify_mapping_installation");
+      try {
+        console.log("EO05_THREE_PROVIDER_REFRESH_START");
+        await prepareGoogleTimingLocalRoles(client);
+        const installation=await ownerFixture(client,"google_ads");
+        const sharedRefresh=createSharedRefreshProbe(client);
+        const options={sharedRefresh,ownerFixture:(db,provider)=>provider==="google_ads"
+          ?Promise.resolve(installation):ownerFixture(db,provider,installation),singleReportClose:true,finalSynthetic:true,shopifyMapping:true};
+        const combined=await sharedRefresh.run({
+          google_ads:()=>googleDailyTimingProbe(client,{...options,combinedCandidate:true,reportBreakdown:true,packageReuseCandidate:true}),
+          klaviyo:()=>klaviyoDailyTimingProbe(client,{...options,connection,environment,mode:"retention-boundary",retentionVariant:"cached",
+            combinedVerification:true,reduceReportRepeats:true,reportWriteCleanup:true,phaseCandidate:"ordered-json",
+            reuseStagedCanonical:true,reuseCanonicalRows:true,endToEnd:true,matchedTransport:"authority"}),
+          meta:async()=>metaShopifyRefreshProbe(client,await ownerFixture(client,"meta",installation),{sharedRefresh}),
+        });
+        console.log("EO05_THREE_PROVIDER_REFRESH_PASS",JSON.stringify(combined));
+      } finally {
+        await client.query("rollback to savepoint shared_shopify_mapping_installation");
+        await client.query("release savepoint shared_shopify_mapping_installation");
+      }
+    } else {
     const singleReportCloseComparison={};
-    if(finalSynthetic)await client.query("savepoint shared_shopify_mapping_installation");
-    const installation=finalSynthetic?await ownerFixture(client,"google_ads"):null;
     for(const [i,provider] of ["google","klaviyo"].entries()){
       await client.query("savepoint eo05_single_close_comparison");
       try{
         if(provider==="google")await prepareGoogleTimingLocalRoles(client);
-        const options={ownerFixture:installation?(db,nativeProvider)=>nativeProvider==="google_ads"
-          ?Promise.resolve(installation):ownerFixture(db,nativeProvider,installation):ownerFixture,
-          singleReportClose:true,finalSynthetic,shopifyMapping:finalSynthetic};
+        const options={ownerFixture,singleReportClose:true};
         const candidate=provider==="google"
           ?await googleDailyTimingProbe(client,{...options,combinedCandidate:true,reportBreakdown:true,packageReuseCandidate:true})
           :await klaviyoDailyTimingProbe(client,{...options,connection,environment,mode:"retention-boundary",retentionVariant:"cached",
             combinedVerification:true,reduceReportRepeats:true,reportWriteCleanup:true,phaseCandidate:"ordered-json",
             reuseStagedCanonical:true,reuseCanonicalRows:true,endToEnd:true,
-            // Mapping retention writes invalidate the optional whole-day memo.
-            // This rehearsal uses the independent physical/source validators.
-            sharedDaySources:!finalSynthetic,matchedTransport:"authority"});
+            sharedDaySources:true,matchedTransport:"authority"});
         const {reportRows,reportPackages,requests,receipts,durationsMs,totalMs}=candidate;
         assert.deepEqual([reportRows,reportPackages,requests,receipts],[1000,5,queueToClose[i].requests,1]);
         assert.deepEqual(Object.keys(durationsMs),Object.keys(queueToClose[i].durationsMs));
         assert.ok(Object.values(durationsMs).every(ms=>Number.isFinite(ms)&&ms>=0));
         assert.ok(Math.abs(Object.values(durationsMs).reduce((a,b)=>a+b,0)-totalMs)<0.01);
-        singleReportCloseComparison[provider]={control:queueToClose[i],candidate:{reportRows,reportPackages,requests,receipts,durationsMs,totalMs},
-          ...(finalSynthetic?{shopifyMapping:candidate.shopifyMappingMeasurement}:{}),
-          ...(finalSynthetic&&provider==="google"?{profileReuses:candidate.profileReuses}:{}),
-          ...(finalSynthetic&&provider==="klaviyo"?{authorityChecks:candidate.authorityChecks,quotaDebits:candidate.quotaDebits}:{})};
+        singleReportCloseComparison[provider]={control:queueToClose[i],candidate:{reportRows,reportPackages,requests,receipts,durationsMs,totalMs}};
       }finally{
         await client.query("rollback to savepoint eo05_single_close_comparison");
         await client.query("release savepoint eo05_single_close_comparison");
       }
     }
-    if(finalSynthetic){
-      console.log("EO05_META_1000_PACKAGE_QUEUE_TO_CLOSE_START");
-      const meta=await metaShopifyRefreshProbe(client,await ownerFixture(client,"meta",installation));
-      console.log("EO05_META_1000_PACKAGE_QUEUE_TO_CLOSE_PASS",JSON.stringify(meta));
-      await client.query("rollback to savepoint shared_shopify_mapping_installation");
-      await client.query("release savepoint shared_shopify_mapping_installation");
+    console.log("EO05_SINGLE_REPORT_CLOSE_COMPARISON_PASS",JSON.stringify(singleReportCloseComparison));
     }
-    console.log(finalSynthetic?"EO05_SHOPIFY_MAPPING_QUEUE_TO_CLOSE_PASS":"EO05_SINGLE_REPORT_CLOSE_COMPARISON_PASS",JSON.stringify(singleReportCloseComparison));
     await client.query("savepoint google_package_reuse_correctness");
     try{
       await installGoogleCombinedCandidate(client);

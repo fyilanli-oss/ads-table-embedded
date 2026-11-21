@@ -65,7 +65,7 @@ async function seedQuota(client,owner,{provider,apiVersion,organizationId=null,f
   return policy;
 }
 
-export async function metaShopifyRefreshProbe(client,owner) {
+export async function metaShopifyRefreshProbe(client,owner,{sharedRefresh}={}) {
   await prepareGoogleTimingLocalRoles(client);
   const roleSql=readFileSync(new URL("./sql/eo05-meta-source-role-install.sql",import.meta.url),"utf8");
   await client.query("set local role postgres");
@@ -75,9 +75,9 @@ export async function metaShopifyRefreshProbe(client,owner) {
   await client.query("set local role adstable_owner");
   await installMetaDailyReportRehearsal(client);
 
-  const now=Date.now, issued=now(), day=new Date(issued-86400000).toISOString().slice(0,10), window={from:day,to:day};
+  const now=Date.now, issued=now(), day=sharedRefresh?.day??new Date(issued-86400000).toISOString().slice(0,10), window={from:day,to:day};
   const connectedAt=new Date(issued-3*86400000).toISOString();
-  const generation=randomUUID(), environment=metaFirstDayRehearsalEnvironment();
+  const generation=sharedRefresh?.generation??randomUUID(), environment=metaFirstDayRehearsalEnvironment();
   environment.ADSTABLE_REFRESH_DATASET_DATABASE_URL=environment.ADSTABLE_RUNTIME_DATABASE_URL.replace("adstable_runtime",datasetRole);
   environment.ADSTABLE_REFRESH_DATASET_DB_TIMEOUT_MS="30000";
   for(const {v} of (await client.query("select distinct key_version v from integrations.provider_credential_envelopes union select distinct key_version v from integrations.oauth_pkce_envelopes")).rows)
@@ -93,13 +93,16 @@ export async function metaShopifyRefreshProbe(client,owner) {
   await client.query("update integrations.reporting_account_bindings set effective_from=$2 where connection_id=$1",[owner.connectionId,connectedAt]);
   const metaPolicy=await seedQuota(client,owner,{provider:"meta",apiVersion:"v26.0",families:["token_debug","insights","product_insights"]});
   const partnerPolicy=await seedQuota(client,owner,{provider:"shopify_partner",apiVersion:"2026-07",organizationId:"10",families:["partner_graphql"]});
+  if(sharedRefresh)sharedRefresh.setPartnerEnvironment(environment);
   const cost={requests:16,dbWrites:8000,connections:6,rows:1000,bytes:4194304};
+  if(!sharedRefresh){
   await client.query("update operations.refresh_control set budget=$1,bounds=$2 where singleton",[
     {global:cost,interactiveReserve:{requests:0,dbWrites:0,connections:0,rows:0,bytes:0},providers:[{provider:"meta",limit:cost}],
       workspaces:[{workspaceId:owner.workspaceId,limit:cost}],accounts:[{provider:"meta",accountId:owner.accountId,limit:cost}]},
     {maxWorkspaces:8,maxCandidates:8,maxClaims:1,maxAdmissions:1}]);
   await client.query("update operations.refresh_tick_control set enabled=true,generation=$1,last_minute=null,last_checked_at_ms=null,queue_revision=null where singleton",[generation]);
   await client.query("update operations.refresh_queue_control set max_workspaces=8,max_accounts=8,max_snapshot_bytes=100000,max_snapshot_age_ms=60000 where singleton");
+  }
 
   const cipher=createConfiguredSourceEvidenceCipher(environment), ledger=createGoogleTimingLedger();
   const mapping=await seedShopifyMappingTimingFixture(client,{owner,cipher,window});
@@ -130,7 +133,7 @@ export async function metaShopifyRefreshProbe(client,owner) {
     assert.equal(identity.profile_ready,true);
     return roleQuery(coordinatorRole,sql,args);
   }};
-  const store=createRefreshWorkRepository({query:(sql,args)=>/operations\.(check_refresh_queue_on_tick|review_refresh_interrupted_work)\(/.test(sql)
+  let store=createRefreshWorkRepository({query:(sql,args)=>/operations\.(check_refresh_queue_on_tick|review_refresh_interrupted_work)\(/.test(sql)
     ?roleQuery("adstable_refresh_queue_runner",sql,args):coordinator.query(sql,args)});
   const runtime={query:(sql,args)=>roleQuery("adstable_runtime",sql,args)};
   const pool=role=>()=>({on(){},async end(){},async connect(){
@@ -159,6 +162,7 @@ export async function metaShopifyRefreshProbe(client,owner) {
 
   const verified=await loadMetaBackgroundOwner({database:runtime,owner:{workspaceId:owner.workspaceId,installGeneration:Number(owner.generation),shopId:owner.shopId,shopDomain:owner.shopDomain}});
   const tokenVault=createTokenVault({database:runtime,environment});
+  if(sharedRefresh)store=await sharedRefresh.beforeWork({owner,cost,store});
   const limits={deadlineAt:now()+115000,requestTimeoutMs:80000,finishReserveMs:2000,maxRows:1000,maxBytes:cost.bytes};
   const entitlementVerifier=createAuthorityQuotaEntitlementVerifier({store,quotaStore:createSharedQuotaRepository(coordinator),
     appId:environment.SHOPIFY_APP_GID,environment,now,limits,async fetchFn(endpoint){
@@ -172,7 +176,7 @@ export async function metaShopifyRefreshProbe(client,owner) {
   let result;
   try{
     ledger.start();
-    await store.checkQueueFromAuthority({expectedRevision:(await store.readQueueCheck()).revision});
+    if(!sharedRefresh)await store.checkQueueFromAuthority({expectedRevision:(await store.readQueueCheck()).revision});
     ledger.phaseAt("queueAndAdmission");
     result=await runScheduled({store,generation,environment,poolFactory:pool(datasetRole),work:{now,entitlementVerifier,
       buildWorkPlan:async candidate=>candidate.workspaceId===owner.workspaceId&&candidate.provider==="meta"
@@ -224,14 +228,17 @@ export async function metaShopifyRefreshProbe(client,owner) {
   } finally {observer.close();}
   const measured=ledger.stop();
   if(failure)throw failure;
+  if(sharedRefresh)await sharedRefresh.afterClose(owner,result);
   assert.equal(result.work?.status,"completed",JSON.stringify({result,calls}));
   assert.equal(result.work.dataset.consumerReceipt,true);
   assert.equal(result.work.dataset.checkpointAdvanced,true);
   assert.equal(measured.rawDatasets,2);
   assert.deepEqual(calls,{meta:12,partner:1});
-  for(const [policy,expected] of [[metaPolicy,12],[partnerPolicy,1]]){
+  const debitCounts=[];
+  for(const [policy,expected] of [[metaPolicy,12],[partnerPolicy,sharedRefresh?3:1]]){
     const {rows:[count]}=await client.query("select count(*)::int reserved,count(*) filter(where settled)::int settled from operations.api_quota_debits where policy_id=$1",[policy]);
     assert.deepEqual(count,{reserved:expected,settled:expected});
+    debitCounts.push(count);
   }
   const {rows:[facts]}=await client.query(`select
     (select count(*)::int from analytics.pd_facts where installation_id=$1 and platform='meta') account,
@@ -281,5 +288,6 @@ export async function metaShopifyRefreshProbe(client,owner) {
     assert.deepEqual(after,{account:0,performance:0,consumed:0,status:"running"});
   }
   await client.query("release savepoint meta_daily_before_publication");
-  return {...measured,facts,calls,mapping:mapping.summary(),receipts:receipts.length,packageSizes,retention,incompletePackRejected:true};
+  return {...measured,facts,calls,mapping:mapping.summary(),receipts:receipts.length,packageSizes,retention,incompletePackRejected:true,
+    quotaDebits:debitCounts[0],partnerQuotaDebits:debitCounts[1]};
 }

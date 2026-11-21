@@ -660,7 +660,7 @@ export function summarizeGooglePublishTrace(notices) {
  return {...publish,...writer,writerBoundaryOverheadMs};
 }
 
-export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false,factTriggerTrace=false,writerPreparationCandidate=false,comparableReport=false,packageReuseCandidate=false,fourPhaseDiagnostics=false,singleReportClose=false,finalSynthetic=false,shopifyMapping=false}){
+export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false,factTriggerTrace=false,writerPreparationCandidate=false,comparableReport=false,packageReuseCandidate=false,fourPhaseDiagnostics=false,singleReportClose=false,finalSynthetic=false,shopifyMapping=false,sharedRefresh}){
  const target=assertGoogleTimingTarget(client.connectionParameters);
  if(quotaClaimComparison)assert.equal(target,"local");
  assert.ok(!combinedCandidate||!quotaClaimComparison);
@@ -719,7 +719,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   fourPhase?fourPhase.query(ledger.phase,sql,args,()=>queryAsRole(role,sql,args)):queryAsRole(role,sql,args);
  function poolFactory(role){return ()=>({on(){},async end(){},async connect(){
   const name="google_rpc_"+(++ordinal),connected=performance.now();let open=false,report=false;
-  if(singleReportClose&&role==="adstable_refresh_dataset_runner"&&reportPublished){
+  if(singleReportClose&&!sharedRefresh&&role==="adstable_refresh_dataset_runner"&&reportPublished){
    await client.query("savepoint eo05_single_close_proof");
   }
   return {release(){if(report&&ledger.phase==="reportWrite")ledger.phaseAt("reportPreparation");},async query(sql,args=[]){
@@ -750,7 +750,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   return roleQuery("adstable_refresh_coordinator",sql,args);
  }};
  const queue={query:(sql,args)=>roleQuery("adstable_refresh_queue_runner",sql,args)};
- const store=createRefreshWorkRepository({query:(sql,args)=>/operations\.(check_refresh_queue_on_tick|review_refresh_interrupted_work)\(/.test(sql)?queue.query(sql,args):coordinator.query(sql,args)});
+ let store=createRefreshWorkRepository({query:(sql,args)=>/operations\.(check_refresh_queue_on_tick|review_refresh_interrupted_work)\(/.test(sql)?queue.query(sql,args):coordinator.query(sql,args)});
  try{
   if(combinedCandidate)await installGoogleCombinedCandidate(client);
   // The private package-reuse writer copies the selected preparation definition.
@@ -762,8 +762,8 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   if(comparableReport){await installComparableReportTiming(client,"google");comparable=collectComparableReportTiming(client);}
   if(fourPhaseDiagnostics)fourPhase=await createFourPhaseDiagnostics(client,"google");
   await installRoleAdapter(client,collectionDiagnostics);
-  const owner=await ownerFixture(client,"google_ads"),day="2026-11-01",window={from:day,to:day},now=Date.now;
-  const issued=now(),generation=randomUUID(),operationId=randomUUID(),hash=()=>randomBytes(32).toString("hex"),key=()=>randomBytes(32).toString("base64url");
+  const owner=await ownerFixture(client,"google_ads"),day=sharedRefresh?.day??"2026-11-01",window={from:day,to:day},now=Date.now;
+  const issued=now(),generation=sharedRefresh?.generation??randomUUID(),operationId=randomUUID(),hash=()=>randomBytes(32).toString("hex"),key=()=>randomBytes(32).toString("base64url");
   const environment={GOOGLE_ADS_DEVELOPER_TOKEN:"SYNTHETIC-ONLY",ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION:"1",ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1:key(),
    ADSTABLE_SOURCE_EVIDENCE_ACTIVE_KEY_VERSION:"1",ADSTABLE_SOURCE_EVIDENCE_ENCRYPTION_KEY_V1:key(),ADSTABLE_SESSION_ENCRYPTION_KEY_V1:key(),
    ADSTABLE_GOOGLE_SOURCE_DB_TIMEOUT_MS:"5000",ADSTABLE_REFRESH_DATASET_DB_TIMEOUT_MS:"30000"};
@@ -777,8 +777,9 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
    installGeneration:Number(owner.generation),provider:"google_ads",purpose:"provider_token_set"},secret:JSON.stringify(token)});
   await client.query("update integrations.provider_credential_envelopes set payload_ciphertext=$2,nonce=$3,auth_tag=$4,key_version=$5 where id=$1",
    [owner.credentialId,sealed.ciphertext,sealed.nonce,sealed.authTag,sealed.keyVersion]);
-  await client.query("update integrations.provider_connections set granted_scopes=$2,connected_at='2026-10-31' where id=$1",[owner.connectionId,scopes]);
-  await client.query("update integrations.reporting_account_bindings set effective_from='2026-10-31' where connection_id=$1",[owner.connectionId]);
+  const eligibleFrom=sharedRefresh?new Date(issued-3*86400000).toISOString():"2026-10-31";
+  await client.query("update integrations.provider_connections set granted_scopes=$2,connected_at=$3 where id=$1",[owner.connectionId,scopes,eligibleFrom]);
+  await client.query("update integrations.reporting_account_bindings set effective_from=$2 where connection_id=$1",[owner.connectionId,eligibleFrom]);
   const context={provider:"google_ads",clientScopeKey:hash(),connectionScopeKey:hash(),connectionEpoch:1,accountId:owner.accountId,organizationId:null,apiVersion:"v25"};
   await client.query(`insert into operations.refresh_quota_contexts(workspace_id,install_generation,provider,installation_id,connection_id,connection_version,account_id,client_scope_key,connection_scope_key,connection_epoch,api_version,enabled)
    values($1,$2,'google_ads',$3,$4,$5,$6,$7,$8,1,'v25',true)`,[owner.workspaceId,owner.generation,owner.installationId,owner.connectionId,owner.connectionVersion,owner.accountId,context.clientScopeKey,context.connectionScopeKey]);
@@ -791,21 +792,24 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   await client.query("insert into operations.api_quota_route_profiles values($1,$2,operations.shared_api_quota_fingerprint($1),true)",[route.routeKey,context.connectionScopeKey]);
   await client.query("insert into operations.api_quota_routes values($1,$1,true)",[route.routeKey]);
   const cost={requests:40,dbWrites:10000,connections:6,rows:6000,bytes:8000000};
+  if(!sharedRefresh){
   await client.query("update operations.refresh_control set budget=$1,bounds=$2 where singleton",[
    {global:cost,interactiveReserve:{requests:0,dbWrites:0,connections:0,rows:0,bytes:0},providers:[{provider:"google_ads",limit:cost}],workspaces:[{workspaceId:owner.workspaceId,limit:cost}],accounts:[{provider:"google_ads",accountId:owner.accountId,limit:cost}]},
    {maxWorkspaces:8,maxCandidates:8,maxClaims:1,maxAdmissions:1}]);
   await client.query("update operations.refresh_tick_control set enabled=true,generation=$1,last_minute=null,last_checked_at_ms=null,queue_revision=null where singleton",[generation]);
   await client.query("update operations.refresh_queue_control set max_workspaces=8,max_accounts=8,max_snapshot_bytes=100000,max_snapshot_age_ms=60000 where singleton");
+  }
   const verified=await loadGoogleBackgroundOwner({database:runtime,owner:{workspaceId:owner.workspaceId,installGeneration:Number(owner.generation),shopId:owner.shopId,shopDomain:owner.shopDomain}});
   const tokenVault=createTokenVault({database:runtime,environment}),cipher=createConfiguredSourceEvidenceCipher(environment);
   const mapping=shopifyMapping?await seedShopifyMappingTimingFixture(client,{owner,cipher,window}):null;
+  if(sharedRefresh){sharedRefresh.setCoordinator(coordinator);store=await sharedRefresh.beforeWork({owner,cost,store});}
   const limits={deadlineAt:now()+120000,requestTimeoutMs:100000,finishReserveMs:2000,maxRows:2000,maxBytes:cost.bytes};
-  const appId="gid://shopify/App/456",entitlementVerifier=createRefreshEntitlementVerifier({store,appId,now,limits,authorizeRead:async()=>true,
+  const appId="gid://shopify/App/456",entitlementVerifier=sharedRefresh?.partnerVerifier({store,owner,now,limits})??createRefreshEntitlementVerifier({store,appId,now,limits,authorizeRead:async()=>true,
    partnerApi:{appId,activeSubscription:async()=>({data:{activeSubscription:{shop:{id:owner.shopId,myshopifyDomain:owner.shopDomain},billingPeriod:"EVERY_30_DAYS",cancelAtEndOfCycle:false,trialEndsAt:null,
     currentBillingCycle:{startTime:new Date(now()-86400000).toISOString(),endTime:new Date(now()+86400000).toISOString()},items:[{handle:"monthly",price:{active:true}}]}}})}});
   const queries=buildGoogleReportingQueries({dateWindow:{start:day,end:day}}),batches=[];let requests=0,claimId,scope;
   ledger.start();
-  await store.checkQueueFromAuthority({expectedRevision:(await store.readQueueCheck()).revision});
+  if(!sharedRefresh)await store.checkQueueFromAuthority({expectedRevision:(await store.readQueueCheck()).revision});
   ledger.phaseAt("queueAndAdmission");
   const run=await runScheduled({store,generation,environment,poolFactory:poolFactory("adstable_refresh_dataset_runner"),work:{now,entitlementVerifier,
    buildWorkPlan:async candidate=>candidate.workspaceId===owner.workspaceId&&candidate.provider==="google_ads"?{window,partitionId:"synthetic-google-daily:"+day,workClass:"deep_reconciliation",cost,limits}:null,
@@ -823,7 +827,9 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
      storageLimits:{maxRows:1000,maxBytes:2097152},sourcePolicy:sourceStoreFixture().input.policy,merchant:null},signal,now,poolFactory:poolFactory("adstable_google_source_runner"),
      fetchFn:async(url,init)=>{assert.equal(new URL(url).hostname,"googleads.googleapis.com");requests++;const query=JSON.parse(init.body).query;
       if(query.includes("FROM product_link"))return Response.json({results:[]});const family=Object.keys(queries).find(f=>queries[f]===query);assert.ok(family);
-      return Response.json({results:googleDatasetNativeRows(family,owner.accountId,{googleProducts:500,googleSalesProducts:499,mappedTimingSample:shopifyMapping})});}});
+      const results=googleDatasetNativeRows(family,owner.accountId,{googleProducts:500,googleSalesProducts:499,mappedTimingSample:shopifyMapping});
+      if(sharedRefresh)for(const row of results)if(row.segments?.date)row.segments={...row.segments,date:day};
+      return Response.json({results});}});
     const capture=await reader.run();await reader.close();reader=null;
     if(failed)throw Object.assign(Error(failed.message),failed);
     assert.equal(capture.status,"partial",JSON.stringify({capture,failed}));assert.equal(capture.contentVerified,true);
@@ -835,11 +841,12 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
     ...(mapping?{bindSyntheticMappings:mapping.bindSyntheticMappings}:{})};}
   }});
   const measured=ledger.stop();if(failed)throw Object.assign(Error(failed.message),failed);
+  if(sharedRefresh)await sharedRefresh.afterClose(owner,run);
   assert.equal(run.work?.status,"completed",JSON.stringify(run));assert.equal(requests,18);assert.equal(measured.rawDatasets,3);assert.ok(roleChecks>0);
   if(finalSynthetic)assert.ok(profileReuses>0&&profileReuses<=roleChecks);
-  const rows=(await client.query(`select (select count(*)::int from analytics.pd_facts where installation_id=$1) pd,
-   (select count(*)::int from analytics.cpd_product_performance_facts where installation_id=$1) performance,
-   (select count(*)::int from analytics.cpd_product_sales_facts where installation_id=$1) sales`,[owner.installationId])).rows[0];
+  const rows=(await client.query(`select (select count(*)::int from analytics.pd_facts where installation_id=$1 and platform='google_ads') pd,
+   (select count(*)::int from analytics.cpd_product_performance_facts where installation_id=$1 and platform='google_ads') performance,
+   (select count(*)::int from analytics.cpd_product_sales_facts where installation_id=$1 and platform='google_ads') sales`,[owner.installationId])).rows[0];
   assert.deepEqual(rows,{pd:1,performance:500,sales:499});
   let shopifyMappingMeasurement;
   if(mapping){
@@ -854,7 +861,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   const receipts=(await client.query("select manifest->'googleDailyReceipt' receipt from evidence.source_batches where authority=$1::jsonb and manifest ? 'googleDailyReceipt'",[JSON.stringify(owner)])).rows;
   assert.equal(receipts.length,1);assert.equal(receipts[0].receipt.rowCount,1000);assert.deepEqual(receipts[0].receipt.packages.map(p=>p.rowCount),[200,200,200,200,200]);
   assert.equal((await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",[owner.workspaceId,claimId])).rows[0].status,"completed");
-  if(singleReportClose){
+  if(singleReportClose&&!sharedRefresh){
    assert.ok(closeArgs);
    await client.query("rollback to savepoint eo05_single_close_proof");
    await verifySingleReportCloseRejections(client,"google",GOOGLE_DAILY_FINISH_SQL,closeArgs);
@@ -872,7 +879,10 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
    receipts[0].receipt.rowCount,publishDetails.physicalWriteMs,
   ):null;
   const reportComparison=comparable?await comparable.result(reportWriteBreakdown.reportWriteMs,reportWriteBreakdown.stageCallWallMs):undefined;
-  return {provider:"google_ads",synthetic:true,rollbackOnly:true,combinedCandidate,reportCandidate,reportRows:1000,nativeRows:shopifyMapping?1500:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,
+  const quotaDebits=sharedRefresh?(await client.query(`select count(*)::int reserved,count(*) filter(where settled)::int settled
+    from operations.api_quota_debits where policy_id=$1`,[policyId])).rows[0]:undefined;
+  if(sharedRefresh)assert.deepEqual(quotaDebits,{reserved:requests,settled:requests});
+  return {provider:"google_ads",synthetic:true,rollbackOnly:true,combinedCandidate,reportCandidate,reportRows:1000,nativeRows:shopifyMapping?1500:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,quotaDebits,
    ...(shopifyMappingMeasurement?{shopifyMappingMeasurement}:{}),
    ...(finalSynthetic?{profileReuses}:{}),
    adstableWallMs:measured.totalMs-measured.postgresCallWallMs,providerNetworkMeasured:false,sqlInnerTimers:collectionDiagnostics||publishTrace||comparableReport,durableCommitMeasured:false,

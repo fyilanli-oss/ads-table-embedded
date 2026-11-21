@@ -13,6 +13,7 @@ export async function seedShopifyMappingTimingFixture(client,{owner,cipher,windo
   const google=owner.provider==="google_ads";
   const meta=owner.provider==="meta";
   const fixture=verifiedMappingFixture(owner.provider,{owner,cipher,...owner.provider==="klaviyo"?{context:{metric_id:"m3"}}:{}});
+  const ruleKey=`${fixture.rule.ruleKey}-${owner.provider}`;
   const node=(type,id)=>({id:`gid://shopify/${type}/${id}`,legacyResourceId:id});
   const product=node("Product","123");
   const verified=await verifyShopifyProductCandidate({
@@ -39,16 +40,17 @@ export async function seedShopifyMappingTimingFixture(client,{owner,cipher,windo
   await client.query("update evidence.source_batches set manifest=manifest||jsonb_build_object($1::text,$2::jsonb) where id=$3",
     [readKey,{...readContext,completedAt},origin.batchId]);
   const attempt=randomUUID(),body=emptyBatch();
-  body.rules.push({key:"r",ruleKey:fixture.rule.ruleKey,version:"1",kind:"product_identity",context:identity.context,
+  body.rules.push({key:"r",ruleKey,version:"1",kind:"product_identity",context:identity.context,
     parserVersion:fixture.rule.parserVersion,state:"reviewed",basis:fixture.rule.basis,applicability:fixture.rule.applicability});
   body.mappings.push({key:"m",rule:"r",identity,revision:"2",nativeId:identity.nativeId,context:identity.context,
     productId:verified.candidate.product_id,variantId:verified.candidate.variant_id,state:"verified",verifiedAt:completedAt,applicability:{state:"synthetic_fixture"}});
   for(const [ordinal,entry] of fixture.entries.entries()){
     const key=`p${ordinal}`;
+    const row=entry.role==="review_basis"?{...entry.row,ruleKey}:entry.row;
     body.pages.push(cipher.seal({owner,attemptId:attempt,ordinal:0,page:{key,family:entry.family,ordinal,origin:owner.provider,
       captureLayer:entry.role==="native_product_observation"?"native_response_projection":"collector_projection",numericFidelity:"decoded_only",
-      fieldCoverage:["records"],schemaVersion:entry.schema,sanitizerVersion:"synthetic-v1"},payload:{records:[entry.row]}}));
-    body.references.push({key,page:key,locatorKind:"row",locator:"/records/0",nativeType:entry.role,nativeId:null,state:"present",hash:sourcePayloadHash(entry.row)});
+      fieldCoverage:["records"],schemaVersion:entry.schema,sanitizerVersion:"synthetic-v1"},payload:{records:[row]}}));
+    body.references.push({key,page:key,locatorKind:"row",locator:"/records/0",nativeType:entry.role,nativeId:null,state:"present",hash:sourcePayloadHash(row)});
     body.links.push({reference:key,targetType:entry.target,target:entry.target==="mapping"?"m":"r",role:entry.role});
   }
   const receipt=await commit(attempt,body);

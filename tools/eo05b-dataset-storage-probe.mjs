@@ -234,6 +234,7 @@ export async function datasetStorageProbe(client, connection, environment = proc
       }
     }
     if(finalSynthetic){
+      console.log("EO05_META_1000_PACKAGE_QUEUE_TO_CLOSE_START");
       const meta=await metaShopifyRefreshProbe(client,await ownerFixture(client,"meta",installation));
       console.log("EO05_META_1000_PACKAGE_QUEUE_TO_CLOSE_PASS",JSON.stringify(meta));
       await client.query("rollback to savepoint shared_shopify_mapping_installation");

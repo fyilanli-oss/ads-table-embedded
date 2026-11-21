@@ -22,8 +22,8 @@ begin
     or not pack ?& array['version','operationId','policy','rows'] or pack->>'version' is distinct from 'eo05b-storage-v1'
     or pack-'rows' is distinct from (extra_packages->0)-'rows'
     or jsonb_typeof(pack->'rows') is distinct from 'array' or jsonb_array_length(pack->'rows')<>200
-    or octet_length(analytics.dataset_json(jsonb_build_object('write',pack,'context',c)))>1048576
     then raise exception 'META_REPORT_PACKAGE_INVALID';end if;
+   -- The existing digest rejects canonical inputs over 1 MiB as it hashes.
    pack_summary:=pack_summary||jsonb_build_array(jsonb_build_object('ordinal',jsonb_array_length(pack_summary),
     'rowCount',200,'digest',analytics.dataset_digest(jsonb_build_object('write',pack,'context',c))));
    combined_rows:=combined_rows||(pack->'rows');
@@ -40,11 +40,16 @@ begin
   // Keep replacement out of this first-publication-only rehearsal.
   sql=replaceOnce(sql,"old_count:=old_count+1;if old_count>200", "old_count:=old_count+1;if extra_packages is not null or old_count>200");
   sql=replaceOnce(sql," limit 201) x',name)"," limit %s) x',name,case when extra_packages is null then 201 else 1001 end)");
-  // The report holds every eligible batch before this loop. Every row still
-  // proves its references belong to that same locked, verified day and floor.
-  sql=replaceOnce(sql,`   for k in select distinct x->>'batch_id' from jsonb_array_elements(r->'provenance'->'sources') x loop
+  // The whole-day context, date/timezone floor and superset of references have
+  // already been locked and checked. Keep the per-row equality and membership
+  // checks and map-specific retention, and reuse the shared proof only here.
+  sql=replaceOnce(sql,"if analytics.report_retention_until((r->>'business_date')::date,r->>'source_timezone') is distinct from (p->'policy'->>'until')::timestamptz",
+    "if (extra_packages is null and analytics.report_retention_until((r->>'business_date')::date,r->>'source_timezone') is distinct from (p->'policy'->>'until')::timestamptz)");
+  sql=replaceOnce(sql,`   perform analytics.assert_report_source_context(o,r->'provenance'->'source_context',(p->'policy'->>'until')::timestamptz,r->'provenance'->'sources');
+   for k in select distinct x->>'batch_id' from jsonb_array_elements(r->'provenance'->'sources') x loop
     perform analytics.hold_report_source_batch(o,k::bigint,(p->'policy'->>'until')::timestamptz);
    end loop;`,`   if extra_packages is null then
+    perform analytics.assert_report_source_context(o,r->'provenance'->'source_context',(p->'policy'->>'until')::timestamptz,r->'provenance'->'sources');
     for k in select distinct x->>'batch_id' from jsonb_array_elements(r->'provenance'->'sources') x loop
      perform analytics.hold_report_source_batch(o,k::bigint,(p->'policy'->>'until')::timestamptz);
     end loop;

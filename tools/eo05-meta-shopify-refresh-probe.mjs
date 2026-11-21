@@ -114,6 +114,8 @@ export async function metaShopifyRefreshProbe(client,owner) {
       return result;
     } catch(error) {
       failure??=error;
+      console.error("EO05_META_1000_SQL_STOP",JSON.stringify({phase:ledger.phase,code:error.code??"unknown",
+        operation:sql.match(/(?:analytics|evidence|operations|integrations)\.[a-z_]+/)?.[0]??"role_check"}));
       throw error;
     }
   };

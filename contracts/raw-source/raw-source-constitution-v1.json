@@ -458,7 +458,7 @@
       "docs/RAW_SOURCE_CONSTITUTION.md"
     ],
     "sha256": {
-      ".github/workflows/database-integrity.yml": "cd4fc4e6e4b60d7e0dc51921f99b3596274b50406c0619dac3bb86e2a8b34bc0",
+      ".github/workflows/database-integrity.yml": "7b41c78eef7940aef01da4ff9ff858b1b046b1bbd647a7a98e76c203d7a8a2d5",
       ".github/workflows/repository-governance.yml": "d0c6feecc08f145588c72fac541040ca2e14949af7785961e5df27c01628b852",
       ".github/workflows/shopify-app-deploy.yml": "ef078addb630fdb624189c0f12625524a7e3dcaf708f2059f95e7a2884cf5d24",
       "AGENTS.md": "01ef3b2e4fd58cb77b30b030a87562b0436986e200bc342f77f929b34eb19d51",
@@ -864,7 +864,7 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "325da96ae5f4f320f06a0abd5545fd2032297cafc57c844d0cf5864cae661752",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "e02ff78e4c17b59ef1807972417dfc0cb860685e93ed2cd86e0da59dbc49df7f",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "f40329aa6f2d47b894174252ab15f309694290e01466d77b11cac6f96d039ede",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -3005,6 +3005,22 @@
           "https://developers.facebook.com/docs/graph-api/overview/rate-limiting/#ads-insights",
           "https://shopify.dev/docs/api/partner/latest#rate-limits",
           "https://supabase.com/docs/guides/database/postgres/row-level-security"
+        ]
+      },
+      "isolated_database_integrity_job_timeout_2026_11_21": {
+        "explicit_owner_approval": "Onaylıyorum Codex",
+        "scope": "Change only the isolated-replay CI job-wide timeout from 30 to 45 minutes, then run the same required database and governance checks. Preserve all steps, SQL and request deadlines, OAuth and raw-source behavior, and acceptance criteria. No live provider, hosted database, deployment or merge authorization.",
+        "paths": [
+          ".github/workflows/database-integrity.yml"
+        ],
+        "verification": [
+          "exact_one_line_workflow_diff",
+          "focused_F01_and_constitution_regressions",
+          "required_CI_same_suite"
+        ],
+        "official_checked_at": "2026-11-21",
+        "official_sources": [
+          "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idtimeout-minutes"
         ]
       }
     }

@@ -245,6 +245,13 @@ export async function metaShopifyRefreshProbe(client,owner) {
   assert.equal(receipts[0].receipt.rowCount,1000);
   const packageSizes=receipts[0].receipt.packages.map(p=>p.rowCount);
   assert.deepEqual(packageSizes,[200,200,200,200,200]);
+  const {rows:[retention]}=await client.query(`select count(*)::int reference_count,
+    count(*) filter(where b.retain_until>=e.target and p.retain_until>=e.target and r.retain_until>=e.target)::int retained
+    from evidence.source_batches b join evidence.source_pages p on p.batch_id=b.id
+    join evidence.source_references r on r.page_id=p.id
+    cross join lateral (select analytics.report_retention_until($2::date,'UTC') target) e
+    where b.authority=$1::jsonb and b.handoff_state='consumed'`,[owner,day]);
+  assert.deepEqual(retention,{reference_count:1000,retained:1000});
   assert.equal((await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",[owner.workspaceId,result.work.claim.id])).rows[0].status,"completed");
 
   // Separate negative controls after the measured successful close. Return to
@@ -270,5 +277,5 @@ export async function metaShopifyRefreshProbe(client,owner) {
     assert.deepEqual(after,{account:0,performance:0,consumed:0,status:"running"});
   }
   await client.query("release savepoint meta_daily_before_publication");
-  return {...measured,facts,calls,mapping:mapping.summary(),receipts:receipts.length,packageSizes,incompletePackRejected:true};
+  return {...measured,facts,calls,mapping:mapping.summary(),receipts:receipts.length,packageSizes,retention,incompletePackRejected:true};
 }

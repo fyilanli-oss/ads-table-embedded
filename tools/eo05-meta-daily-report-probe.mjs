@@ -40,6 +40,15 @@ begin
   // Keep replacement out of this first-publication-only rehearsal.
   sql=replaceOnce(sql,"old_count:=old_count+1;if old_count>200", "old_count:=old_count+1;if extra_packages is not null or old_count>200");
   sql=replaceOnce(sql," limit 201) x',name)"," limit %s) x',name,case when extra_packages is null then 201 else 1001 end)");
+  // The report holds every eligible batch before this loop. Every row still
+  // proves its references belong to that same locked, verified day and floor.
+  sql=replaceOnce(sql,`   for k in select distinct x->>'batch_id' from jsonb_array_elements(r->'provenance'->'sources') x loop
+    perform analytics.hold_report_source_batch(o,k::bigint,(p->'policy'->>'until')::timestamptz);
+   end loop;`,`   if extra_packages is null then
+    for k in select distinct x->>'batch_id' from jsonb_array_elements(r->'provenance'->'sources') x loop
+     perform analytics.hold_report_source_batch(o,k::bigint,(p->'policy'->>'until')::timestamptz);
+    end loop;
+   end if;`);
   sql=replaceOnce(sql," for item in select value from jsonb_array_elements(p->'rows') loop\n  name:=item->>'table';",` for item in
   select entries.value from jsonb_array_elements(coalesce(extra_packages,jsonb_build_array(p))) with ordinality packages(body,n)
   cross join lateral jsonb_array_elements(packages.body->'rows') with ordinality entries(value,n)

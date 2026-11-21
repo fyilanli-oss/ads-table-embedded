@@ -1,0 +1,122 @@
+{
+  "version": "eo05-google-nano-end-to-end-v1",
+  "date": "2026-11-19",
+  "status": "harness_prepared_pending_required_ci",
+  "owner_approval": {
+    "response": "Onaylıyorum Codex",
+    "scope": "Prepare a Google-only timing harness, prove isolated correctness, then one hosted Nano queue-to-close run with 1000 report rows, temporary expiring test access, synthetic OAuth/identity data and rollback/cleanup. No production behavior/writer change."
+  },
+  "target": {
+    "project": "lxphenczjmueblnonklm",
+    "host": "aws-1-eu-central-1.pooler.supabase.com",
+    "port": 5432,
+    "preflight_postgres": "17.12",
+    "preflight_installations": 0,
+    "preflight_benchmark_roles": 0,
+    "google_daily_sql_preinstalled": false,
+    "google_source_role_preinstalled": false,
+    "existing_source_role_definition_prerequisite_ready": true
+  },
+  "workload": {
+    "report_rows": 1000,
+    "native_rows": 1501,
+    "product_performance": 500,
+    "product_sales": 499,
+    "pd": 1,
+    "report_packages": [
+      200,
+      200,
+      200,
+      200,
+      200
+    ],
+    "google_synthetic_responses": 18,
+    "real_provider_requests": 0,
+    "daily_receipts": 1
+  },
+  "method": {
+    "actual_google_reader": true,
+    "actual_runtime_vault_and_authority": true,
+    "actual_source_and_dataset_role_profiles": true,
+    "profiles_never_fabricated": true,
+    "actual_queue_and_entitlement": true,
+    "outer_stage_clocks": true,
+    "sql_inner_timers": false,
+    "whole_pages": true,
+    "preloaded_raw_sources": false,
+    "connection_adapter": "Session-local SECURITY INVOKER SELECT adapter performs actual SET ROLE and parameterized SQL. No fabricated role/row results; source and Dataset clients keep real profile checks. Actual statement/lock timeout calls remain outside the function GUC scope. Client BEGIN/COMMIT become savepoint/release inside the caller outer rollback.",
+    "bytea_and_array_parameters_preserved": true,
+    "standard_table_steps": [
+      "queueEnqueue",
+      "queueAndAdmission",
+      "providerCollection",
+      "rawStore",
+      "handoff",
+      "reportSourceRead",
+      "reportPreparation",
+      "reportWrite",
+      "receiptReadback",
+      "jobClose"
+    ],
+    "postgres_call_wall_includes": "database execution, wire/driver response and invoker adapter; not pure SQL CPU",
+    "adstable_wall": "outer total minus non-overlapping PostgreSQL call wall; not CPU time",
+    "stored_boundary_observation": "Fresh in-memory Google reader module inserts only storage entry/exit clock observations; all branches/guards/SQL and the production source file stay unchanged.",
+    "setup_and_teardown_excluded": true,
+    "durable_commit_measured": false,
+    "real_google_latency_measured": false,
+    "hosted_runs_planned": 1,
+    "hosted_runs_completed": 0
+  },
+  "access": {
+    "temporary_login": "adstable_benchmark_google_<run>.lxphenczjmueblnonklm",
+    "validity_max_minutes": 60,
+    "membership": "non-inheriting SET-only, no admin; existing runtime/coordinator/queue/source/Dataset roles plus owner for isolated setup",
+    "source_role": "Absent on Nano. Use the exact existing repository NOLOGIN role definition after its unmodified prerequisite check; remove this test-installed role after the run. No modification of existing role definitions or broad table/public grants.",
+    "prepared_sql": "Only exact lineage-hash-verified existing prepared migrations, inside outer rollback. No durable migration history or config activation.",
+    "first_provider_error": "Stop; no retry or alternative authentication/route. Rollback/authorized cleanup and residue verification required."
+  },
+  "local_tests": {
+    "passed": 4,
+    "failed": 0
+  },
+  "required_ci": "pending",
+  "hosted_result": null,
+  "cleanup": {
+    "pending": true
+  },
+  "unchanged": [
+    "production application files",
+    "provider query families/API version",
+    "accepted Klaviyo tools/writer",
+    "source crypto and privacy/retention guards",
+    "existing Google daily SQL definitions",
+    "live configuration",
+    "merge/deploy"
+  ],
+  "docs_checked": {
+    "date": "2026-11-19",
+    "node_modules": "https://nodejs.org/api/module.html",
+    "supabase_roles": "https://supabase.com/docs/guides/database/postgres/roles"
+  },
+  "failed_correctness_attempts": [
+    {
+      "commit": "2ce097d0abbd1ce2d70958e79c68eee351f8b560",
+      "run": 44545158096,
+      "job": 135633670606,
+      "stage": "first isolated replay",
+      "prior_google_daily_cases": "passed: 501/empty/1000",
+      "error": "REFRESH_WORK_REPOSITORY_UNAVAILABLE",
+      "hosted_mutations": false,
+      "action": "Preserve failure; expose retained test-only SQL/profile cause without modifying production error handling or permissions."
+    },
+    {
+      "commit": "b43d42ee6db44fc6c2d1f8f6891f3f9744b013ba",
+      "run": 44546038104,
+      "job": 135636732225,
+      "stage": "first isolated replay, before Google collection",
+      "error": "REFRESH_NATIVE_INVENTORY_OVER_BOUND",
+      "hosted_mutations": false,
+      "action": "Run the unchanged complete-flow probe before other probes create additional fixture owners, preserving its fixed 8-workspace/8-account bounds. Its own savepoint rollback keeps subsequent tests unchanged."
+    }
+  ]
+}

@@ -21,7 +21,8 @@ export function googleReadRunnerFixture(){
   poolFactory:()=>({on(){},async end(){state.closed++;},async connect(){return {release(){},async query(sql,args){
    sqlCalls.push({sql,args});await hooks.sql?.(sql,args);
    if(sql===GOOGLE_SOURCE_ROLE_CHECK_SQL)return {rows:[{role:GOOGLE_SOURCE_ROLE,profile_ready:state.profile}]};
-   if(["begin","commit","rollback"].includes(sql)||sql.startsWith("select pg_catalog.set_config"))return {rows:[]};
+   if(["begin","commit","rollback"].includes(sql)||sql.startsWith("select pg_catalog.set_config")||
+    sql.startsWith("begin; set local statement_timeout = "))return {rows:[]};
    if(sql.includes("load_provider_identity_authority"))return {rows:[{installation_id:"42",workspace_id:workspace,install_generation:3,installation_status:"active",shop_id:"gid://shopify/Shop/12",shop_domain:"test.myshopify.com",
     connection_id:connection,credential_id:"33333333-3333-4333-8333-333333333333",connection_version:state.version,lifecycle_status:"connected",granted_scopes:scopes,reporting_account_id:"123",reporting_selection_epoch:"71",
     accounts:[{id:"123",kind:"advertiser",status:"active",reporting_eligible:true,login_account_id:"456"}]}]};

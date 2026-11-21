@@ -62,6 +62,31 @@ test("one checked-out connection binds role, timeout, RPC and commit with verifi
  assert.deepEqual(f.calls.map(x=>x[0]),["connect","begin","select pg_catalog.set_config('statement_timeout',$1,true),pg_catalog.set_config('lock_timeout',$1,true)",GOOGLE_SOURCE_ROLE_CHECK_SQL,receipt,"commit"]);
  assert.deepEqual(f.releases,[false]);await db.close();
 });
+const datasetBegin = "begin; set local statement_timeout = '1000ms'; set local lock_timeout = '1000ms'";
+
+test("Google raw dataset transport combines setup and still checks the role before the RPC", async () => {
+ const f = fixture();
+ const db = createGoogleSourcePostgresClient({environment: environment(), poolFactory: f.poolFactory, datasetMode: true});
+ await db.query(receipt, ["{}", "id", 0]);
+ assert.deepEqual(f.calls.map(([sql]) => sql), ["connect", datasetBegin, GOOGLE_SOURCE_ROLE_CHECK_SQL, receipt, "commit"]);
+ assert.equal(f.calls[1][1], undefined);
+ assert.deepEqual(f.releases, [false]);
+ await db.close();
+});
+
+for (const [label, options, queries] of [
+ ["setup failure", {fail: datasetBegin}, [datasetBegin]],
+ ["unsafe role profile", {ready: false}, [datasetBegin, GOOGLE_SOURCE_ROLE_CHECK_SQL]],
+]) test("Google raw dataset transport stops before the RPC on " + label, async () => {
+ const f = fixture(options);
+ const db = createGoogleSourcePostgresClient({environment: environment(), poolFactory: f.poolFactory, datasetMode: true});
+ await assert.rejects(db.query(receipt, ["{}", "id", 0]), /^Error: GOOGLE_SOURCE_DATABASE_UNAVAILABLE$/);
+ await assert.rejects(db.query(receipt, ["{}", "id", 0]), /^Error: GOOGLE_SOURCE_DATABASE_UNAVAILABLE$/);
+ assert.deepEqual(f.calls.map(([sql]) => sql), ["connect", ...queries, "rollback"]);
+ assert.deepEqual(f.releases, [true]);
+ await db.close();
+});
+
 test("SQL outside the exact profile and wrong arity fail before pool acquisition",async()=>{
  const f=fixture(),db=createGoogleSourcePostgresClient({environment:environment(),poolFactory:f.poolFactory});
  for(const sql of ["select * from identity.product_identity_mappings","set role adstable_owner","select privacy.process_deletion_queue(1)",write+"; select 1",receipt.toUpperCase()])await assert.rejects(db.query(sql,[]),/UNAVAILABLE/);

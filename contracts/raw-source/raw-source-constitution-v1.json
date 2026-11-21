@@ -458,7 +458,7 @@
       "docs/RAW_SOURCE_CONSTITUTION.md"
     ],
     "sha256": {
-      ".github/workflows/database-integrity.yml": "51c0fa811d7dd5bb6efe43d8e89e6be2cdbd40e25b8e7f2fb88993139edf5cb2",
+      ".github/workflows/database-integrity.yml": "7b41c78eef7940aef01da4ff9ff858b1b046b1bbd647a7a98e76c203d7a8a2d5",
       ".github/workflows/repository-governance.yml": "d0c6feecc08f145588c72fac541040ca2e14949af7785961e5df27c01628b852",
       ".github/workflows/shopify-app-deploy.yml": "ef078addb630fdb624189c0f12625524a7e3dcaf708f2059f95e7a2884cf5d24",
       "AGENTS.md": "01ef3b2e4fd58cb77b30b030a87562b0436986e200bc342f77f929b34eb19d51",
@@ -474,19 +474,19 @@
       "app/lib/database/customer-source-privacy.server.js": "07c9445cf9e4440b995a7f2dc5665229dd17794015e2c06518bcb33931e317ea",
       "app/lib/database/dataset-fx-policy.server.js": "bf1bc27e567b192d3aee2ccfd9bbe3ecab01fd6b972a177339b154a996eb3a4c",
       "app/lib/database/dataset-fx-resolver.server.js": "cf69147f9ab92250a581dd877a73749fcbab03e539ab1616861dc083b5293556",
-      "app/lib/database/dataset-postgres.server.js": "c816ba182fc5da4e6cc58f4e4bc3909df5852001cb56e13d67b43998d6ed10d0",
-      "app/lib/database/dataset-reconciliation.server.js": "2523fda1eab2510aecad5e693ea3b621686d17920f34120ed4ec3ccb9a0daa38",
+      "app/lib/database/dataset-postgres.server.js": "82b1d4e3665ad270603d72cd2c798225f54e8a988c9de639d93ca01a558432f4",
+      "app/lib/database/dataset-reconciliation.server.js": "764e1de28e5aebf959ac492d123ef7b15808f51ed2b3f88a11f0db0620d41de5",
       "app/lib/database/dataset-retention.server.js": "16ac5cef4b05ba9ee2f1fb8b961fcca04361f5070a308331d8e57c443e265584",
-      "app/lib/database/dataset-rpc.server.js": "771a21441ab24daefb43e7672408940bddc16f3319795df8b9398d5f033d0177",
+      "app/lib/database/dataset-rpc.server.js": "0d55a3978e2ee384fb35e073b4c4b130d9f9a0120afcc412aae6f1333fb6ac6e",
       "app/lib/database/dataset-source-binding.server.js": "755b72bb1204467530b49a6ba604157bf3fb33053b12a1cd55ecbcba3f8ee3e9",
-      "app/lib/database/dataset-source-reader.server.js": "a85bacb641ecbc435a24062fc31666865997d3b26cccc4943e24f949b46f66ec",
+      "app/lib/database/dataset-source-reader.server.js": "40b92004120b65722121ffc0a5c648c7a040c007d85204a033ef5f600f39f7c1",
       "app/lib/database/dataset-source-values.server.js": "a8c10fcd26223597d7d1ae6c6c5e3f3a6304022c171159f34a2585357342f8c4",
       "app/lib/database/dataset-storage.server.js": "fabae3d81b7c056249ff12c3978af0ebcf3caf77145c7fa84e2b7d819de6dbbf",
       "app/lib/database/google-acceptance-coordinator-postgres.server.js": "fac80e170cbff24d73c1c40201dee3371d6f4f6c549634e14b7d230cd94a038d",
       "app/lib/database/google-account-selection-repository.server.js": "1155c186cb7a4ac712798033e80c1b5b3214e41e2b91c05de047a85ce378df3e",
-      "app/lib/database/google-dataset-source-store.server.js": "5d957ae5d96474ae5161f96eb9b7fb5b15909388b042d41031db34cf998fd057",
+      "app/lib/database/google-dataset-source-store.server.js": "15be34a1a651b4e773cf50212bacd9ac303338247303649aa1f12001f09214fb",
       "app/lib/database/google-pmax-history.server.js": "d880bab9f8bf60ffec3e8e5e9a4546bb78cfbf1ed43a66611dc2d1994a7aba7c",
-      "app/lib/database/google-source-postgres.server.js": "6c0a2460498a7ee2be2c9c335d2cf8f9ad04cf6837c2b0640f536fafae3627f1",
+      "app/lib/database/google-source-postgres.server.js": "2fcc8493452ab5641594e0d9e282b739f8fa1100dc53284b8d5dc2c7aa7cbe37",
       "app/lib/database/identity-authority-repository.server.js": "a4d157e77dde93c26e2fb28c915f1c5a92fc3ebf11ccc59ca649dca2df032f0c",
       "app/lib/database/klaviyo-dataset-source-store.server.js": "05f2c72c37822ddcf8b91223f43b5e5e875b7b45985cb3a694a1ee5c0516b83c",
       "app/lib/database/klaviyo-raw-coordinator-postgres.server.js": "e16cbf3c5d0570706d60577f5d1c39683b4e83a7229b5bff5d7af925f8362344",
@@ -505,7 +505,7 @@
       "app/lib/database/provider-connection-lifecycle-repository.server.js": "edcc6eb4a3fb0d9329b55ec9122a5ff1838103f8ec8e341fc2cef4951a382310",
       "app/lib/database/refresh-queue-postgres.server.js": "bbdd98410a5af2bcbded4eb5f396f01574d5609a03d82e39571561f1f9a7e0be",
       "app/lib/database/refresh-work-repository.server.js": "c598d2031cb100c6373fc0ffe1ade1ef79d7b958060c46d717238ac3796c214f",
-      "app/lib/database/report-retention-policy.server.js": "369c5b51461e187dc606a5b4a49ef9e6fc2744f39f6f952276f99fda75d42f41",
+      "app/lib/database/report-retention-policy.server.js": "50700992adaaa1529e9b074744babcd507abc9fdb2deadf3613be7b5631b153d",
       "app/lib/database/reporting-currency.server.js": "7595178b57397bab9e187341421489e84555e80af196d635992b9e7a3fabe640",
       "app/lib/database/runtime-postgres.server.js": "9c24879fd0d2f42c3f04bd2e1b60fabad40b24eb8b44d5cccce39217b76f3df1",
       "app/lib/database/shared-quota-repository.server.js": "1baad5d112c031a27cfede900074d2e3a959695e29800c0d27a1b6aed226af9f",
@@ -514,7 +514,7 @@
       "app/lib/database/shopify-runtime-repositories.server.js": "2bbf7ccb879854c6b9f9665a85da640e3d7ae174eeaedee513aefb29f32001c4",
       "app/lib/database/shopify-session-repository.server.js": "040e991c8cfa9262a256ad47606c808b5ca089b489b4191803ef215f440b7741",
       "app/lib/database/source-evidence-config.server.js": "bd54f2db85b1882835b2f4caa4b095376290022ce3a1231030ebfcb047edc2bd",
-      "app/lib/database/source-evidence-store.server.js": "9d281cc806e21a48a0a64ccbc84833d480a6da08a448d2339e88423426d46856",
+      "app/lib/database/source-evidence-store.server.js": "02b96d695c6337c676cbb85ba60094f7c90f326a0f532aff2e0f0fceb051e79a",
       "app/lib/database/source-retention-policy.server.js": "2c996253a6a519934a11aaa559429ac468a97e6a93e02fa7cc3880c6e0cd44b5",
       "app/lib/database/source-retention.server.js": "93946205de16d88c9908c922c3d0b7df60aeae4b02fac71a7f4470da55d60e11",
       "app/lib/database/source-rule-store.server.js": "0e4ea85dd648d05d8f09025395a04a2d58583070cc4611770921b0e3c2588a3d",
@@ -629,7 +629,7 @@
       "app/lib/providers/quota-managed-clients.server.js": "10ce33751ec6dc1689c9cd7a8ae8515cc42521ba2e44baaac9cf8c08588f6cc6",
       "app/lib/providers/reference-prewrite.server.js": "c449e44090d787149c3c11a1586de514933072701818cfbbf2c3c770a65f2bab",
       "app/lib/providers/sales-role-prewrite.server.js": "5359c43623adeb8d53f432d5f7f003447e2817154e8f279f9ee5bff0a02d4e24",
-      "app/lib/providers/stored-dataset-projection.server.js": "5813128a390a82a5340c63b5cf25ef7702f29361cd9bc5c1cf1650e6f9464f75",
+      "app/lib/providers/stored-dataset-projection.server.js": "f76b6bdc4014b4369f71e47e3b9fac7920edb5f59a844e38c6d281495aa5b97a",
       "app/lib/providers/stored-klaviyo-dataset.server.js": "de3be7dd771b4d0362af299b87b70a0f8a206bc7a1635b1801c3cb41b2bd99bc",
       "app/lib/providers/stored-meta-dataset.server.js": "176c3fb5c10d884f40dc799cf26785470f6b8a178dfb67ac6a40992cadf75a46",
       "app/lib/refresh/admission-policy.server.js": "f3dc10208610c535b45a112dd85eb32259da32810682a9f4c0d653cddbe77825",
@@ -648,8 +648,8 @@
       "app/lib/refresh/google-merchant-server.server.js": "35c0b33864ad0cf25e1b7ac3436a71a359c4e9c08961d99d9ed20f51f08d428c",
       "app/lib/refresh/google-private-request.server.js": "7b0478039ba92f5edf5c885ff73f7d8c47b68372114f1b095b4454cc11bf4dfd",
       "app/lib/refresh/google-quota-observation.server.js": "9eb32e1a3139ee0308e3cf5f47978f680bda37685321f6bdd81b26975e424f2a",
-      "app/lib/refresh/google-raw-dataset-plan.server.js": "029d9fbbf42a496cd67caa2637196a627f4e89b0ac03b6a5b562fc155b9f4d0b",
-      "app/lib/refresh/google-raw-datasets.server.js": "2f51b0a6d7b0560bf2d89496453b7f82e1133789bf1add9469efdafe73f49773",
+      "app/lib/refresh/google-raw-dataset-plan.server.js": "a29082b72a0879d46a46406c00802b920a22c12b7925ff2156ebcb0d924a20f5",
+      "app/lib/refresh/google-raw-datasets.server.js": "9e296cf9fc9a903a8b952f39feed1db1dd406492dc7494809f1eebb908f146f0",
       "app/lib/refresh/google-raw-reader.server.js": "6c9a848346cd759cda862f74f2894c95671f1544d02fcf33e67b5856b96d8578",
       "app/lib/refresh/google-raw-request.server.d.ts": "40a61ee0a5d38fe8f35b942073215641702826d76ba7fac375bd014445e80f7f",
       "app/lib/refresh/google-raw-request.server.js": "cf4d8ec140f409815c16d46580c59474629edeba54344c662ca1b12134bc95f1",
@@ -682,7 +682,7 @@
       "app/lib/refresh/observability.server.js": "30843c9fbe753b2d689756c63482035ba29d500381d9596a59892067ec155246",
       "app/lib/refresh/pd-prewrite-chunk.server.js": "29b295aa601c9e687dd95636a4023a8613a5e34179189635c057b9e5df77a201",
       "app/lib/refresh/pd-source-reader.server.js": "4e041c3521f858b3b7df6830ee781ddd9ea25290eaf7ace1173c05e59581c471",
-      "app/lib/refresh/preflight-bridge.server.js": "4a6453318bffbdd471b20977d5c192f3bce0025ed4152627fc173c4caf94ca27",
+      "app/lib/refresh/preflight-bridge.server.js": "26280a4a7146ca40ac761e7c38ce99cefbd66cd13f9a3402b2ffe825a5365734",
       "app/lib/refresh/queue-check.server.js": "4795afa7149373d342860a4428b6028252ff475a77716dc2bcba363a2b9105e6",
       "app/lib/refresh/queue-cron-entry.server.d.ts": "7f78161c378a99cf8c52a905a4a23ebc026fe81fba929d74d2a5104b491efe7b",
       "app/lib/refresh/queue-cron-entry.server.js": "1667e1f0c3f38394ca52f49e6f018579be7942496102cd98ec65c4fe2e0d72b2",
@@ -691,7 +691,7 @@
       "app/lib/refresh/quota-response-feedback.server.js": "5929583f6b1c1eb0d4e0d99c7060d635861a9a60d28468485c7a389853d5e3a8",
       "app/lib/refresh/quota-scope-resolver.server.js": "ff38b878371213d4ba5047b8bcd0005f75342e9c178281df72f85505fd13507f",
       "app/lib/refresh/quota-work-wait.server.js": "241ae261ce805bf76fe4c2f027969bbc67be6cf774f511201fb2381308f2cfcd",
-      "app/lib/refresh/scheduled-queue-check.server.js": "16e65f20605e447964221501bf43780132ff46c4dbcbc0f95f91ff93aa133e5f",
+      "app/lib/refresh/scheduled-queue-check.server.js": "902b4db79699a038c08052564c77b5470ec0c021b9c2822beb17f20ae59c1ae6",
       "app/lib/refresh/setup-proof-review.server.js": "4f2c59b4b72c791b944c3bb040fa1531eae96b91ba78b49e92aef2c952aeae91",
       "app/lib/refresh/shared-quota.server.js": "105a4f5ed3413395701e7f0246557b53de984be0cd68ba43f2225eaf3389852d",
       "app/lib/refresh/shopify-admin-identity-quota.server.js": "84e33743b3f8b9a8fc7514ab418b3283746470ebb935ef1d566abad4d1655537",
@@ -792,7 +792,7 @@
       "contracts/a6-parent-package-analysis-design-closure-v1.json": "54b606afd64eefc65edb7c322de7649e9e550737619426f1ce774ede997a1f60",
       "contracts/a6-quality-and-assurance-gates-v1.json": "707c38761519d4ac5e17b7b3cd32ae30dcfc306f406baa6c4676f74c152af81e",
       "contracts/a6-tech-01-engineering-integrity-audit-v1.json": "ab5fa0d88157a5710630560c11a97089dfc4cc047a19ab7cb32bf94a40072949",
-      "contracts/a6-tech-01-f01-migration-lineage-v1.json": "0fee8b4ce9db9e32848a219dcf4f4ebd41e08d6de980c33c321849c096fc1817",
+      "contracts/a6-tech-01-f01-migration-lineage-v1.json": "4461e5308374ee7daddae67f93eaf72d7d4ad30931ee5ce3863792d07c21c6f5",
       "contracts/a6-tech-01-f01c-scoped-recovery-v1.json": "05173e82d2576d81fe5d93f0edb3193c5e053db28416d9b0d128e08d6dea941f",
       "contracts/demo/eo05b-v1/golden.json": "08b58ade3ed14843f25f9453710d8f1d15c01810c00556ae38718751f034befc",
       "contracts/demo/eo05b-v1/rolling-2026-11-10.json": "a482b2d1e9faebc4d768c437378b05a85ec9433312e904f9900158f7e65f8bc2",
@@ -841,7 +841,7 @@
       "contracts/eo-05-step15-google-live-acceptance-v1.json": "1444654b503858b047b2bd1dc0a1c41d0e7bca2e192023a63c7ebb5c95e4dbd5",
       "contracts/eo-05-step15-google-source-role-v1.json": "00e7820d1b0537f42d6af09d593857169d6f1a7b8baf200953c86b8358977835",
       "contracts/eo-05-step15-storage-design-v1.json": "6aea99251e3b467c3ac2c48cec3d81a201c35527e135c0ebac2b957ddd7c8d2c",
-      "contracts/eo-05a-global-refresh-design-v1.json": "b32ea1b61c6b6b5572ca2981ac3651974f10e4199b25a4aebfdc77f05b1a370f",
+      "contracts/eo-05a-global-refresh-design-v1.json": "a2cb32b2185fc39a603765d098a7b6363894d4b8f5b57d672e9a09d600106416",
       "contracts/eo-05a-quota-authority-binding-v1.json": "36513785f0c62a18f0a4d81169f77b534b7aaa85e80e9821becde522401eec0a",
       "contracts/eo-05a-quota-native-transport-v1.json": "867509849717c4500cf206e1a4f05c0487bddfea1fe9fdcf8130299ad5dae461",
       "contracts/eo-05a-quota-scope-resolver-v1.json": "9162628db08897eb901e65b6dde438edc4ca5cce42b8c138e942ee1e4536c881",
@@ -862,9 +862,9 @@
       "contracts/eo-05b-fx-reporting-currency-v1.json": "f8971fc94bc63d89d3eea1b7916fae94de4fd5f1e4ed8fa32914464d1a28f332",
       "contracts/eo-05b-report-retention-v1.json": "cc4673fe9be0f77567bc6f2c0171a93eb95d1a4f637d0ccb10481de28bcb67d4",
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
-      "contracts/eo-05d-reconciliation-v1.json": "6575f6f48b6c3cfd71eb3cd20325aeffd73ba2c09090d1d87a67dd7dee3ab478",
+      "contracts/eo-05d-reconciliation-v1.json": "325da96ae5f4f320f06a0abd5545fd2032297cafc57c844d0cf5864cae661752",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "487a36fd492fd3b20aab4f82d172c25753c3653d16361e77f35d82fd0f3e944a",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "f40329aa6f2d47b894174252ab15f309694290e01466d77b11cac6f96d039ede",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -980,8 +980,9 @@
       "supabase/migrations/20261111131821_eo05_refresh_fenced_dataset_commit.sql": "08408fb499d2b92b85011b2604afa4d94a9744e0ad9ad86703c94252ba977eeb",
       "supabase/migrations/20261117174509_eo05_klaviyo_daily_raw_packages.sql": "e89ac6971d103e739b6ddf78df960b08d96951147c4da80f1040c1f3868263e4",
       "supabase/migrations/20261117183725_eo05_klaviyo_report_package_staging.sql": "1daf432e1232088ba74c86b2036c184b55aa36c00203160cfb413570d205ee6d",
+      "supabase/migrations/20261119112554_eo05_google_daily_packages.sql": "4926f56467c5c0d5d0c212074c9d9f5bb25ad3cdeb837c07df19377ddfbd612b",
       "tests/a6-docs-01-text-integrity.test.js": "7fc1daa89371488ea5c1a74ed9eae65b0de5d6b4bfa08887dc5a62ffc3357d24",
-      "tests/a6-docs-01-turkish-standardization.test.js": "5dcaa387ca679f75339510ca9d9856fcfb98eadf2510e31f94afd0599c9f870d",
+      "tests/a6-docs-01-turkish-standardization.test.js": "90df09b309720d65e97d71c9c6bcfa75ddf43ff8935b9f060b32ae33cf664d46",
       "tests/a6-eo-07-funnel-visualization-reference.test.js": "9b049ced97ee895f82c44338b3c13389d4d4c99dbf998402a9963e009d496c0b",
       "tests/a6-eo-07-three-surface-ui-product-freeze.test.js": "07b4e29380c0d7dcc3e456e6b8b934d8f68778f93f2f4b53276381479c427945",
       "tests/a6-eo-cross-cutting-safety-capacity.test.js": "f2482db931736d2ab6aa1c15f06de4da79a2d23cb096cb41659caa16a89686b7",
@@ -1015,7 +1016,7 @@
       "tests/dataset-bootstrap.test.js": "ce02047764e17ee5b5f6f49bcaf9d13a003256ab85c67f7b638a08dd348abd43",
       "tests/dataset-column-dictionary-design.test.js": "7e5abe51b1aec4ffbbcae2f9ad902260a97c6663c023af1c6b2641bbd4d1a441",
       "tests/dataset-fx.test.js": "7bbe4c8db5f22f2082d743d5dedc8da08c4a96e394dc0e391399529cce702bd0",
-      "tests/dataset-reconciliation.test.js": "e4c99ca9b6a5067c8815abc44c13f6584c4bc4d6b643ed784958b0cfb0c0d759",
+      "tests/dataset-reconciliation.test.js": "37bb85d1d97b6479c5f8429af54bd7cf0fbd379e604ae7e91f640a592a5e59ec",
       "tests/dataset-server.test.js": "f461a4d16692dc37079888a00c46209a75812ec0f32870e043aa5f9357913c88",
       "tests/dataset-source-binding.test.js": "b48370afb236e018dca4dcfb1147209c589ef8eb912a9dadf5177f202558de8d",
       "tests/dataset-storage.test.js": "e5598f66bb4c733346b4a50f89b647d35b1388f7b1059d7febd70bf54708c855",
@@ -1091,23 +1092,27 @@
       "tests/eo05b-demo-fixture.test.js": "d63b2bbb733d25c1f4585314f4094b010e4b6de2ca23032fc2b2d36f1aabde41",
       "tests/f01-live-readiness.test.js": "5225024e104f9087337452827f674961944f4dd1d53b808a0a0ac66bdef0a6eb",
       "tests/fixtures/customer-worker-fixture.js": "11b10dbd255ff34d6af9b11496866c3ad22145f21e60343ca0d50587eba21352",
-      "tests/fixtures/dataset-source-binding-fixture.js": "74a3cdc3cd2896e9263baeaed6543358f4475ee95781d38c2a9bffff858fbb44",
+      "tests/fixtures/dataset-source-binding-fixture.js": "489dd7bd22c6e5e618ed116fc881ebfb804b28ba7d7034aaf833543bc36ffba0",
       "tests/fixtures/dataset-storage-fixture.js": "33592e181bc429d3032548b6b27fff70f802323699ca1d9dfcd2d3606e33761e",
+      "tests/fixtures/eo05-klaviyo-bulk-writer-378.sql": "9f91643d8c11d61318bf108dc81f217f348d404b218e0f749c360bcfeb513659",
       "tests/fixtures/google-acceptance-fixture.js": "e7bf9aa5faf8094f87366f197bfdbbf0ca65f13e9c7909be0473d96c6460cf2c",
-      "tests/fixtures/google-raw-datasets-fixture.js": "01a12e2ef0926ee6860060f4420da164f6bd57a03700306e3702644a04d33c86",
+      "tests/fixtures/google-raw-datasets-fixture.js": "f9450af86c2db859cab036921f9bb08e1e761aba0c3cb67ff4d1d09a2d19bd1e",
       "tests/fixtures/google-raw-server-fixture.js": "5a4e6674187de87b574b450c5f8d7b1aab8f749994259aa9cfe6a38a86d713a5",
-      "tests/fixtures/google-read-runner-fixture.js": "13606de2cc661e920c8ebfa17bad05d3ca3356733586c732bfca88466d758e4e",
+      "tests/fixtures/google-read-runner-fixture.js": "98ef901281ac3e9bdc5e691ce338efbd0f85e948bbc56c984f5f221dd9012e0b",
       "tests/fixtures/klaviyo-raw-datasets-fixture.js": "713b415451ed84bf23521d023d6fc81893f6ea5df69aa03dd448f07cadb6d5c1",
       "tests/fixtures/maturity-fixture.js": "1747b1b91cfbf34ddbeda7eb96f91a39d66732caa4df827806c0a13a50e896d6",
       "tests/fixtures/meta-raw-datasets-fixture.js": "4bef55ba236f77df9d4c46138bfcafaef5acfd5aaa64c0570a26225a33b3cf36",
       "tests/fixtures/pmax-history-fixture.js": "03fd63811d3787e612cec262069bf9143156bd0719c956b6289e299a90581111",
       "tests/fixtures/pre23-route-config-baseline.json": "d373bf89339bef5f992764e89d9f9dac46e133b35d4fe317ebd370de410eeb2a",
+      "tests/fixtures/refresh-shopify-mapping-probe.js": "0b87d2ba2704ac83dc5ab6d534141d8f0a7996dadb543ed0464beceea93ddbcf",
       "tests/fixtures/security-config/invalid.ts": "8e560514a68397115adf170894bde8a141ef5ad7a95a2e3f011c8af6600b1cb5",
       "tests/fixtures/security-config/missing.ts": "b22648b89b801c99b2468464390388dd114da419152cced85494b04592f63bfc",
       "tests/fixtures/security-config/valid.ts": "e989a7fa1673cc6ceffc21f2ad7356dbe6c7fccf3f53043c7c279160b263180a",
       "tests/fixtures/source-store-fixture.js": "beb281da7854346724bcdb2528495010ae9793a2a4a17f54627004251d0bf5ae",
-      "tests/fixtures/verified-mapping-fixture.js": "eddf0c215df64311f84c97cc99fad2567336ecf848a06e0b0ac9539678af4db1",
+      "tests/fixtures/verified-mapping-fixture.js": "4e542aff2ea98132d602fb72e2ee7af3013e503d3eda56510cfa9e7530dd404f",
       "tests/google-acceptance.test.js": "4f5758592bc8056ee5f0f1a49a434c011f77cba09137961b3d3b03e2d1ff42ee",
+      "tests/google-daily-packages.test.js": "9965be7d2a63cb5cf6fa0fc948408c73336194c636eeec8a696496115168a116",
+      "tests/google-daily-timing-probe.test.js": "accca12dafcab8363e01e65b8c4dbb491d7cdc703815972a3942662733839796",
       "tests/google-identity-collection.test.js": "2a140381e16aa50470f15af7854c83a0c9a620aa9be227f205281a55e5b9160a",
       "tests/google-identity-credential-lifecycle.test.js": "653b984b00b8cd57f5efd9c17702eed2661fed4f4dd722b924dea71003037462",
       "tests/google-identity-renewal-receipt.test.js": "40410f673166acc0dff0056631ceaf3bdbc691cf2914a22e57e0cb98264a6027",
@@ -1123,7 +1128,7 @@
       "tests/google-pmax-source-links.test.js": "51fd3b43f077dea809ca5930a4208635fa3832e58296174f047a3fce7ae07c6b",
       "tests/google-product-identity-reader.test.js": "ee549faceb249a2ec5774b3de9b4a7c0137790aaaaec53fe952c3d1435faa56c",
       "tests/google-product-query-split.test.js": "e609ae188d71fb8b3c7c44454afd703e178b309c867cf35855f9dd422610dfa8",
-      "tests/google-raw-datasets-permission.test.js": "19134b03792e1e9d18ed3e0c82ecb88f7fa400c244a93ec8462b926d1f0b9833",
+      "tests/google-raw-datasets-permission.test.js": "e169194bc470f5d19d917d4bc026879d1ea0241ad0ad3996812cafcd63bad6c4",
       "tests/google-raw-duration-permission.test.js": "b7301f5715d047aca658b7569d57a303501876289ac930ea082039fb0ffd1507",
       "tests/google-raw-request-permission.test.js": "dc68dee80c52dedb248990525b7b6fac4138586f5aa08835facc08d4c0dee799",
       "tests/google-raw-server-permission.test.js": "0737ed3f1f00d6a9234b3d827c937e194046279e0a9ff121530ce9a830ef0791",
@@ -1132,7 +1137,7 @@
       "tests/google-rest-permission-log.test.js": "7c6f3816c4b2bf79e12ddf1b942d548d4fa245dfac00f1f003b767226515686d",
       "tests/google-source-links.test.js": "9a1fc4a5b07c5a8aa8e927c1b14f7813546fdc1eb8e535921c8da298dbf6d9a3",
       "tests/google-source-role-plan.test.js": "e908c49bef4e44b23618630151f6c6f5875a7b90812ea577384dc7450a8943d2",
-      "tests/google-source-server.test.js": "c6aaa8907f41f568f544bfecfd2bc55890cfb1f9f3f00b3fe5ba8837bbe1a9e2",
+      "tests/google-source-server.test.js": "9c063757fcb534a5f538a6141f8347bd8ab3458176d730d5489ecc0fecd77e3d",
       "tests/google-unavailable-account-discovery.test.js": "31e2f899688f24aed0b238870efffa0e3b2380665c0fba14bfe34d14da2f5905",
       "tests/helpers/candidate-prewrite-cases.js": "7b93996fe2187f4dd5d1071977eaa1c55cfc81d8d249b35130e4ac6581940fe1",
       "tests/helpers/independent-order-fixture.js": "4bcdf7e2fbd1136d8890db42f2fabfcde864041e971d0fac580b3f131d1c9f33",
@@ -1193,7 +1198,7 @@
       "tests/queue-observer-canary.test.js": "baa8ab2bf40c5e51470c7e12626c99061f3dc68e5f527a1efd9b01888ce8b51b",
       "tests/raw-fixture-calendar-permission.test.js": "352a2467a5f724d13e08dd873d3c397521bbd301be9e1f2cc9fbbedb2d54f9e6",
       "tests/raw-source-constitution.test.js": "d90035e96f45ae5daec7c2beb13db25d44ce0aa00a80864a9215b2b2f5cb4c02",
-      "tests/report-retention.test.js": "123df4139af531c18ae40b06bac5a06d8784b8c3dd2d2bb8dc6763445effc02d",
+      "tests/report-retention.test.js": "7dd5d69b831f51bf493119d747a4d97a2edcceba21a8abe29350ef40a3872560",
       "tests/sales-role-prewrite.test.js": "cbf55b26a4db2cb9b3f3eaf559de3f79832acd4a80e04ab7c94c86ce7dd0e021",
       "tests/shopify-admin-identity-quota.test.js": "0fa1b6030a3437be0239af2be430c88ffe04e53049db9e721b298524e114af0d",
       "tests/shopify-admin-quota-feedback.test.js": "f359b63659b56e483cf63864814d9a1f377d6115eb6c3f5c33bf0914637ddf15",
@@ -1217,7 +1222,7 @@
       "tests/shopify-product-identity-verification.test.js": "3a96b6892c3eb6c4f4f8438b564a02c3425b524a5916bb410294201cc745e969",
       "tests/shopify-products-completion.test.js": "4bb82463a7e175122d0a8a34a74c038d2525942e0dbd03c9b1e8d17ac59053ad",
       "tests/shopify-progressive-permissions.test.js": "4e6ee536bb7d4626c892c637594f1737a044394f8480c72821955ae3652294e6",
-      "tests/source-evidence-store.test.js": "b6772c12841632db09fb7c15914d05c7bbf7ed6dfd559403383a58dd3880f785",
+      "tests/source-evidence-store.test.js": "ef765993a77825e04ceb163fe2d8d929720da6717d2a633bd65be11af0dd6f11",
       "tests/source-retention-policy-permission.test.js": "822cb4c7f44c599ab7be931bd4e6c0f2f9b05d30658fe90850337239db52d345",
       "tests/source-retention.test.js": "0fa43b2050984eec011923225341846ca7af8753a2d753abd90ff921b037f532",
       "tests/source-rule-store.test.js": "63b6ba585102e416682e0e6b6d08187707ef6982dafc20b885f2e25208d218a1",
@@ -1230,7 +1235,12 @@
       "tools/eo05-admin-cost-feedback-probe.mjs": "3929e29a7ddeef23acb87a7d361289ead0dcd52f7b89e64399c372fba6071071",
       "tools/eo05-admin-quota-context-probe.mjs": "e67525499cd3d2042298076e17ea2d84618c74781d78bd93fbbe44cfa827e0f9",
       "tools/eo05-customer-source-privacy-probe.mjs": "df854e763301a99f8ae21212bb84d5dca379647f735c51db4910bf1fc517e20d",
-      "tools/eo05-google-acceptance-probe.mjs": "c70c383952e96f852053a6406f75c5dc9c6058aca4514748fd81f99ae4da78ea",
+      "tools/eo05-final-synthetic-candidate.mjs": "f39563923c239b9d47f6ccba810ffddd544d434b8f416373cb94e92a7dd8343c",
+      "tools/eo05-four-phase-diagnostics.mjs": "c95afca832e974a24f69f819813a4eb003dd2cded579856f6a0923f7de6b29b9",
+      "tools/eo05-google-acceptance-probe.mjs": "6895c9f7f2180de717b27e2c86572cfcd79967bb7b84c0b0f1c450ffcf372797",
+      "tools/eo05-google-daily-packages-probe.mjs": "06303e6a0e0bdef025d847c1e78b928e122a70e76c1340b756e3e90e59a1b5f0",
+      "tools/eo05-google-daily-timing-probe.mjs": "b6479a57938b69700b38721fb693f7ea23f3a1fb8e53fcd088549f6e909dd097",
+      "tools/eo05-google-hosted-benchmark.mjs": "2724b75f248a74a447108afb0a35b804be8c13bee98f1da3ba43b8bd26fbd77e",
       "tools/eo05-google-identity-renewal-probe.mjs": "2f429c983600225ccdc9cadeede2611de9d48522dc575d5cb583b324b6f07fd1",
       "tools/eo05-google-mapping-flow-probe.mjs": "4cbdd4f19fb6db6ae199daa1ffcc5921ec885e467d45a1ec4abf2e6e14650d2d",
       "tools/eo05-google-merchant-server-probe.mjs": "6892d0ecceac339e83116fbf23407c26de05b94e62d80d3b40dbcee37a21a637",
@@ -1240,12 +1250,15 @@
       "tools/eo05-google-source-role-probe.mjs": "fba96de648dd50a099dae4cdfd1e17807e5eb250cbc139d967a3f6e96b8ad19a",
       "tools/eo05-identity-authority-snapshot-probe.mjs": "0136e8dc5a5720b78d1cb4dca081f19e8b473812b6d66129b94f64fd5edf672c",
       "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
-      "tools/eo05-klaviyo-daily-timing-probe.mjs": "fdd81d01c768c26d6ce1d1a9db36d4f14ec4995978484ec055a0aa05cf9a141c",
+      "tools/eo05-klaviyo-daily-timing-probe.mjs": "3568c0465b7456f482cac419220a93582ddbc36127540bdd4ab01da8e31ac768",
+      "tools/eo05-klaviyo-hosted-benchmark.mjs": "1a21a53113d2a87cebc4426d3d8ef5f99b9e746a399ab088dc48381766e77dd9",
       "tools/eo05-klaviyo-raw-datasets-probe.mjs": "e7d504cd848ad8380575fa8a9dd6755fc95354d9a208db4d7f1a40693cc50888",
       "tools/eo05-klaviyo-source-capture-probe.mjs": "c9b9f604a72611fb0f39a8e6a178dadd72fcc6ee2f340a4396d0d6058bbaf5ab",
       "tools/eo05-merchant-quota-context-probe.mjs": "699aae3f090c490ca59abba882ea3e36fbe25e817d7ce697a55a0cb294269deb",
+      "tools/eo05-meta-daily-report-probe.mjs": "89b64766f0895189bb4b8bda033f2da3d5bfa76d2f2d03514475803c1d9d4ded",
       "tools/eo05-meta-first-day-probe.mjs": "54759310dd8a25fbacd710ef3ed130e62a862d498b8e81b2e1ebd7d9154e4abe",
       "tools/eo05-meta-raw-datasets-probe.mjs": "2ce162397322c014e8c9029e5d08beb53578a1fdc68d941476dae04b1dc2d3d5",
+      "tools/eo05-meta-shopify-refresh-probe.mjs": "b3ff46bcfea15cdda8703ef3a3455797f8a4a5b757021e88126810a432366082",
       "tools/eo05-meta-source-capture-probe.mjs": "a8cea28c2c80ced0436fe660dd201b73351d02336a4a3bcba5540cb63f2135b4",
       "tools/eo05-pmax-history-probe.mjs": "97a7338edab5f58455cad9acba5638490d7cb2fab737afa77eb663cd78037e82",
       "tools/eo05-privacy-source-worker-probe.mjs": "c120d7f57b50390e8da14c4975994759a662dd87333bb6dbaaee36eec4e0adfd",
@@ -1264,7 +1277,9 @@
       "tools/eo05-refresh-work-probe.mjs": "c6acab3b3d47a056979bff1047b7290227b4a0480f6d0531896065fec95b75be",
       "tools/eo05-refresh-work-stops-probe.mjs": "3ca5e3a66981d045fc5004c3f40f984c2a4546246c813ece1887198d7b4f844e",
       "tools/eo05-shared-quota-probe.mjs": "653dc43e21f5c7f1a9fdd9b7dac4ceea3f96ef4ecce0916438cc27db3fd97290",
+      "tools/eo05-shared-refresh-probe.mjs": "00ef6ebd38186d5803c1e2658391e5970b8114e70f968742b34aac86aa048448",
       "tools/eo05-shopify-installation-owner-probe.mjs": "83455ad97e85cae388aeb92b72ab314cc582384233c40fdeb0ed569997ca1668",
+      "tools/eo05-shopify-mapping-timing-fixture.mjs": "bc294047f158c53961abf28294284503643d4dcbef98cd2df1369a153569e6ab",
       "tools/eo05-shopify-order-admin-probe.mjs": "f32b9cc99f3aab0e78c81bd1c481c2478534666ff00a5cbf51cebe0ae4b0d608",
       "tools/eo05-shopify-order-entitlement-probe.mjs": "02b9291e443cad2e90b98837dde3ed6a39afcb4c3ca01b2ea227177b1ae91ef9",
       "tools/eo05-shopify-order-fair-dispatch-probe.mjs": "8d9235325cf6ac6b6050beb9824b49672b1ee4aaecabacf42470d29581f83cfa",
@@ -1272,13 +1287,14 @@
       "tools/eo05-shopify-order-reconciliation-probe.mjs": "06eac560b4e00bbcdb2b83cdb5fc7d8c5f980f7589bef8b332794238ab185d24",
       "tools/eo05-shopify-order-work-probe.mjs": "1b3045b0c28ec2e8acaaa92e1308185becc02a03655ada9accf823cd52445bd9",
       "tools/eo05-single-account-selection-probe.mjs": "c87be931bf049384ceb339ec77c57f185f8245a9ff7764879c5eafa629bdfbf0",
+      "tools/eo05-single-report-close-probe.mjs": "dcd852d53a3c36ceb0277b45e2adf1543d3bbe284f346c1d2492d681964ec48b",
       "tools/eo05-source-evidence-probe.mjs": "1a3e0245c32a6478c3ec5d845f01eea5b496fa0e7eec361802e0dbb6a809c718",
       "tools/eo05-source-retention-policy-probe.mjs": "8a137f4325fd407abf97deb721f1f81b3ac197f8b42d35273bb5927b08426d57",
       "tools/eo05-source-retention-probe.mjs": "621641d587b4622bf6b72e526932b83963ec46a57df4e346a17b6d78141f0d29",
       "tools/eo05-source-rule-probe.mjs": "bdba143e69a0ac680687dfbfce815bf8c97c7fa2228179e22cc5d5d4626477ab",
       "tools/eo05-verified-mapping-probe.mjs": "875aadd0c47e64d66f5fef187b2a803cd9716ff04b0ac0871f17cc97f84f88eb",
       "tools/eo05b-dataset-server-probe.mjs": "d6177954ab377f697209d5753651f7403e82b1c1349e0425405187ce33c3b02c",
-      "tools/eo05b-dataset-storage-probe.mjs": "e9cba6945cfd15780235a599929a3bb405226d13f28cb020d53748d4b356e861",
+      "tools/eo05b-dataset-storage-probe.mjs": "8f2ce1be3c27e3b539f55532846f645ba7e68d8ea860aca283bbebc6909f6719",
       "tools/eo05b-demo-fixture.mjs": "c91cf0e2b82ae6bb4db46d4dfa4ffbc0e1415877075995a5bf5cbc1f30afdd73",
       "tools/eo05b-fx-reporting-currency-probe.mjs": "c5decd13fad2a1aebccacbdf6229bcfec590c429db8ab3380008c318c479a9d5",
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
@@ -1286,7 +1302,7 @@
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
       "tools/eo05d-reconciliation-probe.mjs": "cfa524d612e31a13ec495f884c65110df1386cc068c9d5101e2ffcb8038d6476",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
-      "tools/f01-database-replay.mjs": "11e8736bc46f76dd3476a79fae8d18d21d19d375e4c8534c4ad67eccf6f5a98b",
+      "tools/f01-database-replay.mjs": "b23e14a8236a2ea276b15b2a016996082a4078ef401d9ed92139f5055cd36a2a",
       "tools/f01-identity-oauth-rollout.mjs": "5894b9ae54363fcf31372ed0a1abf39d3c0e1dfea428190232a0420b0b11f787",
       "tools/f01-live-readiness-plan.mjs": "d4eb8e8ca9d80d6e99cea8c9cf475b388db46a756e2e7a631c5c245e8e7bb25b",
       "tools/f01-live-readiness-rehearsal.mjs": "d5d2b8510551b7f99e7669a37072636bab135a6bef90b0da51bf9ef185aac17e",
@@ -2476,6 +2492,537 @@
       ],
       "visual_acceptance": "not_applicable_no_UI_change",
       "native_acceptance": false
+    },
+    {
+      "id": "eo05-klaviyo-isolated-insert-measurement-2026-11-18",
+      "date": "2026-11-18",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat 2026-11-18: 'Tamam başlayalım onaylıyorum' after the precise proposal to measure five direct INSERTs for the same 1,000 synthetic rows on an isolated GitHub Actions PostgreSQL table copy, and compare them with the normal flow. Owner then explicitly requested repeating measurement with the exact PR #378 writer, the same 1,000 rows, and measurement-only changes. Owner explicitly approved the same 1,000 rows with the exact #378 writer and timing-only instrumentation inside the writer. Owner explicitly requested the first standalone queue-to-completion run, with all internal timing and SQL experiments disabled. Owner explicitly requested the second test, timing only PostgreSQL report publication with the same writer and fixture. Owner explicitly approved the scoped, paired retention comparison after agreeing to measure only the source/retention block first. Owner explicitly approved the paired queue-to-close measurement after seeing the isolated source/retention block result. Owner approved measuring only total time and the report-write boundary together in one optimized run. Owner explicitly approved the isolated candidate that verifies physical facts in bulk and computes the daily receipt fingerprint from the same read. Owner explicitly approved the isolated Frankfurt Supabase benchmark, its SQL and synthetic OAuth/identity fixture dependencies, and supplied the exact test-project session pooler host. Owner explicitly accepted the two proposed optimizations in chat: validate staged packages once per first-day publication, and read writer column metadata once per table per package. Owner asked for the detailed standard report-write timings, including locating the lock on the same isolated Supabase Nano environment. Owner approved starting the rollback-only report-write cleanup covering package, writer and trigger repeated work. Owner requested the same standard breakdown after cleanup, with regression and improvement checks per phase. Owner explicitly approved comparing ordered canonical JSON aggregation and trigger reuse of the locked verified source batch separately on isolated Supabase Nano. Owner explicitly approved testing staged canonical JSON reuse with tamper rejection and separately timing inner trigger checks against the ordered JSON candidate. Owner explicitly approved reusing package row canonical bytes between staging and the isolated writer while retaining distinct document hashes and byte limits. Owner explicitly requested the isolated Nano queue-to-completion run and necessary optimizations before deciding on compute sizing. Owner explicitly requested immediate optimization of report preparation, receipt readback and job closure on Nano after the queue-to-close results. Owner explicitly authorized measuring application call wall time and PostgreSQL execution separately to diagnose the report-excluded time gap. Owner explicitly approved fixing the encrypted-page versus generic-text size-bound conflict and running the 1,000-row fixture with 15 synthetic responses. Owner explicitly approved starting with receipt readback and job closure on 2026-11-19; scope is an opt-in rollback-only comparison on isolated Nano with the same 1,000 rows and 15 synthetic responses. Owner approved implementation of the concrete first-day shared-source plan with 'Tamam devam edelim Codex' on 2026-11-19, after the plan was recorded: isolated candidate and matched Nano comparison only; completion/readback redesign stays separate. Owner explicitly approved two same-day reread measurements with 'Çok mantıklı başlayalım Codex' on 2026-11-19: seed 1,000 rows outside timing, then measure a new 1,000-row refresh with zero or exactly five changed sales through the unchanged writer and job closure. Owner explicitly approved the narrow isolated SQL correction after the multipart UPDATE gate failure with 'Onaylıyorum devam edelim Codex' on 2026-11-19: only a verified complete daily group may use exact row revision permits, then repeat the two 1,000-row rereads. Owner explicitly approved the proposed per-source retention-hold deduplication with Onaylıyorum on 2026-11-19 after the failed correctness fixture: same 1000-row rollback-only rereads; original row guards retained. Owner approved starting only the first-day physical comparison metadata candidate with Tamam başlayalım Codex on 2026-11-19 after a read-only review of the 17-second first-publication chain. Scope: prepare numeric/bigint column names once per table, preserve every row comparison, compare same 1000 rows/15 synthetic responses on isolated Nano. No reread, other preparation candidate, closure redesign or production install. Owner explicitly rejected further optimization and accepted the pre-candidate normal first-day code as the stable reference on 2026-11-19: Yok bu da fayda etmedi bundan önceki kod ile yola devam edelim ve stabil sayalım bu son geliştirmeden önceki kodu. Artık daha fazla zorlamanın bize faydası yok. This authorizes removing only the latest fact-column candidate and preserving measurements; no merge/deploy or reread work. Owner explicitly approved the concrete Google normal daily packaging scope with Tamam devam edelim after the layer-by-layer plan: bounded raw groups, exact day/job/owner bindings, up to 200 report rows per package, all packages before one daily receipt, readback before closure, isolated positive/negative tests. Klaviyo stable path, OAuth, provider query families, historical rereads, live installation/merge/deploy remain outside scope. Owner explicitly approved with Onaylıyorum the concrete Google 1000-report-row recipe and isolated correctness scope: 500 product performance, 499 product sales and one PD fact, native capture ceiling 1000 to 2000, five 200-row packages and one receipt. After the unchanged envelope bound rejected a whole sale page, owner separately approved with Onaylıyorum raising only the Google v2 storage-byte ceiling from 1 MiB to 2 MiB and using it explicitly in this new fixture. HTTP bytes, per-envelope 1000 source rows, whole-page preservation and all report/receipt limits stay fixed. No timing, hosted call, live config, OAuth flow change, migration, merge or deployment approval. Owner explicitly approved with Onaylıyorum Codex the concrete next hosted Google measurement scope: prepare a separate Google harness, validate correctness, then one Nano queue-to-close run with 1000 report rows/5x200/one receipt, 18 synthetic Google responses, temporary test role and synthetic account/identity/OAuth records, rollback and cleanup, standard timing table and AdsTable vs PostgreSQL call-wall separation. Temporary isolated Nano setup is authorized separately from earlier row/byte-bound preparation. No actual provider requests, production changes, existing writer change, merge or deploy."
+      },
+      "rationale": "Extend only the existing rollback-only Klaviyo timing probe. Time five 200-row inserts on a disposable logged copy with indexes and foreign keys preserved and AdsTable trigger logic absent from the copy. The normal path is measured independently with its guards and triggers enabled. No OAuth behavior or product runtime changes. Include changes to the timing probe in the existing F01 path filter so SQL execution is verified in CI. Replay the byte-verified PR #378 SQL as a test fixture within the isolated savepoint, leaving the original PR and production migration lineage untouched. Collect package-level clocks and actual bulk execution plans with trigger timings inside the existing localhost-only, rollback-only probe. The byte-verified original SQL fixture and runtime migration stay unchanged. Use PostgreSQL EXPLAIN ANALYZE to sample the exact bulk SQL with its captured synthetic inputs in a separate savepoint; preserve the measured normal writer flow and restore its rows. Run the existing isolated 1,000-row probe with one external elapsed clock and retain all correctness assertions. Report-only mode times PostgreSQL staging/publishing, records trigger elapsed time in the same transaction, and does not run the additional plan or direct-insert experiments. Compare an exact #378 writer with a rollback-only candidate that reuses one retention-date calculation per verified Klaviyo day and timezone; preserve row ownership, date, timezone, mapping and retention checks. Assert 1,000 versus one computation and measure only the changed block in paired savepoints on the same PostgreSQL server. Compare the exact #378 writer and the same retention candidate in paired rollback runs using only external elapsed time. Neither writer runs timing probes or retention-call counting in these runs. Measure only end-to-end wall time and the report staging-to-publication transaction boundary for the unchanged retention candidate. Compare verification in bulk with the previous readback and fingerprint passes while keeping staging checks, owned row locks, row equality, canonical fingerprint shape and independent receipt readback. Scope remains rollback-only. Reuse the existing synthetic probe in an explicitly bound hosted test session with certificate verification and rollback. Time report staging and publication using PostgreSQL clocks; no credential or production endpoint is stored in Git. In this same unmerged revision, add an optional rollback-only candidate built from the exact #378 writer and existing retention and combined verification variants. Pass the verified summary through private invoker functions inside the active transaction and cache column metadata per table per package. Keep the original comparison path, receipt readback, row triggers and data checks. Verify the candidate with the existing 1,000-row localhost CI fixture; the hosted candidate is explicitly opt-in. Add a one-run rollback-only timing option to the bound hosted benchmark. Reuse report and writer timing probes against the optimized private functions, and record common-lock acquisition before authority checks. The isolated cleanup reuses canonical text for each identical size/digest or key/digest input, groups validated rows once instead of rebuilding a growing JSONB package, and combines two reads of the same source-batch status and retention per reference. Preserve per-row guards, physical verification, digest/readback and one daily receipt. The authorized isolated Supabase Nano run completed all three rollback-only fixtures. Compare pre-cleanup and cleanup report SQL with the same server-side detailed phase clocks in the same isolated Nano session and separate rollback transactions. Share the package canonicalization timing wrapper and include bulk grouping and receipt-row preparation in the same writer preparation clock for both variants. The rollback-only phase benchmark compares the current cleanup against ordered canonical aggregation and the trigger-only verified batch reuse separately with identical detailed clocks. Verify canonical bytes and digest against the prior function and exercise private-key, key-length, depth and byte-size rejection. Preserve batch and page verification, row-aware checks and the physical daily receipt/readback. The rollback-only staged candidate stores canonical bytes in the existing temporary package table, checks their SHA-256 and compares the decoded JSONB byte representation with the current package and context. Verify body, digest and canonical-text tampering in savepoints outside the matched timing boundary. Collect the same trigger phase counters for reference and candidate. The rollback-only rows candidate stores canonical rows temporarily, binds the exact bytes to the verified staged envelope and requires exact JSONB bytes apart from the regenerated operation ID before writer reuse. Check five independent writer canonical outputs and reject whitespace tampering on the cached row text. Both package paths retain their distinct hash and size checks. Add three full queue-to-completion runs of the accepted report candidate with only outer call timings and no report inner counters or timed tamper experiments. Separately measure a readback metadata candidate that still recomputes every physical row digest and compare old and candidate digests for all 1,000 rows outside the elapsed window. Keep the original readback as default; the candidate is explicitly opt-in and its median did not improve total elapsed time. No provider network calls or committed fixtures. Cache the application retention date only within one prepare call by the exact business-day and timezone pair, revalidate each distinct pair and reject mixed or invalid dates/timezones. Retention semantics and source lifetime remain unchanged. Add mixed-key and no-cross-call-reuse regression coverage. Nano tests use the same full-flow harness. The optional readback candidate also groups physical row validation and ordered fingerprint leaves in one SQL query per table. It still recomputes every physical digest and is compared to the original fingerprint for all 1,000 rows after elapsed timing. Retain it as opt-in because receipt/closure gains are not established. Track outer report CPU and report-stage queue calls to diagnose wall-time variation. Add an opt-in temporary invoker SQL clock for fixed parameterized SELECTs, aggregate original result rows to JSON with explicit original parameter casts, and record step, count, wall and SQL times. Preserve all calls and complete the original synthetic assertions. The residual includes driver, serialization, pooling and network; it is not classified as pure network. Savepoint control calls are recorded without claiming a separate measured SQL time. Keep public canonicalSourceJson at its 65,536-character string bound. Only source-write preparation accepts a large ciphertext string when its containing object and exact ciphertext were registered by the private native cipher seal operation. Preserve canonical bytes, plaintext bounds, 8 MiB page limit, total package budgets and AEAD/readback. Reject cloned or modified oversized ciphertext. Set the synthetic event page size to the requested 200 and assert exactly 15 responses. Add an opt-in readback comparison of three alternating reference/candidate pairs. Canonicalize scalar JSONB children without recursive PL/pgSQL dispatch, while preserving ordered object keys, private-key checks, root byte bounds and depth rejection. Keep independent physical digest validation at receipt readback and closure. Compare canonical bytes on boundary fixtures and all 1,000 physical row digests and the full daily fingerprint against the original outside elapsed measurement. No production SQL installation. Add an opt-in transaction-local first-day source proof scoped to owner, original context, operation and transaction. Reuse locked source metadata and original binding while preserving live owner/privacy and all row-specific checks. Invalidate the proof on source page, relevant batch or work-binding mutations; clear before consumption. Keep absent-proof and other-provider paths. Negative probes run in a separate correctness-only fixture. Compare six alternating 1,000-row/15-response rollback-only fixtures with identical existing readback settings. Add --daily-reread for exactly two isolated rollback fixtures. Each seeds the accepted first-day chain once, drops only its private staging table, reuses installed SQL and owner, and dispatches a new job/operation for the same day with expectedRevision=1. Only the second refresh is timed. Synthetic pages remain five by 200 rows and 15 responses; five-changed alters quantities/values for e0-e4 only. Verify 1,000 stable IDs/native keys, exact values, new source bindings, row revisions and superseded prior receipt outside elapsed timing. No replacement writer optimization, runtime migration or closing redesign. The unchanged-sales reread stopped at DATASET_REVISION_PROTOCOL_REQUIRED: multipart source batches remain partial, but UPDATE permit lookup requires complete. First-day seed completed; no completed reread timing exists. Five-changed case was not run after this shared gate failure. The writer and guards remain unchanged; correction requires a separate owner-approved scope. Preserve stopped-run evidence and prior benchmark history in versioned JSON artifacts. Add an opt-in rollback-only multipart revision helper. Bind revision permits to the server-owned verified stage operation and day binding and require exact row payload equality, owner/connection/job/fence/window/transaction, partial product-group metadata, pending handoff and live retention. Preserve the complete-source path and all original OLD/NEW revision guards. Private helper denies missing/false stage proof, bad operation/binding/hash/row/scope and stale transaction; no package state is relabeled. Separate correctness-only invocation includes a missing-group rejection before the two uninstrumented reread timing cases. No first-day optimization, closing change, live migration, deploy or merge. The correctness-only 1,000-row reread then stopped on SQLSTATE 57014 at repeated source-reference retention UPDATEs inside hold_report_source_batch. All 15 negative/positive checks are not confirmed and neither performance case ran. Keep candidate opt-in and unaccepted; preserve timeout and failed-run evidence, rollback and zero-residue cleanup. Deduplicating retention work remains a separately proposed scope. In the isolated revision candidate only, after original staged-day replacement planning, hold each distinct provenance source batch once in sorted ID order for the same owner and policy. Keep the original hold function, source locks, privacy/expiry checks and row-level revision/hash/context validation. No cross-operation cache. Correctness mode records unique held batch IDs outside performance fixtures and verifies exact staged source coverage. Then run the same unchanged and five-changed 1000-row scenarios. The isolated correctness fixture passed all 15 revision checks, exact three distinct replacement-source holds, 1000 stable IDs/new source bindings/revision advances and prior receipt supersession. Separate uninstrumented rereads completed at 40857.5713 ms unchanged and 40099.0205 ms with exactly five changed sales; seed excluded. Report call wall sums were 32005.4091 and 31412.3778 ms. All 1000 facts are revised even when sales are unchanged. This resolves completion, not the remaining performance problem; no completed before baseline, speedup percentage or capacity claim. Preserve earlier failed evidence unchanged. All fixture data, sessions and temporary roles removed. Add opt-in first-day factColumns helper derived byte-for-byte from the existing comparator except its numeric/bigint catalog loop is supplied by an enclosing once-per-table query. Only the private verified first-day physical comparison calls it; original comparator and all row/owner/source/hash/retention checks remain. Compare three alternating reference/candidate pairs through queue to closure with unchanged 1000-row fixture. After elapsed clocks, compare all physical rows against the original function and reject six altered fields for each row. No internal counters in performance timing and no reread mode enabled. All six first-day comparisons completed. Three candidate fixtures passed 3000 original/candidate row comparisons and 18000 altered-field rejections outside clocks. Mean queue-to-close was reference 17415.0546 ms versus candidate 17650.7663 ms; report-call means 9171.2598 versus 9392.1059 ms. Only one of three paired totals improved. No speedup established, so keep candidate opt-in and preserve the original first-day default. No other optimization started. All test fixtures, sessions and temporary roles cleaned. Following the explicit owner decision, restore both benchmark tool files byte-for-byte to 2175a45, removing the latest fact-column helper, mode and validation additions while retaining the measured evidence and approval history. Normal first-day publication is owner-accepted as the stable reference; same-day reread remains parked separately. No further optimization or timing test. Stable reference is not a new production capacity or release acceptance. Prepare Google-specific raw package validation and first-day staging/publication/inspection/finish functions without replacing existing Klaviyo functions. Keep native pages intact and existing raw byte/row/request budgets; one page that cannot fit is rejected. Bind cumulative family/page/reference coverage and source context. Add explicit server-owned googleDailyPackages opt-in to scheduled handoff; old source paths stay on their existing RPCs. Support verified empty day without fake fact rows and reject nonzero expected revision. Bulk writer copied from the verified exact #378 fixture into a provider-private function with Google account identity preserved; row triggers remain enabled. All fact packages and daily receipt use one transaction, followed by independent readback and job closure; no replay after lost response. Test source packaging, unknown publication/readback/finish, 501-row and empty SQL fixtures plus incomplete/tampered stage rejection. The owner-role SQL fixture completed 501 rows in three packages and an empty day in one package, including missing/tampered stage and wrong-hash closure rejection. Preserve actual partial-package primary source IDs. Google-private canonical JSON is byte-equivalent on the existing boundary corpus and uses ordered aggregation; cache retention date/timezone within each verified Google package, preserving mismatched-pair fallback and all row guards. Original Klaviyo/shared SQL is not replaced. Late package acknowledgement is independently tracked to prevent a previous success masking a later unknown. Explicit daily activation is server-owned and defaults off pending migration/profile acceptance. The hosted runner-role SET ROLE check was denied for the temporary owner-only login; stop, no extra grant or hosted retry. Standard F01 runner-role proof remains required. New probe and workflow filter are additive; no old test/guard/workflow removed. Initial F01 reached the new runner-role probe but stopped because the preceding probe rolled back its own test membership. Make the new probe localhost:54322-only and prepare the same established non-inheriting, set-only membership inside its own savepoint, restoring it by rollback. This is isolated fixture setup only, no hosted grant/retry and no runtime changes. Preserve failed run 44518994499; repeat required CI for the corrected fixture. Within the already approved Google normal daily handoff scope, preserve the explicit server-owned googleDailyPackages opt-in across the scheduler return and preflight bridge. The prior database-client opt-in alone did not route reconciliation to the daily writer. Add a scheduler-composition regression using 203 synthetic report rows in [200,3] packages, asserting one daily publication, independent receipt readback and completion without legacy reconcile. No provider query, OAuth, default activation, SQL or Klaviyo writer change. Earlier role-level SQL proof remains distinct from this mocked scheduler regression and from any future timing measurement. Implement only those two Google v2 plan ceilings. Share synthetic native row construction between capture and stored-source fixtures, preserve all existing defaults, and add independent performance/sale cardinalities and a terminal whole native page per family for this case. Project exactly 1000 facts from 1501 native rows without truncation. The full synthetic capture reads the actual encrypted envelopes through the existing source reader, then exercises five packages/one receipt/inspection/closure using mock SQL results. The independent localhost-only rollback probe adds the exact 1000-fact case to existing 501/empty real PostgreSQL checks. Preserve the failed 1MiB attempt. Correct only synthetic receipt fidelity (existing SQL input-digest field) and hash already canonical prepared ciphertext bytes without relaxing the public plain-string bound. Test original 1000-row and 1MiB plan failures, new 2000/2MiB acceptance and above-bound rejection; keep HTTP/readback/unknown/privacy/retention guards. Add a Google-only harness using the existing actual scheduler, source reader, vault, source/dataset roles and SQL profiles. A session-local invoker SELECT adapter switches to real narrow roles without fabricating results; preserve client timeouts and outer rollback via savepoints. Collect outer standard-stage and real SQL call-wall clocks only; no inner SQL timers or writer changes. Observe storage boundaries in a fresh in-memory reader module without changing source files or guards. Local-only CI setup uses the existing exact source-role installation/extension artifact and rolls back memberships/roles; hosted setup uses one expiring test login and the approved existing NOLOGIN source-role definition if absent, with removal afterward. Add isolated real SQL complete-flow assertions before one hosted run. Record fixed input counts, adapter/rollback limitations, failed attempts if any and verified cleanup. Add only required path coverage and a correctness probe, preserving existing CI/tests. Keep the code-delivery scope live_database=false: this package does not install or activate production SQL. The separately approved isolated Nano test execution is recorded explicitly in isolated_database_test_authority and the dedicated evidence artifact; it is not permission inferred from CI or this scope flag. No guard change. Diagnose isolated native inventory overflow before collection: execute the same complete-flow savepoint before other probes add fixture owners. Keep all inventory bounds, workload, guards, roles and production functions unchanged; rollback restores the preceding state. 20 November owner approval (Onaylıyorum Codex) for Google raw dataset transaction setup only: send BEGIN and the two transaction-local timeout settings in one simple query, using only the validated server timeout. Retain role/profile, RPC, COMMIT acknowledgement, rollback and stop/no-retry behavior. Original legacy and history modes retain their setup. Preserve actual SQL in both existing isolated probes by substituting only their outer savepoint for BEGIN. Regression tests check four calls instead of five and no business RPC after setup or profile rejection. All 98 focused local tests passed. No live/provider runs, grants, merge or deploy authorized by this change. 20 November owner approved (onaylıyorum devam edelim) collection-stage diagnostic tooling only. Opt-in clocks inside the rollback-only temporary invoker cover actual SELECT execution and role switching, and the original client path counts/times each existing query without additional SQL round trips. Classify Google quota, role checks, transaction control and other collection calls. Separate measured in-adapter SQL from residual wire, driver and adapter wall; keep uninstrumented transaction controls separate. The normal hosted mode continues using the original untimed function. Exercise the diagnostic on the fixed complete-flow isolated CI fixture; verify classes and phase partition. No production code, provider calls, permissions, live execution, merge or deploy authorized here. Isolated run 44709326835 completed the reader but stopped on an incorrect test expectation: each of 37 collection guards has three source-role calls and one direct runtime-vault read, not four source-profile calls. Keep 18 times six quota RPCs and assert one setup/one release per source role profile, with the runtime reads measured in other. Correct the benchmark assertion only. No hosted mutation occurred. Owner explicitly approved (Onaylıyorum) splitting the existing Google quota diagnostic into four operation buckets, isolated proof, then one Nano run with the same 1000 report rows and 18 synthetic responses and temporary access cleanup. No additional DB calls, SQL behavior or app runtime changes. Preserve total quota without double counting; verify child counts and aggregate conservation. Five local tests passed. No live production/provider, merge or deploy. Owner approved (Onaylıyorum devam edelim) a same-claim isolated A/B for Google quota context with one shared current-claim proof. This is test-only on localhost:54322. Read existing exact function definitions and require each anchor once. Inline unchanged SELECT predicates for bound authority, installation and entitlement in a temporary invoker owned by the fixture owner, with mandatory original current claim once per call and a final live-clock deadline check. Merchant wrapper behavior and all other predicates remain in the temporary candidate. Never bypass admission or expose a new privilege. Verify equal context JSON and invalid job/fence/window, future entitlement and expired deadline denials. Warm and stagger six query-only pairs before actual HTTP/storage starts; rollback both temp definitions and fixture changes. Use existing F01 proof only, without hosted execution or runtime changes, merge or deploy. Explicit owner approval (Onaylıyorum Codex) for one combined experiment: use the verified shared claim for Google quota context only; combine final missing/extra-page detection up to the 100-page read limit with no crypto changes; canonicalize report stage bytes once for size and digest, and reuse publisher-verified owner-only staged binding under lock before the independent post-write verification. A/B uses same synthetic 1000 report facts and 18 responses, same Nano session and outer rollback with two balanced ABBA pairs, outside setup clocks. All exact known SQL definitions and in-memory modules are restricted to isolated targets and rolled back; live code, migrations and roles outside temporary benchmark grants unchanged. Re-run established positive/negative report schema probes on candidate in a separate savepoint and verify both candidate and baseline closure. 42 focused tests passed. No provider requests, merge or deploy. Isolated F01 run 44719417836 rejected the candidate publish with SQLSTATE 55000 because alias s conflicts with the pre-existing PL/pgSQL loop record s. Rename only the new alias to staged; keep the proof and comparison unchanged. No Nano mutation occurred. Owner explicitly approved (Onaylıyorum Codex) the report-only follow-up atop the three-stage candidate. Within rollback-only isolated fixtures, canonicalize each package once for size and digest; render bounded scalar children directly with identical text and original recursion at depth/byte boundaries. Retain sorted keys, private key rejection, row guards, independent physical readback and receipt. Assert identical canonical output and digest for eight boundary inputs and identical rejection for five invalid inputs; rerun existing real report and closure checks with the candidate. PostgreSQL 17 CASE and JSON documentation checked 20 November 2026. Run one same-session ABBA Nano comparison against the prior three-stage candidate using standard external timings, same 1000 rows, then remove temporary grants and verify rollback. No production definition changes, provider calls, deployments or merge. Fourteen focused tests passed. Owner approved (Onaylıyorum devam edelim Codex) report-write diagnostic only: use existing outer call timestamps for five stage RPCs and one publish RPC; attribute remaining wall time separately and preserve the standard end-to-end table. No extra database query, SQL clock, writer change, application behavior or live execution in this scope. Isolated tests use the accepted three-stage comparison variant as diagnostic reference; keep previous scalar/package parity and negative report cases in the separate probe. Seven focused tests passed. Owner approved (Onaylıyorum devam edelim Codex) tracing inside the Google publish RPC on the prior three-stage reference. Localhost-only, rollback-only test substitutions insert clock_timestamp boundaries and emit two timing-only notices without an extra DB request. Groups cover claim/stage, source/retention, writer setup, package row write, physical verification, and receipt/handoff. Nested durations reconcile with enclosing publication and are separate from standard performance timing. No query predicates, inputs, thresholds, result bytes, production definitions or live access changes. Eight focused local tests passed. Owner approved (Onaylıyorum devam edelim) localhost-only trigger diagnostics on the same Google workload and three-stage reference. Existing validator predicates and inputs remain in the exact replay; clocks around ownership, work binding, and source lookups accumulate numeric results in a transaction-local setting, read after timing. Count row and source reference coverage; no benchmark claim, production SQL, hosted access, provider calls, merge or deploy. Ten focused tests passed. Owner explicitly approved aligning the Klaviyo synthetic comparator with Google for work-order and existing per-request quota resolution/reserve/settlement. F01 localhost only, uses existing source client and narrow fixture role and shared quota RPCs backed by SQL. Compare the retained report chains on 1,000 rows and also preserve a direct Klaviyo control outside runtime. Prove one settled debit per Klaviyo request, five 200-row packages, one receipt and completed closure. Synthetic provider feedback and no real HTTP, credentials, durable commit, hosted access, runtime changes, merge or deployment. Sixty-seven focused tests passed; official provider quota and PostgreSQL/Supabase local transaction docs checked on 20 November 2026. Owner explicitly approved (Onaylıyorum Codex) two isolated experiments on 20 November. Klaviyo uses the existing background owner, current authority loader and vault against a rollback-only synthetic encrypted credential, compares the quota context around reads, and retains existing quota reserve/settle plus unchanged accepted writer. Compare with the same Klaviyo quota-only baseline. Google writer alone caches column metadata by table within each package and groups prepared rows once in original order. Compare against the retained Google three-stage reference, retain validation and original readback, and prove malformed row/decimal rejections and full verified closure. No OAuth route, live credential/DB/provider, production runtime/SQL, permission, deployment or merge changes. Fifty-seven focused tests passed; PostgreSQL 17 aggregation/arrays and Supabase query optimization documentation checked on 20 November 2026. First isolated run 44746994190 exceeded the statement timeout in the invalid-decimal test because it exercised the unstaged writer with a full package. Use two rows for the same table to reach the cached column-validation path without unrelated source checks for up to 200 rows. Positive benchmark workload and guards remain unchanged. Owner approved (Onaylıyorum başlayalım Codex) restricting the benchmark decision to PostgreSQL report write: 8.402 s historical Google reference and 4.066 s historical Klaviyo target. Exact Google reference plus approved writer preparation variant report five staging and one publishing call, non-overlapping elapsed clocks, no SQL stopwatch or additional scenario. Existing regressions remain active. Nineteen focused tests passed. PostgreSQL 17 aggregation and Supabase query optimization docs checked November 20. Owner explicitly approved (Tamam onaylıyorum başkayalım) a same-run detailed comparison of the earlier Google 8.402 s and Klaviyo 4.066 s variants. Each reports shared authority, stage and package checks, source/retention, row preparation, JSON and hashes, combined existing-row/insert SQL, row triggers, physical readback, receipt and residual. SQL clocks inside the rollback-only comparison copies add diagnostic overhead and do not replace the historical outer timings. Existing lookup and insert SQL remain one statement, separately reportable only with a different experiment. Same workload and original receipt proof; no changes to application SQL, OAuth, hosted provider/database access, deploy or merge. Twenty-one focused tests passed. PostgreSQL 17 clock and query timing documentation and Supabase query optimization checked 20 November. Owner explicitly approved (Onaylıyorum başlayalım Codex) testing the existing Klaviyo approach for Google package work only. A protected staging relation holds the exact canonical payload and row text generated by the existing serializer. Publish verifies digest, JSONB binary binding, canonical row text, staged ordinals and row keys before passing the verified summary to private same-transaction writer and physical checker. Physical compare, source retention, row digest, triggers and receipt remain active. Rebuild the private writer package with its own operation ID, exact row text and separate hash. Assert exact stage hashes and writer serialization in 0/501/1000-row cases, reject tampered digest/body/cache and missing packages, confirm privilege boundary and closure. Staged changes and invoker variants roll back. Twenty-two focused tests passed. PostgreSQL 17 JSON/functions and Supabase functions documentation checked 20 November. No application, OAuth, hosted DB, provider, merge or deploy changes. Owner explicitly approved (Tamam Codex onaylıyorum devam edelim) the isolated combination of the validated package JSON/summary reuse with the already tested row preparation changes. Capture the chosen writer definition before making its private verified package copy, preserving table checks, numeric/row validation, ordering and one verified receipt. Compare against package reuse alone in matching savepoints with outer PostgreSQL report timing only. Combined positive 0/501/1000 workload, exact package identities and negative stage/decimal/shape proof remain active. Twenty-two focused tests passed. PostgreSQL 17 arrays/aggregation and Supabase query optimization docs checked November 20. No runtime changes, trigger changes, live access, deploy or merge. Owner explicitly approved (Tamam devam edelim Codex) measurement of the repeated trigger checks on the retained package/row preparation combination. Fit existing timing anchors to the private verified writer, keep control and diagnostic runs distinct, and accumulate total Google insert validator time plus its source/authority/binding intervals without per-row notices. Fixed 1,000 rows, five packages and one verified receipt. No predicates, receipt, ACL, provider, hosted database or runtime changes. Twenty-two focused tests passed. PostgreSQL 17 actual clock/triggers and Supabase query performance documents checked November 20. Owner approved (Tamma Codex onaylıyorum. başlayalım) a paired queue-to-finish report on the historical Google package-reuse writer and Klaviyo retained writer with the existing full current-authority and quota verification. Reuse the existing successful local replay scenarios in the same database session, verify exact stage keys and conservation, and persist all ten stage clocks and verified 1000-row closure. Keep report writer behaviors and existing proof cases intact. No extra SQL, provider call, role, runtime, live installation, merge or deploy changes. Twenty-two focused tests passed. PostgreSQL 17 savepoint and Supabase local development official docs checked November 20. Owner explicitly approved (tamam onaylıyorum basşalayım Codex.) paired measurement-only observations in four shared phases on the exact approved full flow, with 1,000 rows per provider. Record existing query wall time and counts for role/quotas/commit/receipt/page checks, and SQL clock intervals inside the original inspect and finish procedures for the receipt, fact hash, repeated inspection, closure lock and final state change. Numeric-only notices and localhost savepoint rollback. Keep ordinary end-to-end comparison and all entitlement, quota, raw evidence and receipt guards. Twenty-three focused tests passed. PostgreSQL 17 clocks and savepoints and Supabase query optimization docs checked November 20. No runtime, hosted role/database, live provider, deploy or merge changes.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "changed_paths": [
+        ".github/workflows/database-integrity.yml",
+        "app/lib/database/dataset-postgres.server.js",
+        "app/lib/database/dataset-reconciliation.server.js",
+        "app/lib/database/dataset-rpc.server.js",
+        "app/lib/database/dataset-source-reader.server.js",
+        "app/lib/database/google-dataset-source-store.server.js",
+        "app/lib/database/google-source-postgres.server.js",
+        "app/lib/database/report-retention-policy.server.js",
+        "app/lib/database/source-evidence-store.server.js",
+        "app/lib/providers/stored-dataset-projection.server.js",
+        "app/lib/refresh/google-raw-dataset-plan.server.js",
+        "app/lib/refresh/google-raw-datasets.server.js",
+        "app/lib/refresh/preflight-bridge.server.js",
+        "app/lib/refresh/scheduled-queue-check.server.js",
+        "contracts/a6-tech-01-f01-migration-lineage-v1.json",
+        "contracts/eo-05a-global-refresh-design-v1.json",
+        "contracts/eo-05d-reconciliation-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "supabase/migrations/20261119112554_eo05_google_daily_packages.sql",
+        "tests/a6-docs-01-turkish-standardization.test.js",
+        "tests/dataset-reconciliation.test.js",
+        "tests/fixtures/dataset-source-binding-fixture.js",
+        "tests/fixtures/eo05-klaviyo-bulk-writer-378.sql",
+        "tests/fixtures/google-raw-datasets-fixture.js",
+        "tests/fixtures/google-read-runner-fixture.js",
+        "tests/fixtures/refresh-shopify-mapping-probe.js",
+        "tests/fixtures/verified-mapping-fixture.js",
+        "tests/google-daily-packages.test.js",
+        "tests/google-daily-timing-probe.test.js",
+        "tests/google-raw-datasets-permission.test.js",
+        "tests/google-source-server.test.js",
+        "tests/report-retention.test.js",
+        "tests/source-evidence-store.test.js",
+        "tools/eo05-final-synthetic-candidate.mjs",
+        "tools/eo05-four-phase-diagnostics.mjs",
+        "tools/eo05-google-acceptance-probe.mjs",
+        "tools/eo05-google-daily-packages-probe.mjs",
+        "tools/eo05-google-daily-timing-probe.mjs",
+        "tools/eo05-google-hosted-benchmark.mjs",
+        "tools/eo05-klaviyo-daily-timing-probe.mjs",
+        "tools/eo05-klaviyo-hosted-benchmark.mjs",
+        "tools/eo05-meta-daily-report-probe.mjs",
+        "tools/eo05-meta-shopify-refresh-probe.mjs",
+        "tools/eo05-shared-refresh-probe.mjs",
+        "tools/eo05-shopify-mapping-timing-fixture.mjs",
+        "tools/eo05-single-report-close-probe.mjs",
+        "tools/eo05b-dataset-storage-probe.mjs",
+        "tools/f01-database-replay.mjs"
+      ],
+      "artifact_paths": [
+        ".github/workflows/database-integrity.yml",
+        "app/lib/database/dataset-postgres.server.js",
+        "app/lib/database/dataset-reconciliation.server.js",
+        "app/lib/database/dataset-rpc.server.js",
+        "app/lib/database/dataset-source-reader.server.js",
+        "app/lib/database/google-dataset-source-store.server.js",
+        "app/lib/database/google-source-postgres.server.js",
+        "app/lib/database/report-retention-policy.server.js",
+        "app/lib/database/source-evidence-store.server.js",
+        "app/lib/providers/stored-dataset-projection.server.js",
+        "app/lib/refresh/google-raw-dataset-plan.server.js",
+        "app/lib/refresh/google-raw-datasets.server.js",
+        "app/lib/refresh/preflight-bridge.server.js",
+        "app/lib/refresh/scheduled-queue-check.server.js",
+        "contracts/a6-tech-01-f01-migration-lineage-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "docs/evidence/EO05_GOOGLE_1000_ROW_WORKLOAD_2026_11_19.json",
+        "docs/evidence/EO05_GOOGLE_DAILY_PACKAGES_2026_11_19.json",
+        "docs/evidence/EO05_GOOGLE_NANO_END_TO_END_2026_11_19.json",
+        "docs/evidence/EO05_KLAVIYO_BENCHMARK_HISTORY_2026_11_19.json",
+        "docs/evidence/EO05_KLAVIYO_DAILY_REREAD_2026_11_19.json",
+        "docs/evidence/EO05_KLAVIYO_FIRST_DAY_FACT_COLUMNS_2026_11_19.json",
+        "docs/evidence/EO05_KLAVIYO_MULTIPART_REVISION_ATTEMPT_2026_11_19.json",
+        "docs/evidence/EO05_KLAVIYO_REREAD_RETENTION_DEDUP_2026_11_19.json",
+        "supabase/migrations/20261119112554_eo05_google_daily_packages.sql",
+        "tests/dataset-reconciliation.test.js",
+        "tests/fixtures/dataset-source-binding-fixture.js",
+        "tests/fixtures/eo05-klaviyo-bulk-writer-378.sql",
+        "tests/fixtures/google-raw-datasets-fixture.js",
+        "tests/fixtures/google-read-runner-fixture.js",
+        "tests/google-daily-packages.test.js",
+        "tests/google-daily-timing-probe.test.js",
+        "tests/google-raw-datasets-permission.test.js",
+        "tests/google-source-server.test.js",
+        "tests/report-retention.test.js",
+        "tests/source-evidence-store.test.js",
+        "tools/eo05-four-phase-diagnostics.mjs",
+        "tools/eo05-google-acceptance-probe.mjs",
+        "tools/eo05-google-daily-packages-probe.mjs",
+        "tools/eo05-google-daily-timing-probe.mjs",
+        "tools/eo05-google-hosted-benchmark.mjs",
+        "tools/eo05-klaviyo-daily-timing-probe.mjs",
+        "tools/eo05-klaviyo-hosted-benchmark.mjs",
+        "tools/eo05b-dataset-storage-probe.mjs"
+      ],
+      "tests": [
+        "tools/eo05-klaviyo-daily-timing-probe.mjs",
+        "tools/eo05-klaviyo-hosted-benchmark.mjs",
+        "tools/eo05b-dataset-storage-probe.mjs",
+        "tests/report-retention.test.js",
+        "tests/dataset-reconciliation.test.js",
+        "tests/source-evidence-store.test.js",
+        "tests/google-daily-packages.test.js",
+        "tools/eo05-google-daily-packages-probe.mjs",
+        "tests/google-raw-datasets-permission.test.js",
+        "tests/dataset-source-binding.test.js",
+        "tests/google-daily-timing-probe.test.js",
+        "tools/eo05-google-daily-timing-probe.mjs",
+        "tools/eo05-google-hosted-benchmark.mjs",
+        "tests/google-source-server.test.js",
+        "tools/eo05-google-acceptance-probe.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_no_UI_change",
+      "native_acceptance": false,
+      "isolated_database_test_authority": {
+        "explicit_owner_approval": "Onaylıyorum Codex after the scoped Google Nano measurement proposal",
+        "project": "lxphenczjmueblnonklm",
+        "single_synthetic_run": true,
+        "outer_rollback": true,
+        "temporary_access_cleanup": true,
+        "production_or_runtime_activation": false
+      },
+      "google_dataset_transaction_setup_2026_11_20": {
+        "explicit_owner_approval": "Onaylıyorum Codex",
+        "scope": "Google raw reader transaction setup, local verification and existing PR checks only",
+        "paths": [
+          "app/lib/database/google-source-postgres.server.js",
+          "tests/fixtures/google-read-runner-fixture.js",
+          "tests/google-source-server.test.js",
+          "tools/eo05-google-acceptance-probe.mjs",
+          "tools/eo05-google-daily-timing-probe.mjs"
+        ],
+        "local_tests_passed": 98
+      },
+      "google_collection_diagnostics_2026_11_20": {
+        "explicit_owner_approval": "onaylıyorum devam edelim",
+        "scope": "rollback-only diagnostic tooling, focused local tests and existing isolated CI",
+        "paths": [
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05-google-hosted-benchmark.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs",
+          "tests/google-daily-timing-probe.test.js"
+        ],
+        "local_tests_passed": 5
+      },
+      "google_quota_detail_2026_11_20": {
+        "explicit_owner_approval": "Onaylıyorum",
+        "scope": "Test-only four quota operation labels, isolated verification, one synthetic Nano diagnostic with exact ephemeral ACL cleanup",
+        "paths": [
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs",
+          "tests/google-daily-timing-probe.test.js"
+        ],
+        "local_tests_passed": 5
+      },
+      "google_quota_claim_reuse_comparison_2026_11_20": {
+        "explicit_owner_approval": "Onaylıyorum devam edelim",
+        "scope": "localhost-only exact six-pair same-claim A/B and parity tests; no hosted mutation",
+        "paths": [
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs"
+        ]
+      },
+      "google_three_stage_comparison_2026_11_20": {
+        "explicit_owner_approval": "Onaylıyorum Codex",
+        "scope": "three approved isolated changes, required CI, one paired synthetic Nano session and exact ephemeral ACL cleanup",
+        "paths": [
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05-google-hosted-benchmark.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs",
+          "tests/google-daily-timing-probe.test.js"
+        ],
+        "local_tests_passed": 42
+      },
+      "google_report_scalar_and_package_bytes_2026_11_20": {
+        "explicit_owner_approval": "Onaylıyorum Codex",
+        "scope": "test-only Google report pair added to previous three-stage candidate, isolated proof and one paired Nano session with exact ACL cleanup",
+        "paths": [
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05-google-hosted-benchmark.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs"
+        ],
+        "local_tests_passed": 14
+      },
+      "google_report_write_split_2026_11_20": {
+        "explicit_owner_approval": "Onaylıyorum devam edelim Codex",
+        "scope": "test-only split of existing report call wall timings and isolated proof on the previous three-stage candidate",
+        "paths": [
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05-google-hosted-benchmark.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs",
+          "tests/google-daily-timing-probe.test.js"
+        ],
+        "local_tests_passed": 7
+      },
+      "google_publish_inner_trace_2026_11_20": {
+        "explicit_owner_approval": "Onaylıyorum devam edelim Codex",
+        "scope": "localhost-only in-publication diagnostic and existing isolated full-flow proof",
+        "paths": [
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs",
+          "tests/google-daily-timing-probe.test.js"
+        ],
+        "local_tests_passed": 8
+      },
+      "google_fact_trigger_trace_2026_11_20": {
+        "explicit_owner_approval": "Onaylıyorum devam edelim",
+        "scope": "Isolated rollback-only measurement of Google fact trigger owner, job binding and source reference checks on the fixed 1000-row workload, within approved publication diagnostics",
+        "paths": [
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs",
+          "tests/google-daily-timing-probe.test.js"
+        ],
+        "local_tests_passed": 10
+      },
+      "google_klaviyo_matched_transport_2026_11_20": {
+        "explicit_owner_approval": "Tamam onaylıyorum ama şunu unutma bu sefer Klaviyounun süresi yukarı fırlayacak gibi duruyor.",
+        "scope": "Local isolated rollback comparison: Google existing three-change reference, Klaviyo direct and with existing real shared quota transport, same 1000 report rows, complete job, standard clock boundaries. No runtime or hosted changes.",
+        "paths": [
+          "tools/eo05-klaviyo-daily-timing-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs"
+        ],
+        "local_tests_passed": 67
+      },
+      "klaviyo_read_authority_google_writer_preparation_2026_11_20": {
+        "explicit_owner_approval": "Onaylıyorum Codex",
+        "scope": "Localhost rollback-only Klaviyo existing production read authority and quota guard dependencies with a synthetic encrypted token, and Google writer package column metadata reuse plus single ordered grouping. Two paired controls and closure work. No provider HTTP, OAuth flow, production code, hosted DB, merge or deploy.",
+        "paths": [
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05-google-daily-packages-probe.mjs",
+          "tools/eo05-klaviyo-daily-timing-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs",
+          "tests/google-daily-timing-probe.test.js"
+        ],
+        "local_tests_passed": 57
+      },
+      "google_report_only_comparison_2026_11_20": {
+        "explicit_owner_approval": "Onaylıyorum başlayalım Codex",
+        "scope": "Google only report-write outer duration comparison with original three-stage reference at 0204674 and already approved writer preparation candidate, same 1000 rows, five packages and one receipt. Reuse the two existing isolated full-flow scenarios and add report timing metadata only. No new SQL, live access or measurement, runtime change, merge or deploy.",
+        "paths": [
+          "tools/eo05b-dataset-storage-probe.mjs"
+        ],
+        "local_tests_passed": 19
+      },
+      "google_klaviyo_comparable_report_timing_2026_11_20": {
+        "explicit_owner_approval": "Tamam onaylıyorum başkayalım",
+        "scope": "Read-only performance attribution via instrumented rollback-only test copies of the exact Google 8.402 s and Klaviyo 4.066 s report writers, 0204674 variants, same 1000 rows per provider, five packages and one verified receipt. Existing SQL operations remain in original order. No new hosted access, runtime changes, deployment or merge.",
+        "paths": [
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05-klaviyo-daily-timing-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs",
+          "tests/google-daily-timing-probe.test.js"
+        ],
+        "local_tests_passed": 21
+      },
+      "google_klaviyo_package_reuse_2026_11_20": {
+        "explicit_owner_approval": "Onaylıyorum başlayalım Codex",
+        "scope": "Localhost rollback-only Google report candidate following existing Klaviyo staged canonical-row reuse and once-per-publish package verification. Original Google comparison reference and unchanged 1000 rows, five packages, one verified receipt, with outer report clocks only. No production SQL, role or provider/cloud action.",
+        "paths": [
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05-google-daily-packages-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs",
+          "tests/google-daily-timing-probe.test.js"
+        ],
+        "local_tests_passed": 22
+      },
+      "google_combined_writer_preparation_2026_11_20": {
+        "explicit_owner_approval": "Tamam Codex onaylıyorum devam edelim",
+        "scope": "Localhost rollback-only add the approved per-table column metadata and single ordered row grouping to verified package JSON/summary reuse. Compare the two Google variants on the same 1000 rows, five packages, one verified receipt. Only outer report-write timings. No live actions or trigger redesign.",
+        "paths": [
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs",
+          "tests/google-daily-timing-probe.test.js"
+        ],
+        "local_tests_passed": 22
+      },
+      "google_combined_trigger_diagnostics_2026_11_20": {
+        "explicit_owner_approval": "Tamam devam edelim Codex",
+        "scope": "Local rollback-only timings of row trigger ownership, job binding and source reference checks on current combined Google writer and fixed 1000 rows. Observations only; no optimization or live actions.",
+        "paths": [
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs",
+          "tests/google-daily-timing-probe.test.js"
+        ],
+        "local_tests_passed": 22
+      },
+      "google_package_klaviyo_authority_queue_to_close_2026_11_20": {
+        "explicit_owner_approval": "Tamma Codex onaylıyorum. başlayalım",
+        "scope": "Local rollback-only report of the same-session complete ten-stage timeline of the existing Google package-only reuse and the retained Klaviyo writer with full read authority. Savepoints, no inner timers or new scenarios, 1000 rows each, no runtime/hosted actions.",
+        "paths": [
+          "tools/eo05b-dataset-storage-probe.mjs"
+        ],
+        "local_tests_passed": 22
+      },
+      "four_shared_refresh_phases_diagnostics_2026_11_20": {
+        "explicit_owner_approval": "tamam onaylıyorum basşalayım Codex.",
+        "scope": "One matched rollback-only Google package-reuse and full-read Klaviyo diagnostic pair per replay. Measure existing role and quota calls, raw write and readback calls, receipt lookup/fingerprint, repeated inspection, closure lock and final update. Preserve original paths and ordinary comparison; no optimization or live change.",
+        "paths": [
+          "tools/eo05-four-phase-diagnostics.mjs",
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05-klaviyo-daily-timing-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs",
+          "tests/google-daily-timing-probe.test.js"
+        ],
+        "local_tests_passed": 23
+      },
+      "single_report_close_rehearsal_2026_11_20": {
+        "explicit_owner_approval": "Onaylıyorum Codex",
+        "scope": "Approved after the exact isolated Google and Klaviyo closure proposal. Preserve one full physical report and receipt readback under the existing closure lock, with exact equality to the publication receipt and the original source and current-claim guards. Test 1,000 rows and five packages against the previous uninstrumented matched control. Reject a mismatching receipt, a removed report row and an invalid fence before closure. Local rollback-only fixture, no shipped SQL or runtime, OAuth, hosted access, merge or deployment.",
+        "paths": [
+          "tests/google-daily-timing-probe.test.js",
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05-klaviyo-daily-timing-probe.mjs",
+          "tools/eo05-single-report-close-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs"
+        ],
+        "local_tests_passed": 24,
+        "official_checked_at": "2026-11-20",
+        "references": [
+          "https://www.postgresql.org/docs/17/tutorial-transactions.html",
+          "https://www.postgresql.org/docs/17/explicit-locking.html",
+          "https://supabase.com/docs/guides/database/query-optimization"
+        ]
+      },
+      "final_paired_synthetic_refresh_2026_11_20": {
+        "explicit_owner_approval": "Tamam onaylıyorum.",
+        "scope": "Owner approved the three specified optimizations followed by one final paired rollback-only 1,000-report-row synthetic comparison, regardless of timing. Materialize Google mandatory RPC OIDs once per fresh profile statement during collection without caching privileges or omitting checks. In the same Klaviyo quota context read, keep request intent and the existing current-entitlement/active-installation checks while eliminating the redundant installation JSON read. In the existing route guard combine the canonical fingerprint, binding count and provider checks into one scan with unchanged reservation, dispatch recheck, feedback and settlement. Both raw stores use the authenticated expected page hash instead of hashing the same opened payload again, retaining the current plain-payload comparison, ciphertext metadata, completeness, and receipt checks. Combine with the previously proved single report closure/readback. Staged F01 environment only for the final comparison; preserve the second replay's earlier correctness baseline. No runtime, shipped SQL, OAuth setup/token behavior, hosted access, merge or deployment.",
+        "paths": [
+          "tests/google-daily-timing-probe.test.js",
+          "tools/eo05-final-synthetic-candidate.mjs",
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05-klaviyo-daily-timing-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs",
+          "tools/f01-database-replay.mjs"
+        ],
+        "local_tests_passed": 98,
+        "official_checked_at": "2026-11-20",
+        "references": [
+          "https://www.postgresql.org/docs/17/transaction-iso.html",
+          "https://supabase.com/docs/guides/database/query-optimization",
+          "https://developers.google.com/google-ads/api/docs/best-practices/quotas",
+          "https://developers.klaviyo.com/en/docs/rate_limits_and_error_handling"
+        ]
+      },
+      "synthetic_shopify_report_mapping_2026_11_21": {
+        "explicit_owner_approval": "Onaylıyorum Codex.",
+        "scope": "Approved the exact Google and Klaviyo report identity rules in the refresh contract and their isolated synthetic reconciliation proof only. Exact authenticated raw context and current verified mapping evidence within the same owner; positive shared Shopify product, wrong shop, variant-parent mismatch, absent/ambiguous report link, missing Shopify evidence, and independent advertised/sold roles. No changes to runtime files, migrations, permission grants, registered native rules, Meta, provider/API operations, live database, merge or release.",
+        "paths": [
+          "contracts/eo-05d-reconciliation-v1.json",
+          "tests/dataset-reconciliation.test.js",
+          "tests/fixtures/dataset-source-binding-fixture.js",
+          "tests/fixtures/refresh-shopify-mapping-probe.js",
+          "tests/fixtures/verified-mapping-fixture.js"
+        ],
+        "local_tests_passed": 125,
+        "official_checked_at": "2026-11-21",
+        "proof": "Two fixture-driven composition tests use the existing Shopify verifier, AEAD source, mapping repository validation and real reconciliation JS with a synthetic PostgreSQL adapter. They assert the exact write/readback/closure request boundary, not physical Dataset or mapping SQL acceptance. PMax provides observed content language; the standard Shopping fixture lacks it."
+      },
+      "synthetic_shopify_mapping_queue_to_close_2026_11_21": {
+        "explicit_owner_approval": "Tamam oanylıyorum başlayalım.",
+        "scope": "Owner approved an isolated PostgreSQL only, one Google Ads and Klaviyo end-to-end rehearsal, with the approved Shopify report identity dry-run bound to existing full authority/quota, five packages, one verified receipt and completed closure. Prepare one synthetic encrypted verified catalog/rule fixture per provider before timing on the same synthetic Shopify installation. Use true PostgreSQL owner-only scoped mapping read in the isolated adapter without any new grant and assert the real mapped fact and Shopify Product ID plus unchanged full row and package totals. One Google performance and one Google sales PMax sample and one Klaviyo event are mapped. No broad capacity inference, no workflow disablement, and no runtime/migration, OAuth flow, hosted provider or database, Meta, merge or release changes.",
+        "paths": [
+          "contracts/eo-05d-reconciliation-v1.json",
+          "tests/fixtures/dataset-source-binding-fixture.js",
+          "tests/fixtures/refresh-shopify-mapping-probe.js",
+          "tests/google-daily-timing-probe.test.js",
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05-klaviyo-daily-timing-probe.mjs",
+          "tools/eo05-shopify-mapping-timing-fixture.mjs",
+          "tools/eo05-single-report-close-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs"
+        ],
+        "local_tests_passed": 67,
+        "official_checked_at": "2026-11-21",
+        "references": [
+          "https://www.postgresql.org/docs/17/sql-savepoint.html",
+          "https://supabase.com/docs/guides/local-development/overview",
+          "https://shopify.dev/docs/api/admin-graphql/latest/objects/ProductVariant"
+        ],
+        "fixture_recovery": "Attempt 44891649753 reached Klaviyo report write and failed EO05_DAY_PROOF_INVALID. Mapping retention updates change the source tables and invalidate the optional Klaviyo whole-day proof. Only the mapped local rehearsal selects the existing independent full source validators. All checks are kept; the earlier unmapped branch and product runtime stay unchanged.",
+        "fixture_timeout_recovery": "Attempt 44892275752 reached final physical fact verification after preserving the source and mapping checks and then hit the synthetic raw adapter's 5s statement timeout. The raw transaction ends through a RELEASE SAVEPOINT on the shared local connection, so SET LOCAL persists unlike a normal committed connection. Set the mapped Klaviyo report adapter to the configured scheduled report 30s test boundary, bounded by actual remaining job time. All verification and prior workloads remain protected; no production environment or SQL change."
+      },
+      "synthetic_meta_shopify_queue_to_close_2026_11_21": {
+        "explicit_owner_approval": "Onaylıyorum Codex.",
+        "scope": "Exercise the existing Meta token debug and Insights reader and scheduled Dataset reconciliation for one fully eligible day on the same synthetic installation as the Google Ads and Klaviyo rehearsals. Use scoped PostgreSQL roles, real quota reservation and settlement for Meta and Shopify Partner, encrypted raw source write/readback, one reconciled consumer receipt, and a completed work order. Three synthetic facts within the existing 200-row writer boundary: one ad performance fact and two product performance facts. Bind only the product with a unique exact synthetic report-to-catalog link to its independently verified Shopify Product ID. Assert the second product stays unmapped and no Meta product sales facts exist. Test-only binding after authenticated raw-source projection and before Dataset write. Physical HTTP responses are synthetic. No live provider, hosted database, runtime role grants or activation. Meta Insights identity namespace proof, native sales roles, and a 1,000-row comparison remain open.",
+        "paths": [
+          "contracts/eo-05d-reconciliation-v1.json",
+          "tests/fixtures/refresh-shopify-mapping-probe.js",
+          "tools/eo05-meta-shopify-refresh-probe.mjs",
+          "tools/eo05-shopify-mapping-timing-fixture.mjs",
+          "tools/eo05-single-report-close-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs"
+        ],
+        "local_tests_passed": 79,
+        "official_checked_at": "2026-11-21",
+        "official_sources": [
+          "https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/breakdowns",
+          "https://shopify.dev/docs/api/usage/gids",
+          "https://www.postgresql.org/docs/current/sql-savepoint.html",
+          "https://supabase.com/changelog.md"
+        ]
+      },
+      "synthetic_meta_daily_packages_2026_11_21": {
+        "explicit_owner_approval": "Onaylıyorum devam edelim",
+        "scope": "Isolated PostgreSQL rollback rehearsal on the same Shopify installation with exactly 1,000 Meta Dataset facts: 20 ad performance and 980 product performance rows. Existing Meta debug, Insights cursor paging and encrypted raw proof plus full Meta and Shopify Partner authorization and quota are exercised with synthetic HTTP. Verify one actual scoped Shopify mapping and one deliberately unlinked product. Validate five exact 200-row packages and their digests and per-package byte ceiling before atomic first-publication reconciliation. Reuse the original fenced SQL path, source and retention checks, and physical per-row verification. Reuse the already locked whole-day batch retention promotion instead of rewriting the same authenticated references for every fact. Verify the retention floor for all 1,000 raw references. Keep the existing receipt size limit by avoiding duplicate per-insert change details in this rehearsal. Verify one readback digest and durable completed status in the isolated transaction. Separate negative cases challenge a missing fifth package and a fifth package short by one row; each must leave zero facts, zero source consumption and the original running job. Tools-only. Keep native Meta identity and product sales acceptance pending. No changes to application runtime, provider OAuth, migrations, live database, release or merge. In the packaged path, reuse the locked whole-day source context, retention deadline and reference set. Each row must match the validated context, date, timezone and subset of references. Mapping retention and the physical fact checks remain per fact. Apply the same canonical byte ceiling as part of each package digest and bind the daily request digest to the ordered list of verified package digests.",
+        "paths": [
+          "contracts/eo-05d-reconciliation-v1.json",
+          "tools/eo05-meta-daily-report-probe.mjs",
+          "tools/eo05-meta-shopify-refresh-probe.mjs",
+          "tools/eo05-single-report-close-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs"
+        ],
+        "local_tests_passed": 79,
+        "official_checked_at": "2026-11-21",
+        "official_sources": [
+          "https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/breakdowns",
+          "https://www.postgresql.org/docs/17/tutorial-transactions.html",
+          "https://supabase.com/changelog.md"
+        ]
+      },
+      "shared_three_provider_refresh_rehearsal_2026_11_21": {
+        "explicit_owner_approval": "Onaylıyorum devam edelim Codex",
+        "scope": "One isolated PostgreSQL rollback run, one Shopify installation, and one fully closed UTC business day. One real inventory tick queues Google Ads, Klaviyo and Meta under one budget and one concurrent claim. The test coordinator drains that tick serially in Google Ads, Klaviyo, Meta order, with fresh SQL admission and fencing for each job. The second and third drains consume the already verified tick receipt and load current preflight snapshots. There is no scheduler frequency claim. Each provider writes exactly 1,000 Dataset facts in five 200-row packages with its own verified Shopify mapping, consumer receipt and completed job. All three completions, receipts and 3,000 facts coexist and share the same day and installation in the isolated transaction. Provider quota debits and three Shopify Partner entitlement quota debits are verified in actual PostgreSQL. A missing or shortened fifth Meta package remains an independently checked rejection. Measure one wall-clock interval from just before the shared inventory tick to the acknowledgement of the third closure. Keep preparation, physical verification audits and negative controls outside this clock. Record the common queue time once and the existing execution phases for each provider. Use the established isolated writer candidates and synthetic HTTP. The result measures this one serial run and supplies no estimate for live provider latency, durable commits, production throughput or multiple refresh lanes. Tools-only rehearsal. No runtime, provider OAuth, migration, live provider, hosted database, cron, deployment or merge change. Native Meta product identity and sales validation still need real data.",
+        "paths": [
+          "contracts/eo-05a-global-refresh-design-v1.json",
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05-klaviyo-daily-timing-probe.mjs",
+          "tools/eo05-meta-shopify-refresh-probe.mjs",
+          "tools/eo05-shared-refresh-probe.mjs",
+          "tools/eo05-shopify-mapping-timing-fixture.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs"
+        ],
+        "local_tests_passed": 79,
+        "official_checked_at": "2026-11-21",
+        "official_sources": [
+          "https://www.postgresql.org/docs/17/sql-savepoint.html",
+          "https://supabase.com/changelog.md",
+          "https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/breakdowns",
+          "https://developers.google.com/google-ads/api/docs/reporting/overview",
+          "https://developers.klaviyo.com/en/reference/get_events",
+          "https://shopify.dev/docs/api/usage/gids"
+        ]
+      },
+      "daily_refresh_operating_contract_2026_11_21": {
+        "explicit_owner_approval": "tamam dır refresh sözleşmesinin için bu bütün süreçlerin tüm kalemlerini alt kalemlerini varsa en alt kalemlerinide ekleyelim hiçbir boşluk bırakmakayım çünkü burası çok kritik bir akış.",
+        "scope": "Documentation-only consolidation of the approved closed-day refresh decision and the existing isolated shared-queue evidence. Describe inputs, authority and quota, raw evidence, Dataset projection, Shopify mapping, packages, PostgreSQL fact write, isolated timing, receipt, checkpoint, completion and open decisions. No OAuth behavior, raw-source implementation, runtime, SQL, live provider or database, merge or deployment change.",
+        "paths": [
+          "contracts/eo-05a-global-refresh-design-v1.json",
+          "docs/EO_05A_REFRESH_CONTRACT.md",
+          "tests/a6-docs-01-turkish-standardization.test.js"
+        ],
+        "verification": [
+          "relative_links_and_14_sections",
+          "phase_evidence_consistency",
+          "oauth_and_raw_source_guards",
+          "focused_refresh_and_reconciliation_regressions",
+          "append_new_document_to_later_inventory_preserve_historical_baseline"
+        ],
+        "official_checked_at": "2026-11-21",
+        "official_sources": [
+          "https://www.postgresql.org/docs/17/tutorial-transactions.html",
+          "https://www.postgresql.org/docs/17/explicit-locking.html",
+          "https://supabase.com/docs/guides/database/postgres/row-level-security"
+        ]
+      },
+      "multi_lane_refresh_design_2026_11_21": {
+        "explicit_owner_approval": "tamam bu kural önemli bu şeklide devam edelim.",
+        "scope": "Documentation-only multi-lane design, canonical store ownership and monotonic fence, pre-send outbox intent and global quota, explicit verified handoff and single active data destination. Link the daily refresh contract and preserve the separately measured one-lane evidence. No runtime, OAuth, provider, SQL, hosted database, deployment or merge change.",
+        "paths": [
+          "contracts/eo-05a-global-refresh-design-v1.json",
+          "docs/EO_05A_MULTI_LANE_REFRESH_DESIGN.md",
+          "docs/EO_05A_REFRESH_CONTRACT.md",
+          "tests/a6-docs-01-turkish-standardization.test.js"
+        ],
+        "verification": [
+          "scope_and_relative_links",
+          "both_constitution_guards",
+          "existing_document_inventory_and_refresh_regressions"
+        ],
+        "official_checked_at": "2026-11-21",
+        "official_sources": [
+          "https://www.postgresql.org/docs/17/explicit-locking.html",
+          "https://developers.google.com/google-ads/api/docs/productionize/rate-limits",
+          "https://developers.klaviyo.com/en/docs/rate_limits_and_error_handling",
+          "https://developers.facebook.com/docs/graph-api/overview/rate-limiting/#ads-insights",
+          "https://shopify.dev/docs/api/partner/latest#rate-limits",
+          "https://supabase.com/docs/guides/database/postgres/row-level-security"
+        ]
+      },
+      "isolated_database_integrity_job_timeout_2026_11_21": {
+        "explicit_owner_approval": "Onaylıyorum Codex",
+        "scope": "Change only the isolated-replay CI job-wide timeout from 30 to 45 minutes, then run the same required database and governance checks. Preserve all steps, SQL and request deadlines, OAuth and raw-source behavior, and acceptance criteria. No live provider, hosted database, deployment or merge authorization.",
+        "paths": [
+          ".github/workflows/database-integrity.yml"
+        ],
+        "verification": [
+          "exact_one_line_workflow_diff",
+          "focused_F01_and_constitution_regressions",
+          "required_CI_same_suite"
+        ],
+        "official_checked_at": "2026-11-21",
+        "official_sources": [
+          "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idtimeout-minutes"
+        ]
+      }
     }
   ],
   "dataset_retention_decision": {

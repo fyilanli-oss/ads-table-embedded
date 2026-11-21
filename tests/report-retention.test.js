@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {randomUUID} from "node:crypto";
-import {reportRetentionPolicy, readReportRetentionPolicy, resolveReportRetentionPolicy} from "../app/lib/database/report-retention-policy.server.js";
+import {reportRetentionPolicy, readReportRetentionPolicy, resolveReportRetentionPolicy, resolveReportWritePolicy} from "../app/lib/database/report-retention-policy.server.js";
 import {prepareDatasetWrite} from "../app/lib/database/dataset-storage.server.js";
 import {datasetStorageFixture} from "./fixtures/dataset-storage-fixture.js";
 import {datasetSourceBindingFixture} from "./fixtures/dataset-source-binding-fixture.js";
@@ -23,6 +23,22 @@ test("missing/invalid day or timezone never falls back to ingestion time", () =>
     assert.throws(() => resolveReportRetentionPolicy({businessDate, timeZone}), /REPORT_RETENTION_POLICY_INVALID/);
   for (const p of [{version: "report-source-3y-v1", calendarYears: 4}, {...reportRetentionPolicy(), until: "2099-01-01T00:00:00.000Z"}, {version: "unknown", calendarYears: 3}])
     assert.throws(() => readReportRetentionPolicy(p));
+});
+
+test("repeated report dates keep independent timezone validation and call-local retention", () => {
+  const row=(business_date,source_timezone)=>({row:{business_date,source_timezone}});
+  const policy=reportRetentionPolicy(), day="2026-11-01";
+  const repeated=Array.from({length:200},()=>row(day,"UTC"));
+  assert.deepEqual(resolveReportWritePolicy(policy,repeated),
+    resolveReportRetentionPolicy({businessDate:day,timeZone:"UTC"}));
+  for(const last of [row(day,"America/Los_Angeles"),row("2026-11-02","UTC"),
+    row(day,"Not/AZone"),row(null,"UTC"),row(day,null)]) {
+    assert.throws(()=>resolveReportWritePolicy(policy,[...repeated,last]),/REPORT_RETENTION_POLICY_INVALID/);
+  }
+  repeated[0].row.business_date="2026-11-02";
+  assert.throws(()=>resolveReportWritePolicy(policy,repeated),/REPORT_RETENTION_POLICY_INVALID/);
+  assert.deepEqual(resolveReportWritePolicy(policy,[row("2026-11-02","UTC")]),
+    resolveReportRetentionPolicy({businessDate:"2026-11-02",timeZone:"UTC"}));
 });
 
 test("read/replay/correction clock cannot renew the original report lifetime", () => {

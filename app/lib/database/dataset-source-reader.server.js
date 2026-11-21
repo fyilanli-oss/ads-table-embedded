@@ -22,7 +22,7 @@ export async function readStoredDatasetSources({database, cipher, owner, batches
   batches = structuredClone(batches); limits = structuredClone(limits);
   const bound = sourceStoreOwner(owner), spec = specs[bound.provider];
   if (!spec || typeof database?.query !== "function" || typeof cipher?.open !== "function" || !Array.isArray(batches)
-    || batches.length < 1 || batches.length > (bound.provider === "klaviyo" ? 22 : 3)
+    || batches.length < 1 || batches.length > (bound.provider === "klaviyo" ? 22 : bound.provider === "google_ads" ? 41 : 3)
     || !limits || !Number.isInteger(limits.maxPages) || limits.maxPages < 1 || limits.maxPages > 300
     || !Number.isInteger(limits.maxRows) || limits.maxRows < 1 || limits.maxRows > 20000
     || !Number.isInteger(limits.maxBytes) || limits.maxBytes < 1 || limits.maxBytes > 16777216
@@ -49,7 +49,8 @@ export async function readStoredDatasetSources({database, cipher, owner, batches
       || receipt.manifest.counts.pages < 1) fail("RECEIPT_INVALID");
     seenBatchIds.add(receipt.batchId);
     const multipart = Object.hasOwn(read, "packageCount");
-    if (multipart && (bound.provider !== "klaviyo" || read.dataset !== "product_performance"
+    const googleGroup=bound.provider==="google_ads"&&["account_performance","product_performance"].includes(read.dataset);
+    if (multipart && ((!googleGroup&&(bound.provider !== "klaviyo" || read.dataset !== "product_performance"))
       || receipt.sourceState !== "partial" || !Number.isInteger(read.packageCount) || read.packageCount < 2 || read.packageCount > 20)
       || group && (!multipart || canonicalSourceJson(read) !== group.binding)) fail("PACKAGE_BINDING_INVALID");
     const currentScope = {operationId: read.operationId, jobId: read.jobId, fence: read.fence, window: read.window};
@@ -94,6 +95,20 @@ export async function readStoredDatasetSources({database, cipher, owner, batches
     group ??= {attemptId: input.attemptId, binding: canonicalSourceJson(read), dataset, nextOrdinal: 0,
       eventPages: 0, events: 0, eventIds: new Set(), receipts: []};
     if (group.dataset.sourceContext.digest !== dataset.sourceContext.digest) fail("PACKAGE_BINDING_INVALID");
+    if(googleGroup){
+      group.googlePages=(group.googlePages??0)+pages.length;
+      group.googleRows=(group.googleRows??0)+pages.reduce((n,p)=>n+p.payload.records.length,0);
+      group.googleFamilies??=new Set();
+      for(const page of pages)group.googleFamilies.add(page.family);
+      if(group.dataset!==dataset)group.dataset.pages.push(...pages);
+      group.receipts.push(receipt);group.nextOrdinal++;
+      if(group.nextOrdinal===read.packageCount){
+        if(read.pageCount!==group.googlePages||read.recordCount!==group.googleRows
+          ||canonicalSourceJson(read.families)!==canonicalSourceJson([...group.googleFamilies].sort()))fail("PACKAGE_COVERAGE_INVALID");
+        datasets.push({...group.dataset,packageReceipts:group.receipts});group=null;
+      }
+      continue;
+    }
     for (const page of pages) {
       if (page.family !== "klaviyo_ordered_product_events") continue;
       group.eventPages++;

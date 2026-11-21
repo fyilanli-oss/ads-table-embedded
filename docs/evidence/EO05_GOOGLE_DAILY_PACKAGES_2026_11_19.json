@@ -1,0 +1,118 @@
+{
+  "version": "eo05-google-daily-packages-v1",
+  "checked_at": "2026-11-19",
+  "status": "functional_validation_passed_scheduler_followup_pending_ci",
+  "scope": "Google normal first-day publication only; no reread, attribution change, native provider call, live migration, merge or deploy.",
+  "implementation": {
+    "native_pages_preserved": true,
+    "raw_packages_per_performance_dataset_max": 20,
+    "report_rows_per_package_max": 200,
+    "report_packages_max": 20,
+    "raw_capture_total_row_byte_request_budgets_changed": false,
+    "source_packages_remain_partial_until_verified_group": true,
+    "all_report_packages_in_one_transaction": true,
+    "daily_receipts": 1,
+    "empty_day_has_no_fake_facts": true,
+    "readback_before_closure": true,
+    "automatic_retry": false,
+    "scheduled_activation": "explicit server-owned googleDailyPackages opt-in; existing scheduler defaults retained",
+    "klaviyo_functions_changed": false,
+    "google_private_writer": "Verified #378 bulk writer adapted into a separate Google-only function, with preserved row triggers and canonical reporting account. Reuse the stable retention calculation pattern and ordered canonical JSON in Google-private helpers only. Existing shared and Klaviyo functions are not replaced.",
+    "migration": "supabase/migrations/20261119112554_eo05_google_daily_packages.sql",
+    "migration_created_with": "supabase@2.121.0 migration new eo05_google_daily_packages",
+    "migration_live_applied": false
+  },
+  "validation": {
+    "application_tests": {
+      "passed": 4499,
+      "failed": 0,
+      "frozen_final_run": true,
+      "commit": "ec940547c686eb96f10301bfe621fccccdd18326"
+    },
+    "owner_role_sql": {
+      "environment": "isolated Frankfurt Nano; synthetic encrypted source fixtures; outer rollback",
+      "cases": [
+        {
+          "report_rows": 501,
+          "report_packages": 3,
+          "daily_receipt": true,
+          "job_closed": true
+        },
+        {
+          "report_rows": 0,
+          "report_packages": 1,
+          "daily_receipt": true,
+          "job_closed": true
+        }
+      ],
+      "missing_report_package_rejected": true,
+      "tampered_stage_digest_rejected": true,
+      "wrong_receipt_hash_did_not_close": true,
+      "canonical_corpus_matches_existing_digest": true,
+      "accepted_run": "GOOGLE_DAILY_PASS in isolated test session r34"
+    },
+    "dataset_runner_role_sql": {
+      "hosted_status": "not_verified",
+      "reason": "Temporary test login had only adstable_owner membership. SET ROLE adstable_refresh_dataset_runner was denied (42501). Stopped that session, did not add permission or retry through another hosted route.",
+      "ci_status": "passed_twice_on_corrected_fixture",
+      "failed_ci_run": 44518994499,
+      "fixture_fix": "New probe is explicitly localhost:54322 only and uses the existing transactional postgres -> non-inheriting/set-only Dataset-runner membership pattern inside its savepoint. Each case rolls it back. No hosted retry/permission change or runtime change.",
+      "accepted_commit": "a009ee92f60945b68a56de40a05c590c7aec1750",
+      "accepted_ci_run": 44519675403,
+      "accepted_ci_job": 135544781515,
+      "accepted_cases": [
+        {
+          "report_rows": 501,
+          "report_packages": 3,
+          "daily_receipt": true,
+          "job_closed": true
+        },
+        {
+          "report_rows": 0,
+          "report_packages": 1,
+          "daily_receipt": true,
+          "job_closed": true
+        }
+      ]
+    },
+    "failures_preserved": [
+      "Initial generated SQL had a replacement-string syntax error; corrected before acceptance.",
+      "Large fixture exposed the existing generic source-fixture byte budget; changed only the synthetic fixture to use actual Google packaging and bounded synthetic native pages.",
+      "Multipart product projection incorrectly used the first package as primary source for every row; corrected to the physical source page batch.",
+      "Verified empty day exposed a fingerprint precondition requiring at least one row; Google-only fingerprint now accepts zero and still requires exact physical count.",
+      "501-row SQL fixture hit the unchanged 30-second statement timeout on a run; Google-private canonical/retention preparation now reuses the already established stable patterns. Timeout was not increased.",
+      "A full local suite started before code freeze is not acceptance evidence; its snapshot guards detected subsequent edits. A frozen final run is required."
+    ],
+    "typecheck": "passed",
+    "constitution_guards": "passed",
+    "whitespace": "passed",
+    "scheduler_flag_followup": {
+      "issue": "The database client received googleDailyPackages, but the scheduler return object and preflight bridge dropped it before reconciliation. Earlier SQL/helper validation did not cover this composition.",
+      "fix": "Forward the existing server-owned opt-in through both internal layers. Provider, owner and claim checks stay in place; no activation/default or query change.",
+      "regression": "Invoke runScheduledRefreshWithDataset using the actual bridge, database wrapper and encrypted synthetic source reader, with mocked SQL responses. Assert 203 report rows in packages of 200 and 3; one publication, independent receipt inspection and closure; no legacy reconcile RPC.",
+      "targeted_tests": {
+        "passed": 19,
+        "failed": 0
+      },
+      "timing_started": false,
+      "live_database_changed": false,
+      "protected_regression_tests": {
+        "passed": 38,
+        "failed": 0
+      },
+      "typecheck": "passed"
+    }
+  },
+  "cleanup": {
+    "installations": 0,
+    "source_batches": 0,
+    "facts": 0,
+    "bindings": 0,
+    "temporary_roles": 0
+  },
+  "limitations": [
+    "This is functional synthetic validation, not a timing or capacity result.",
+    "The 501-row SQL case contains 250 product performance rows, 250 product sale rows and one entity-performance row; it is not 501 orders or 501 stores.",
+    "Standard role/profile and two isolated SQL replays passed on a009ee92; the scheduler propagation follow-up needs its own required CI. Scheduler regression uses mocked SQL results and is not a hosted queue-to-close timing measurement."
+  ]
+}

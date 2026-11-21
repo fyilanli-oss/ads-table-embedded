@@ -38,6 +38,16 @@ export const SCHEDULED_DATASET_RPC = Object.freeze([
   Object.freeze([SCHEDULED_DATASET_RECONCILE_SQL, "analytics.commit_scheduled_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)"]),
   Object.freeze([SCHEDULED_DATASET_FINISH_SQL, "analytics.finish_scheduled_dataset_reconciliation(jsonb,text,bigint,uuid,text)"]),
 ]);
+export const GOOGLE_DAILY_STAGE_SQL = "select analytics.stage_google_daily_report_package($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz,$5::integer,$6::integer) as result";
+export const GOOGLE_DAILY_PUBLISH_SQL = "select analytics.publish_google_staged_report_day($1::jsonb,$2::jsonb,$3::timestamptz,$4::uuid,$5::jsonb,$6::jsonb) as result";
+export const GOOGLE_DAILY_INSPECT_SQL = "select analytics.inspect_google_daily_report($1::jsonb,$2::uuid) as result";
+export const GOOGLE_DAILY_FINISH_SQL = "select analytics.finish_google_daily_report_job($1::jsonb,$2::text,$3::bigint,$4::uuid,$5::text) as result";
+export const GOOGLE_DAILY_REPORT_RPC=Object.freeze([
+ [GOOGLE_DAILY_STAGE_SQL,"analytics.stage_google_daily_report_package(jsonb,jsonb,jsonb,timestamptz,integer,integer)"],
+ [GOOGLE_DAILY_PUBLISH_SQL,"analytics.publish_google_staged_report_day(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)"],
+ [GOOGLE_DAILY_INSPECT_SQL,"analytics.inspect_google_daily_report(jsonb,uuid)"],
+ [GOOGLE_DAILY_FINISH_SQL,"analytics.finish_google_daily_report_job(jsonb,text,bigint,uuid,text)"],
+].map(Object.freeze));
 // Existing source clients still issue only their own fixed RPCs. Recognizing
 // this exact future extension avoids breaking capture when its separate grant
 // is installed; it does not grant or enable any storage call.

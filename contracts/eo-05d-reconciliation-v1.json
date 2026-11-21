@@ -70,6 +70,57 @@
     "klaviyo_absent_metrics": "Unavailable/held, never zero or consumed",
     "native_acceptance": false
   },
+  "synthetic_report_shopify_mapping_2026_11_21": {
+    "status": "isolated_reconciliation_composition_only",
+    "boundary": "After verified raw-source projection and before report packaging and write. Verify Shopify product and variant evidence while preparing the fixture. Read the current verified mapping once per exact identity within the test reconciliation. Retain native report facts and source provenance.",
+    "owner": "The mapping must match the current provider, reporting account, workspace, installation, generation, Shopify shop, connection and selection. Private verified mapping lookup rechecks its existing rule, source, evidence and revision guards.",
+    "google_ads": {
+      "report_identity": "Exact native item ID by role, Merchant account, feed label and observed content language. Pay attention separately to product, sold product, and advertised product.",
+      "required_bridge": "A unique reviewed synthetic report-to-Merchant link for the exact owner, day and item, explicitly binding the Merchant data source and legacy-local discriminator. A formatted item ID alone cannot choose its Merchant context.",
+      "coverage": "Performance Max fixtures provide observed content language. A report that omits language, including the current standard Shopping fixture, remains unmapped in this prototype. Actual report-to-Merchant identity proof remains open."
+    },
+    "klaviyo": {
+      "report_identity": "Exact event and Shopify Ordered Product metric must be present in the authenticated source pages. Use ProductID with its lexical type, and preserve the separate Variant ID and VariantID evidence states.",
+      "required_bridge": "Exact match against the current verified mapping and its evidence. The documented variant must belong to the verified Shopify Product if present. Order claim and attribution semantics are unchanged."
+    },
+    "failed_evidence": "Missing mapping, missing report context, conflicting Merchant links and incompatible sales-role contexts produce no Shopify association. A purported current mapping with invalid or missing Shopify evidence stops before write. An available advertised mapping cannot be copied to a different unverified sold product.",
+    "verification": "The composition test runs the current Shopify verifier, authenticated source readers, current mapping verification and scheduled reconciliation code through its write/receipt/closure request boundary. Shopify responses, stored mapping snapshots and the SQL adapter are synthetic in that composition test.",
+    "postgresql_rehearsal": {
+      "scope": "One local PostgreSQL rollback rehearsal under the existing dated one-day workload, source authority, quotas, and single verified closure. Both providers share the same synthetic Shopify installation; one verified identity per provider is seeded outside the clocks with encrypted fixture evidence and the existing owner-only ingestion. PostgreSQL verifies the lookup, report mapping retention, write, receipt and completed closure. The existing lookup stays owner-only in the test database adapter; app grants and all runtime entry points stay as before.",
+      "workload": "1,000 Dataset rows and five packages per provider. Replace one Google performance row and one sales row with uniquely linked Performance Max rows. Replace one Klaviyo event with an exact Shopify ProductID and Variant ID. Require two mapped Google rows and one mapped Klaviyo row. This measures the stated coverage only; no per-1,000-mapped-row or live capacity inference.",
+      "clocks": "Report-mapping SQL lookup is inside report preparation and total. Record lookup time and count separately for visibility, with no addition to total. Synthetic provider traffic, no durable commit, no concurrent stores. The prior Google Shopping-only workload is not an exact performance control for this mixed Google fixture.",
+      "klaviyo_mapping_retention": "Use the existing independent source validators for the mapped Klaviyo rehearsal. The optional shared-day proof correctly rejects source table updates during the old optimization. Mapping retention writes trigger that invalidation. Retain original source and mapping checks and leave the older unlinked rehearsal unchanged. Reset the isolated report adapter's SQL timeouts at handoff to the earlier of the scheduled report's 30-second bound and the existing job deadline. The preceding 5-second raw-source SET LOCAL otherwise leaks across the release of the test savepoint. Record the different writer mode when reporting elapsed times."
+    },
+    "meta": "Outside this mapping prototype. Insights namespace and sales-role native acceptance stay open.",
+    "live_or_runtime_enabled": false,
+    "official_checked_at": "2026-11-21",
+    "official_sources": [
+      "https://shopify.dev/docs/api/admin-graphql/latest/objects/ProductVariant",
+      "https://developers.google.com/google-ads/api/reference/rpc/v25/Segments",
+      "https://developers.klaviyo.com/en/reference/get_events",
+      "https://supabase.com/docs/guides/database/query-optimization"
+    ]
+  },
+  "synthetic_meta_shopify_queue_to_close_2026_11_21": {
+    "scope": "Exercise the existing Meta token debug and Insights reader and scheduled Dataset reconciliation for one fully eligible day on the same synthetic installation as the Google Ads and Klaviyo rehearsals. Use scoped PostgreSQL roles, real quota reservation and settlement for Meta and Shopify Partner, encrypted raw source write/readback, one reconciled consumer receipt, and a completed work order.",
+    "workload": "Three synthetic facts within the existing 200-row writer boundary: one ad performance fact and two product performance facts. Bind only the product with a unique exact synthetic report-to-catalog link to its independently verified Shopify Product ID. Assert the second product stays unmapped and no Meta product sales facts exist.",
+    "boundary": "Test-only binding after authenticated raw-source projection and before Dataset write. Physical HTTP responses are synthetic. No live provider, hosted database, runtime role grants or activation. Meta Insights identity namespace proof, native sales roles, and a 1,000-row comparison remain open.",
+    "official_checked_at": "2026-11-21",
+    "official_sources": [
+      "https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/breakdowns",
+      "https://shopify.dev/docs/api/usage/gids",
+      "https://www.postgresql.org/docs/current/sql-savepoint.html",
+      "https://supabase.com/changelog.md"
+    ]
+  },
+  "synthetic_meta_daily_packages_2026_11_21": {
+    "scope": "Isolated PostgreSQL rollback rehearsal on the same Shopify installation with exactly 1,000 Meta Dataset facts: 20 ad performance and 980 product performance rows. Existing Meta debug, Insights cursor paging and encrypted raw proof plus full Meta and Shopify Partner authorization and quota are exercised with synthetic HTTP. Verify one actual scoped Shopify mapping and one deliberately unlinked product.",
+    "publication": "Validate five exact 200-row packages and their digests and per-package byte ceiling before atomic first-publication reconciliation. Reuse the original fenced SQL path, source and retention checks, and physical per-row verification. Reuse the already locked whole-day batch retention promotion instead of rewriting the same authenticated references for every fact. Verify the retention floor for all 1,000 raw references. Keep the existing receipt size limit by avoiding duplicate per-insert change details in this rehearsal. Verify one readback digest and durable completed status in the isolated transaction. Separate negative cases challenge a missing fifth package and a fifth package short by one row; each must leave zero facts, zero source consumption and the original running job.",
+    "boundary": "Tools-only. Keep native Meta identity and product sales acceptance pending. No changes to application runtime, provider OAuth, migrations, live database, release or merge.",
+    "shared_proof": "In the packaged path, reuse the locked whole-day source context, retention deadline and reference set. Each row must match the validated context, date, timezone and subset of references. Mapping retention and the physical fact checks remain per fact. Apply the same canonical byte ceiling as part of each package digest and bind the daily request digest to the ordered list of verified package digests.",
+    "official_checked_at": "2026-11-21",
+    "official_sources": ["https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/breakdowns", "https://www.postgresql.org/docs/17/tutorial-transactions.html", "https://supabase.com/changelog.md"]
+  },
   "verification": {
     "unit": [
       "tests/dataset-bootstrap.test.js",

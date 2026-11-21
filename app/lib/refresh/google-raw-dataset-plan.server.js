@@ -15,8 +15,8 @@ export function readGoogleRawDatasetPlan(p,now) {
   ||typeof t.expiresAt!=="string"||!Number.isFinite(Date.parse(t.expiresAt))||Date.parse(t.expiresAt)<=now||Date.parse(t.expiresAt)>now+900000)fail();
  if(!exact(l,["maxBytes","maxElapsedMs","maxLinkPages","maxLinks","maxPages","maxRows","maxRequests"])
   ||Object.values(l).some(v=>!Number.isSafeInteger(v)||v<1)||l.maxBytes>1048576||l.maxElapsedMs<40000||l.maxElapsedMs>60000
-  ||l.maxRequests<18||l.maxRequests>80||l.maxPages>10||l.maxLinkPages!==1||l.maxLinks>1000||l.maxRows>1000
-  ||!exact(s,["maxBytes","maxRows"])||!Number.isSafeInteger(s.maxBytes)||s.maxBytes<1||s.maxBytes>1048576
+  ||l.maxRequests<18||l.maxRequests>80||l.maxPages>10||l.maxLinkPages!==1||l.maxLinks>1000||l.maxRows>2000
+  ||!exact(s,["maxBytes","maxRows"])||!Number.isSafeInteger(s.maxBytes)||s.maxBytes<1||s.maxBytes>2097152
   ||!Number.isSafeInteger(s.maxRows)||s.maxRows<1||s.maxRows>1000)fail();
  if(p.merchant!==null&&(!exact(p.merchant,["targetAccountId","quotaAccountId","apiVersion","bindingEpoch"])
   ||![p.merchant.targetAccountId,p.merchant.quotaAccountId].every(id)||p.merchant.apiVersion!=="products/v1"

@@ -1,4 +1,5 @@
-import {randomUUID} from "node:crypto";
+import {randomUUID,createHash} from "node:crypto";
+import {prepareGoogleRawDatasetPackages} from "../../app/lib/database/google-dataset-source-store.server.js";
 import {sourceStoreFixture} from "./source-store-fixture.js";
 import {datasetStorageFixture} from "./dataset-storage-fixture.js";
 import {sourcePayloadHash} from "../../app/lib/database/source-evidence-store.server.js";
@@ -31,9 +32,32 @@ async function nativeKlaviyoPage(path, body, request = null) {
   return {family: page.family, ...page.payload, request: request ? {body: JSON.parse(request.body)} : {method: "GET", path}, selectedFields: request ? JSON.parse(request.body).data.attributes.statistics : ["records"]};
 }
 
+// Shared synthetic native rows for capture and stored-source tests. Cardinalities
+// describe the input; no projected report row is removed to meet a target count.
+export function googleDatasetNativeRows(family,account,{nonempty=true,googlePurchase="2.5",googleProducts=1,googleSalesProducts=googleProducts,shopifyMapping=false,mappedTimingSample=false}={}) {
+  if(!Number.isInteger(googleProducts)||googleProducts<1||googleProducts>500||shopifyMapping&&googleProducts!==1
+    ||!Number.isInteger(googleSalesProducts)||googleSalesProducts<0||googleSalesProducts>googleProducts)throw Error("SYNTHETIC_GOOGLE_PRODUCTS_INVALID");
+  if(shopifyMapping&&["shopping_product_daily","shopping_cart_data_product_sales_daily","cart_data_product_sales_daily"].includes(family))return [];
+  if((shopifyMapping||mappedTimingSample)&&["pmax_product_daily","pmax_cart_data_product_sales_daily"].includes(family)){
+    const sales=family.includes("cart_data");
+    const equivalent=sales?"shopping_cart_data_product_sales_daily":"shopping_product_daily";
+    return nativeGoogle(equivalent,account,nonempty,googlePurchase).slice(0,sales?googleSalesProducts:1).map(row=>({
+      customer:row.customer,campaign:{...row.campaign,advertisingChannelType:"PERFORMANCE_MAX"},metrics:row.metrics,
+      segments:{...row.segments,productLanguage:"en",productItemId:"shopify_US_123_456",
+        ...(sales?{productSoldItemId:shopifyMapping==="split_sale"?"shopify_US_124_457":"shopify_US_123_456"}:{})},
+    }));
+  }
+  return nativeGoogle(family,account,nonempty,googlePurchase).flatMap(row=>{
+    if(!["shopping_product_daily","shopping_cart_data_product_sales_daily","cart_data_product_sales_daily"].includes(family))return [row];
+    const sales=family.includes("cart_data");
+    return Array.from({length:sales?googleSalesProducts:googleProducts},(_,n)=>({...row,segments:{...row.segments,
+      productItemId:"product-"+(n+1),...(sales?{productSoldItemId:"product-"+(n+1)}:{})}})).slice(mappedTimingSample?1:0);
+  });
+}
+
 /** All native responses/credentials/owners are synthetic. Real capture projection,
  * AEAD and decrypt paths are used; this fake DB is not SQL/native acceptance. */
-export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", owner: givenOwner = null, cipher: givenCipher = null} = {}) {
+export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", googleProducts=1, googleSalesProducts=googleProducts, googlePageSize=25, googleStorageMaxBytes=1048576, shopifyMapping=false, owner: givenOwner = null, cipher: givenCipher = null} = {}) {
   const owner = givenOwner ? structuredClone(givenOwner) : datasetStorageFixture().owner;
   if (!givenOwner) {owner.installationId = "1"; owner.provider = provider; owner.accountId = provider === "meta" ? "act_123" : provider === "klaviyo" ? "account-1" : "123";}
   if (provider === "klaviyo") owner.selectionEpoch = null;
@@ -45,10 +69,15 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
       : {read: "klaviyoDatasetRead", digest: "klaviyoDatasetInputDigest", schema: "klaviyo-raw-datasets-v1", sanitizer: "klaviyo-native-fields-v1"};
   const native = [];
   if (provider === "google_ads") {
+    if(!Number.isInteger(googlePageSize)||googlePageSize<1||googlePageSize>10000)throw Error("SYNTHETIC_GOOGLE_PAGE_SIZE_INVALID");
     const queries = buildGoogleReportingQueries({dateWindow: {start: day, end: day}});
     for (const [dataset, families] of [["account_performance", GOOGLE_REPORTING_QUERY_FAMILIES.slice(0, 9)], ["product_performance", GOOGLE_REPORTING_QUERY_FAMILIES.slice(9)]]) {
-      native.push({dataset, pages: families.map(family => projectGoogleRawPage(parseGoogleRawJson(JSON.stringify({results: nativeGoogle(family, owner.accountId, nonempty, googlePurchase)})),
-        {family, query: queries[family], ordinal: 0, accountId: owner.accountId, requestId: "synthetic"}))});
+      native.push({dataset, pages: families.flatMap(family => {
+       const rows=googleDatasetNativeRows(family,owner.accountId,{nonempty,googlePurchase,googleProducts,googleSalesProducts,shopifyMapping});
+       return Array.from({length:Math.max(1,Math.ceil(rows.length/googlePageSize))},(_,ordinal)=>projectGoogleRawPage(
+        parseGoogleRawJson(JSON.stringify({results:rows.slice(ordinal*googlePageSize,(ordinal+1)*googlePageSize),...((ordinal+1)*googlePageSize<rows.length)?{nextPageToken:"synthetic-"+(ordinal+1)}:{}})),
+        {family,query:queries[family],ordinal,accountId:owner.accountId,requestId:"synthetic"}));
+      })});
     }
   } else if (provider === "meta") {
     for (const [dataset, family] of [["account_performance", "ad_channel_daily_insights"], ["product_performance", "ad_product_breakdown_daily_insights"]]) {
@@ -76,7 +105,8 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
       reports.push(await nativeKlaviyoPage("/api/" + kind + "-values-reports", {data: {type: kind + "-values-report", attributes: {results: records}}, links: {next: null}}, request));
       coverage.push({family: kind + ":" + name, metricId: id, state: "present", pageCount: 1, recordCount: records.length});
     }
-    const event = {type: "event", id: "event-1", attributes: {datetime: day + "T12:00:00Z", event_properties: {ProductID: "product-1", Quantity: "2.5", $value: "12.500000000000000001"}},
+    const event = {type: "event", id: "event-1", attributes: {datetime: day + "T12:00:00Z", event_properties: {ProductID: shopifyMapping ? "123" : "product-1",
+      ...(shopifyMapping ? {"Variant ID": "456"} : {}), Quantity: "2.5", $value: "12.500000000000000001"}},
       relationships: {metric: {data: {type: "metric", id: "product"}}, attributions: {data: [{type: "attribution", id: "attribution-1"}]}}};
     if (eventOrderId !== null) event.attributes.event_properties.OrderId = eventOrderId;
     const events = await nativeKlaviyoPage("/api/events", {data: nonempty ? [event] : [], included: nonempty ? [{type: "attribution", id: "attribution-1", relationships: {
@@ -87,10 +117,27 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
   }
   const seed = sourceStoreFixture({owner, ...givenCipher ? {cipher: givenCipher} : {}}), cipher = seed.input.cipher, batches = [], envelopes = new Map(); let nextId = 100;
   for (const item of native) {
+    if(provider==="google_ads"&&googleProducts>1){
+      const attemptId=randomUUID(),writes=prepareGoogleRawDatasetPackages({owner,attemptId,dataset:item.dataset,pages:item.pages,complete:true,
+        cipher,policy:seed.input.policy,limits:{maxRows:1000,maxBytes:googleStorageMaxBytes},now:new Date().toISOString()});
+      const read={jobId,fence,window,operationId,dataset:item.dataset,...writes.length>1?{packageCount:writes.length,pageCount:item.pages.length,
+        recordCount:item.pages.reduce((n,p)=>n+p.records.length,0),families:[...new Set(item.pages.map(p=>p.family))].sort()}: {}};
+      // prepareSourceWrite already emitted canonical JSON. Hash those exact
+      // bytes, as the source client does; don't feed ciphertext back through
+      // the public plain-string validator's 65,536-character limit.
+      for(const write of writes){const batchId=String(++nextId),digest=createHash("sha256").update(JSON.stringify(write.body)).digest("hex"),
+        receipt={status:"committed",batchId,commitId:randomUUID(),digest,sourceState:write.body.sourceState,
+        manifest:{counts:{pages:write.body.pages.length},[spec.read]:read,[spec.digest]:digest}};
+       const storedPages=write.body.pages.map(p=>({...p,id:String(++nextId),available:true,expired:false,retentionPruned:false}));
+       envelopes.set(attemptId+(write.ordinal?":"+write.ordinal:""),{receipt,pages:storedPages,dataset:item.dataset,sourceWrite:write});batches.push({attemptId,ordinal:write.ordinal});
+      }
+      continue;
+    }
     const attemptId = randomUUID(), pages = item.pages.map((page, ordinal) => ({key: "p" + ordinal, family: page.family, ordinal, origin: provider,
       captureLayer: "native_response_projection", numericFidelity: "lossless_token", fieldCoverage: page.selectedFields ?? ["records"], schemaVersion: spec.schema, sanitizerVersion: spec.sanitizer, payload: page}));
     const records = Object.fromEntries(["references", "rules", "mappings", "orders", "lines", "journeys", "claims", "links"].map(k => [k, []]));
-    const f = sourceStoreFixture({owner, cipher, attemptId, sourceState: item.partial ? "partial" : "complete", pages, records});
+    const f = sourceStoreFixture({owner, cipher, attemptId, sourceState: item.partial ? "partial" : "complete", pages, records,
+      ...provider==="google_ads"&&googleProducts>1?{limits:{maxRows:1000,maxBytes:1048576}}:{}});
     const write = f.prepare(), batchId = String(++nextId), read = {jobId, fence, window, operationId, dataset: item.dataset, ...(item.coverage ? {coverage: item.coverage} : {})};
     const receipt = {status: "committed", batchId, commitId: randomUUID(), digest: sourcePayloadHash(write.body), sourceState: write.body.sourceState,
       manifest: {counts: {pages: pages.length}, [spec.read]: read, [spec.digest]: sourcePayloadHash(write.body)}};
@@ -102,8 +149,8 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
     queries.push(sql); const custom = await hooks.query?.(sql, args); if (custom) return custom;
     if (sql.includes("assert_source_owner")) return {rows: [{result: null}]};
     if (sql.includes("evidence.read_dataset_source_context")) return {rows: [{source: structuredClone(source), snapshot_hash: "a".repeat(64)}]};
-    if (sql.includes("read_source_receipt")) return {rows: [{result: structuredClone(envelopes.get(args[1])?.receipt)}]};
-    if (sql.includes("read_source_pages")) return {rows: [{result: structuredClone(envelopes.get(args[1])?.pages.filter(p => BigInt(p.id) > BigInt(args[3])).slice(0, args[4]) ?? [])}]};
+    if (sql.includes("read_source_receipt")) return {rows: [{result: structuredClone(envelopes.get(args[1]+(args[2]?":"+args[2]:""))?.receipt)}]};
+    if (sql.includes("read_source_pages")) return {rows: [{result: structuredClone(envelopes.get(args[1]+(args[2]?":"+args[2]:""))?.pages.filter(p => BigInt(p.id) > BigInt(args[3])).slice(0, args[4]) ?? [])}]};
     if (sql.includes("commit_dataset_empty_retention")) {
       const body = JSON.parse(args[1]), receipt = {status: "retained_empty", operationId: body.operationId, digest: sourcePayloadHash(body), sources: body.sources, until: body.policy.until, consumerReceipt: false};
       storageReceipts.set(body.operationId, receipt); return {rows: [{result: structuredClone(receipt)}]};

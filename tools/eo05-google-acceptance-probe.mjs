@@ -95,6 +95,8 @@ export async function googleAcceptanceRehearsal(client,{workspace,shopId,shopDom
      active++;const name="accept_rpc_"+(++ordinal);let committed=false,lastSql="";
      return {release(){active--;if(!active)drained?.();},async query(sql,args){
       if(sql==="begin")return client.query("savepoint "+name);
+      if(role==="adstable_google_source_runner"&&sql.startsWith("begin; set local statement_timeout = "))
+       return client.query("savepoint "+name+sql.slice("begin".length));
       if(sql==="commit"){
        await client.query("set local role adstable_owner");await client.query("release savepoint "+name);committed=true;
        if(mode==="lost_admission"&&lastSql.includes("commit_refresh_preflight_with_deadline")||mode==="lost_finish"&&lastSql.includes("finish_refresh_work")

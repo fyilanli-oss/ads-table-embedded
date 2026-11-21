@@ -33,6 +33,12 @@ on:
       - "tests/dataset-storage.test.js"
       - "tests/fixtures/dataset-storage-fixture.js"
       - "tools/eo05b-dataset-storage-probe.mjs"
+      - "tools/eo05-klaviyo-daily-timing-probe.mjs"
+      - "tools/eo05-google-daily-packages-probe.mjs"
+      - "tools/eo05-google-daily-timing-probe.mjs"
+      - "tools/eo05-google-hosted-benchmark.mjs"
+      - "tests/google-daily-timing-probe.test.js"
+      - "tests/google-daily-packages.test.js"
       - "app/lib/refresh/meta-*"
       - "app/lib/database/meta-*"
       - "app/lib/providers/meta-raw-projection.server.js"
@@ -162,7 +168,7 @@ concurrency:
 jobs:
   isolated-replay:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Checkout exact commit
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6

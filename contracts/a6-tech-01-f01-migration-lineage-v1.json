@@ -1086,6 +1086,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261119112554",
+      "name": "eo05_google_daily_packages",
+      "file": "supabase/migrations/20261119112554_eo05_google_daily_packages.sql",
+      "created_with": "supabase@2.121.0 migration new eo05_google_daily_packages",
+      "repository_sql_sha256": "c316b389e7762e7153f307321a14873b76779cb7ae3789ca85aaf0fb79d49861",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

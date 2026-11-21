@@ -9,6 +9,7 @@ import {projectStoredKlaviyoDataset} from "../providers/stored-klaviyo-dataset.s
 import {applyStoredDatasetFx} from "./dataset-fx-resolver.server.js";
 import {maturityInstant, maturityDate, freezeMaturity} from "../refresh/maturity-policy.server.js";
 import {SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL,
+  GOOGLE_DAILY_STAGE_SQL, GOOGLE_DAILY_PUBLISH_SQL, GOOGLE_DAILY_INSPECT_SQL, GOOGLE_DAILY_FINISH_SQL,
   KLAVIYO_DAILY_STAGE_SQL, KLAVIYO_DAILY_PUBLISH_SQL, KLAVIYO_DAILY_INSPECT_SQL, KLAVIYO_DAILY_FINISH_SQL} from "./dataset-rpc.server.js";
 export {SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL};
 
@@ -44,7 +45,7 @@ export function prepareDailyDatasetPackages({owner,rows,policy,operationId,now,c
     return write;
   };
   if (maxPackages===1 || rows.length===0) return [prepare(rows)];
-  if (owner.provider!=="klaviyo" || rows.length>maxPackages*200) fail("PACKAGE_LIMIT");
+  if (!["klaviyo","google_ads"].includes(owner.provider) || rows.length>maxPackages*200) fail("PACKAGE_LIMIT");
   const packages=[],keys=new Set();
   for (let offset=0;offset<rows.length;) {
     if (packages.length===maxPackages) fail("PACKAGE_LIMIT");
@@ -72,7 +73,7 @@ export function prepareDailyDatasetPackages({owner,rows,policy,operationId,now,c
  * before atomically issuing the real source-consumption/day checkpoint receipt.
  * The scheduled path completes its job only after the known write and readback. */
 export async function reconcileStoredDatasetSources({database, cipher, owner, batches, limits, expectedRevision,
-  operationId = randomUUID(), fxResolver, now = Date.now, signal, admittedScope, scheduled = false}) {
+  operationId = randomUUID(), fxResolver, now = Date.now, signal, admittedScope, scheduled = false, googleDailyPackages = false}) {
   batches = structuredClone(batches); limits = structuredClone(limits);
   admittedScope = structuredClone(admittedScope);
   const bound = sourceStoreOwner(owner);
@@ -84,7 +85,11 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
   if (admittedScope !== undefined && (source.scope.jobId !== admittedScope?.jobId
     || source.scope.fence !== admittedScope.fence || source.scope.window.from !== admittedScope.from
     || source.scope.window.to !== admittedScope.to)) fail("ADMITTED_SCOPE_MISMATCH");
+  if(typeof googleDailyPackages!=="boolean"||googleDailyPackages && (!scheduled||bound.provider!=="google_ads")) fail("INPUT_INVALID");
+  const googleDaily=googleDailyPackages;
+  if(googleDaily && expectedRevision!==0) fail("GOOGLE_FIRST_DAY_REQUIRED");
   const dailyPackages = source.datasets.some(d => d.packageReceipts !== undefined);
+  if(bound.provider==="google_ads"&&dailyPackages&&!googleDaily) return freezeMaturity({status:"held",holds:[{reason:"google_daily_handoff_required"}],sourceVerified:true,rowsStored:0,consumerReceipt:false,checkpointAdvanced:false,reportValuesChanged:false,publishable:false,authorizesActivation:false});
   if (dailyPackages && (!scheduled || typeof database.transaction !== "function")) return freezeMaturity({
     status: "held", holds: [{reason: "daily_package_handoff_required"}], sourceVerified: true, rowsStored: 0,
     consumerReceipt: false, checkpointAdvanced: false, reportValuesChanged: false, publishable: false, authorizesActivation: false,
@@ -93,13 +98,13 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
   for (const {row} of projection.rows) if (row.occurred_at !== null && row.occurred_at !== undefined) row.occurred_at = canonicalDatasetEventTime(row.occurred_at);
   const configuration = source.datasets.filter(d => d.dataset === "configuration").flatMap(d => d.pages.map(p => p.ref));
   if (configuration.length) for (const {row} of projection.rows) row.provenance.sources = [...new Map([...row.provenance.sources, ...configuration].map(r => [r.page_id, r])).values()];
-  if (!dailyPackages && projection.rows.length > 200) fail("ROW_LIMIT");
+  if (!dailyPackages && !googleDaily && projection.rows.length > 200) fail("ROW_LIMIT");
   if (projection.rows.length && fxResolver !== undefined) {
     const fx = await applyStoredDatasetFx({resolver: fxResolver, database, source, rows: projection.rows, deadlineAt: limits.deadlineAt, signal});
     projection.holds.push(...fx.holds);
   }
   if (projection.holds.length || source.datasets.some(d => d.receipt.sourceState !== "complete" && !d.packageReceipts)
-    || dailyPackages && projection.rows.length===0) return freezeMaturity({status: "held", holds: projection.holds,
+    || dailyPackages && !googleDaily && projection.rows.length===0) return freezeMaturity({status: "held", holds: projection.holds,
     sourceVerified: true, rowsStored: 0, consumerReceipt: false, checkpointAdvanced: false, reportValuesChanged: false, publishable: false, authorizesActivation: false});
   const businessDate = maturityDate(source.scope.window.from), timeZone = source.datasets[0].source.timezone;
   if (source.datasets.some(d => d.source.timezone !== timeZone)) fail("TIMEZONE_MISMATCH");
@@ -110,10 +115,10 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
     batchIds: source.datasets.flatMap(d => (d.packageReceipts ?? [d.receipt]).map(receipt=>receipt.batchId)),
     startedAt: clocks.map(c => c.started).sort()[0], completedAt: clocks.map(c => c.completed).sort().at(-1)};
   const policy=projection.rows.length ? reportRetentionPolicy() : resolveReportRetentionPolicy({businessDate,timeZone});
-  if (dailyPackages) {
+  if (dailyPackages || googleDaily) {
     const writes=prepareDailyDatasetPackages({owner:bound,rows:projection.rows,policy,operationId,
       now:new Date(now()).toISOString(),context,maxPackages:20});
-    const receipt=await commitScheduledKlaviyoDailyReport({
+    const receipt=await (googleDaily?commitScheduledGoogleDailyReport:commitScheduledKlaviyoDailyReport)({
       database,owner:bound,writes,context,operationId,deadlineAt:limits.deadlineAt,admittedScope,stop,
     });
     const result=freezeMaturity({...receipt,sourceVerified:true,rowsStored:receipt.rowCount,reportValuesChanged:true,
@@ -209,4 +214,46 @@ export function datasetConsumptionMatches(receipt, owner, businessDate, timeZone
   const bound = confirmed.get(receipt);
   return !!bound && canonicalSourceJson(bound) === canonicalSourceJson(sourceStoreOwner(owner))
     && receipt.businessDate === businessDate && receipt.timeZone === timeZone;
+}
+
+async function commitScheduledGoogleDailyReport({database,owner,writes,context,operationId,deadlineAt,admittedScope,stop}) {
+  const ownerJson=JSON.stringify(owner),contextJson=JSON.stringify(context),deadline=new Date(deadlineAt).toISOString();
+  const packages=writes.map((write,ordinal)=>({ordinal,rowCount:write.rows.length,digest:sourcePayloadHash({write,context})}));
+  const rowCount=packages.reduce((sum,part)=>sum+part.rowCount,0);
+  const digests=packages.map(part=>part.digest);
+  let receipt;
+  try {
+    stop();
+    receipt=await database.transaction(async tx=>{
+      for (const {ordinal,rowCount,digest} of packages) {
+        stop();
+        const staged=(await tx.query(GOOGLE_DAILY_STAGE_SQL,[ownerJson,JSON.stringify(writes[ordinal]),
+          contextJson,deadline,ordinal,packages.length])).rows?.[0]?.result;
+        if (staged?.status!=="staged" || staged.operationId!==operationId || staged.ordinal!==ordinal
+          || staged.packageCount!==packages.length || staged.rowCount!==rowCount || staged.digest!==digest) fail("RESULT_INVALID");
+      }
+      stop();
+      const written=(await tx.query(GOOGLE_DAILY_PUBLISH_SQL,[ownerJson,contextJson,deadline,operationId,
+        JSON.stringify(writes[0].policy),JSON.stringify(digests)])).rows?.[0]?.result;
+      if (written?.version!=="google-daily-receipt-v1" || written.status!=="consumed" || written.operationId!==operationId
+        || written.consumerReceipt!==true || written.checkpointAdvanced!==true || written.comparison!=="matched"
+        || written.rowCount!==rowCount || written.revision!==context.expectedRevision+1
+        || written.jobId!==admittedScope.jobId || written.fence!==admittedScope.fence
+        || written.businessDate!==context.businessDate || written.timeZone!==context.timeZone
+        || !/^[0-9a-f]{64}$/.test(written.digest ?? "")
+        || canonicalSourceJson(written.packages)!==canonicalSourceJson(packages)
+        || canonicalSourceJson(written.batchIds)!==canonicalSourceJson(context.batchIds)) fail("RESULT_INVALID");
+      return written;
+    });
+  } catch {fail("WRITE_UNCONFIRMED");}
+  stop();
+  const readback=(await database.query(GOOGLE_DAILY_INSPECT_SQL,[ownerJson,operationId])).rows?.[0]?.result;
+  if (canonicalSourceJson(readback??null)!==canonicalSourceJson(receipt)) fail("READBACK_UNCONFIRMED");
+  stop();
+  let finished;
+  try {
+    finished=(await database.query(GOOGLE_DAILY_FINISH_SQL,[ownerJson,admittedScope.jobId,admittedScope.fence,operationId,receipt.digest])).rows?.[0]?.result;
+  } catch {fail("FINISH_UNCONFIRMED");}
+  if(finished!==true) fail("FINISH_UNCONFIRMED");
+  return receipt;
 }

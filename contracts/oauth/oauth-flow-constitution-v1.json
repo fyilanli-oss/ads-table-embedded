@@ -4851,6 +4851,20 @@
           "https://developers.google.com/google-ads/api/docs/best-practices/quotas",
           "https://developers.klaviyo.com/en/docs/rate_limits_and_error_handling"
         ]
+      },
+      "synthetic_shopify_report_mapping_2026_11_21": {
+        "explicit_owner_approval": "Onaylıyorum Codex.",
+        "scope": "Approved the exact Google and Klaviyo report identity rules in the refresh contract and their isolated synthetic reconciliation proof only. Exact authenticated raw context and current verified mapping evidence within the same owner; positive shared Shopify product, wrong shop, variant-parent mismatch, absent/ambiguous report link, missing Shopify evidence, and independent advertised/sold roles. No changes to runtime files, migrations, permission grants, registered native rules, Meta, provider/API operations, live database, merge or release.",
+        "paths": [
+          "contracts/eo-05d-reconciliation-v1.json",
+          "tests/dataset-reconciliation.test.js",
+          "tests/fixtures/dataset-source-binding-fixture.js",
+          "tests/fixtures/refresh-shopify-mapping-probe.js",
+          "tests/fixtures/verified-mapping-fixture.js"
+        ],
+        "local_tests_passed": 125,
+        "official_checked_at": "2026-11-21",
+        "proof": "Two fixture-driven composition tests use the existing Shopify verifier, AEAD source, mapping repository validation and real reconciliation JS with a synthetic PostgreSQL adapter. They assert the exact write/readback/closure request boundary, not physical Dataset or mapping SQL acceptance. PMax provides observed content language; the standard Shopping fixture lacks it."
       }
     }
   ],

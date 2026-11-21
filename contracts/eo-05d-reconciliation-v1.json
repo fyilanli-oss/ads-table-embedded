@@ -70,6 +70,31 @@
     "klaviyo_absent_metrics": "Unavailable/held, never zero or consumed",
     "native_acceptance": false
   },
+  "synthetic_report_shopify_mapping_2026_11_21": {
+    "status": "isolated_reconciliation_composition_only",
+    "boundary": "After verified raw-source projection and before report packaging and write. Verify Shopify product and variant evidence while preparing the fixture. Read the current verified mapping once per exact identity within the test reconciliation. Retain native report facts and source provenance.",
+    "owner": "The mapping must match the current provider, reporting account, workspace, installation, generation, Shopify shop, connection and selection. Private verified mapping lookup rechecks its existing rule, source, evidence and revision guards.",
+    "google_ads": {
+      "report_identity": "Exact native item ID by role, Merchant account, feed label and observed content language. Pay attention separately to product, sold product, and advertised product.",
+      "required_bridge": "A unique reviewed synthetic report-to-Merchant link for the exact owner, day and item, explicitly binding the Merchant data source and legacy-local discriminator. A formatted item ID alone cannot choose its Merchant context.",
+      "coverage": "Performance Max fixtures provide observed content language. A report that omits language, including the current standard Shopping fixture, remains unmapped in this prototype. Actual report-to-Merchant identity proof remains open."
+    },
+    "klaviyo": {
+      "report_identity": "Exact event and Shopify Ordered Product metric must be present in the authenticated source pages. Use ProductID with its lexical type, and preserve the separate Variant ID and VariantID evidence states.",
+      "required_bridge": "Exact match against the current verified mapping and its evidence. The documented variant must belong to the verified Shopify Product if present. Order claim and attribution semantics are unchanged."
+    },
+    "failed_evidence": "Missing mapping, missing report context, conflicting Merchant links and incompatible sales-role contexts produce no Shopify association. A purported current mapping with invalid or missing Shopify evidence stops before write. An available advertised mapping cannot be copied to a different unverified sold product.",
+    "verification": "The isolated test runs the current Shopify verifier, authenticated source readers, current mapping verification and scheduled reconciliation code through its write/receipt/closure request boundary. Shopify responses, stored mapping snapshots and the SQL adapter are synthetic. No PostgreSQL write/guard execution or capacity is claimed for this composition test.",
+    "meta": "Outside this mapping prototype. Insights namespace and sales-role native acceptance stay open.",
+    "live_or_runtime_enabled": false,
+    "official_checked_at": "2026-11-21",
+    "official_sources": [
+      "https://shopify.dev/docs/api/admin-graphql/latest/objects/ProductVariant",
+      "https://developers.google.com/google-ads/api/reference/rpc/v25/Segments",
+      "https://developers.klaviyo.com/en/reference/get_events",
+      "https://supabase.com/docs/guides/database/query-optimization"
+    ]
+  },
   "verification": {
     "unit": [
       "tests/dataset-bootstrap.test.js",

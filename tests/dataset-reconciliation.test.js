@@ -10,6 +10,9 @@ import {readDatasetWritePlan} from "../app/lib/refresh/dataset-server.server.js"
 import {runScheduledRefreshWithDataset} from "../app/lib/refresh/scheduled-queue-check.server.js";
 import {createScheduledDatasetPostgresClient} from "../app/lib/database/dataset-postgres.server.js";
 import {GOOGLE_DAILY_STAGE_SQL,GOOGLE_DAILY_PUBLISH_SQL,GOOGLE_DAILY_INSPECT_SQL,GOOGLE_DAILY_FINISH_SQL} from "../app/lib/database/dataset-rpc.server.js";
+import {verifyShopifyProductCandidate,shopifyProductVerificationEvidence} from "../app/lib/shopify/product-identity-verification.server.js";
+import {verifiedMappingFixture} from "./fixtures/verified-mapping-fixture.js";
+import {createSyntheticReportMapping,loadSyntheticMappingReconciliation} from "./fixtures/refresh-shopify-mapping-probe.js";
 
 async function fixture(provider = "google_ads", options = {}) {
   const f = await datasetSourceBindingFixture(provider, options); const key = provider === "google_ads" ? "googleDatasetRead" : provider === "meta" ? "metaDatasetRead" : "klaviyoDatasetRead";
@@ -85,6 +88,68 @@ for (const provider of ["google_ads", "meta", "klaviyo"]) test("reconciliation p
   assert.equal(r.consumerReceipt, true); assert.equal(r.checkpointAdvanced, true); assert.equal(r.publishable, false);
   assert.equal(f.request().context.sources.length, [...f.envelopes.values()].reduce((n, b) => n + b.pages.length, 0));
   assert.equal(f.request().write.rows.length, provider === "google_ads" ? 3 : provider === "meta" ? 0 : 2);
+});
+
+for (const provider of ["google_ads", "klaviyo"]) test(`${provider} synthetic report binds a verified Shopify mapping at the Dataset write seam`, async () => {
+  const reconcile=await loadSyntheticMappingReconciliation();
+  for (const mode of ["matched","wrong_shop","wrong_variant_parent","missing","missing_shopify_evidence",
+    ...(provider==="google_ads"?["split_sale","ambiguous_link"]:[])]){
+    const f=await fixture(provider,{shopifyMapping:mode==="split_sale"?"split_sale":true});
+    const mapping=verifiedMappingFixture(provider,{owner:f.owner,cipher:f.cipher,context:provider==="klaviyo"?{metric_id:"product"}:{}});
+    const actualShop=mode==="wrong_shop"?{...f.owner,shopId:"gid://shopify/Shop/900",shopDomain:"foreign-fixture.myshopify.com"}:f.owner;
+    const node=(type,id)=>({id:`gid://shopify/${type}/${id}`,legacyResourceId:id});
+    let shopifyCalls=0,lookupCalls=0;
+    const observed=await verifyShopifyProductCandidate({
+      shop:{authority:"shopify_admin_verified",shopId:actualShop.shopId,myshopifyDomain:actualShop.shopDomain},
+      installation:{authority:"shopify_installation_verified",status:"active",workspaceId:actualShop.workspaceId,installGeneration:Number(actualShop.generation)},
+      productId:"123",variantId:"456",admin:{async graphql(){
+        shopifyCalls++;
+        return Response.json({data:{shop:{id:actualShop.shopId,myshopifyDomain:actualShop.shopDomain},product:node("Product","123"),
+          productVariant:{...node("ProductVariant","456"),product:node("Product",mode==="wrong_variant_parent"?"999":"123")}}});
+      }},
+    });
+    mapping.check.shopifyVerification=shopifyProductVerificationEvidence(observed);
+    if(mode==="missing_shopify_evidence")mapping.entries.splice(mapping.entries.findIndex(entry=>entry.role==="candidate_check"),1);
+    const snapshot=mapping.snapshot();
+    Object.assign(snapshot.mapping,{state:"verified",revision:"2",productId:"gid://shopify/Product/123",variantId:"gid://shopify/ProductVariant/456"});
+    const identity=JSON.parse(snapshot.mapping.identityKey);
+    const [envelope]=f.envelopes.values();
+    const read=envelope.receipt.manifest[provider==="google_ads"?"googleDatasetRead":"klaviyoDatasetRead"];
+    const googleLinks=provider==="google_ads"&&mode!=="missing"?[{state:"reviewed_synthetic_report_link",owner:f.owner,
+      nativeId:identity.nativeId,window:read.window,reportKey:{merchant_id:"99",feed_label:"US",content_language:"en"},merchantContext:identity.context}]:[];
+    if(mode==="ambiguous_link")googleLinks.push({...googleLinks[0],merchantContext:{...identity.context,data_source:"accounts/99/dataSources/8"}});
+    const original=f.hooks.query;
+    f.hooks.query=(sql,args)=>{
+      if(!sql.includes("identity.lookup_verified_mapping("))return original(sql,args);
+      lookupCalls++;
+      assert.deepEqual(JSON.parse(args[0]),f.owner);
+      assert.deepEqual(JSON.parse(args[1]),identity);
+      if(mode==="missing")throw Error("MAPPING_NOT_VERIFIED");
+      return {rows:[{result:snapshot}]};
+    };
+    const input={...f,scheduled:true,admittedScope:{jobId:read.jobId,fence:read.fence,...read.window},
+      bindSyntheticMappings:createSyntheticReportMapping({googleLinks,now:()=>mapping.now})};
+    if(["wrong_shop","wrong_variant_parent","missing_shopify_evidence"].includes(mode)){
+      await assert.rejects(reconcile(input),mode==="missing_shopify_evidence"?/MAPPING_STORE_NATIVE_EVIDENCE_REQUIRED/:/MAPPING_STORE_SHOPIFY_PROOF_REQUIRED/);
+      assert.equal(f.request(),undefined);
+    }else{
+      assert.equal((await reconcile(input)).jobCompleted,true);
+      const productRows=f.request().write.rows.filter(item=>item.table!=="pd_facts");
+      assert.equal(productRows.length,provider==="google_ads"?2:1);
+      for(const {table,row} of productRows){
+        const keys=table==="cpd_product_performance_facts"?["product_mapping_id"]:provider==="google_ads"
+          ?["sold_product_mapping_id","advertised_product_mapping_id"]:["sold_product_mapping_id"];
+        for(const key of keys){
+          const matched=mode==="matched" || mode==="split_sale"&&key!=="sold_product_mapping_id";
+          assert.equal(row[key],matched?snapshot.mapping.id:null);
+        }
+        if(mode==="matched"||mode==="split_sale")assert.deepEqual(row.product_context,identity.context);
+        if(mode==="split_sale"&&table==="cpd_product_sales_facts")assert.equal(row.native_sold_product_id,"shopify_US_124_457");
+      }
+    }
+    assert.equal(shopifyCalls,1,"catalog verification runs during fixture preparation only");
+    assert.equal(lookupCalls,provider==="google_ads"&&["missing","ambiguous_link"].includes(mode)?0:1,"one exact lookup per identity in the job");
+  }
 });
 
 test("daily Klaviyo packages keep report rows ordered, bounded and unique across the day", async () => {

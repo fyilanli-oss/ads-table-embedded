@@ -4958,6 +4958,26 @@
           "https://developers.klaviyo.com/en/reference/get_events",
           "https://shopify.dev/docs/api/usage/gids"
         ]
+      },
+      "daily_refresh_operating_contract_2026_11_21": {
+        "explicit_owner_approval": "tamam dır refresh sözleşmesinin için bu bütün süreçlerin tüm kalemlerini alt kalemlerini varsa en alt kalemlerinide ekleyelim hiçbir boşluk bırakmakayım çünkü burası çok kritik bir akış.",
+        "scope": "Documentation-only consolidation of the approved closed-day refresh decision and the existing isolated shared-queue evidence. Describe inputs, authority and quota, raw evidence, Dataset projection, Shopify mapping, packages, PostgreSQL fact write, isolated timing, receipt, checkpoint, completion and open decisions. No OAuth behavior, raw-source implementation, runtime, SQL, live provider or database, merge or deployment change.",
+        "paths": [
+          "contracts/eo-05a-global-refresh-design-v1.json",
+          "docs/EO_05A_REFRESH_CONTRACT.md"
+        ],
+        "verification": [
+          "relative_links_and_14_sections",
+          "phase_evidence_consistency",
+          "oauth_and_raw_source_guards",
+          "focused_refresh_and_reconciliation_regressions"
+        ],
+        "official_checked_at": "2026-11-21",
+        "official_sources": [
+          "https://www.postgresql.org/docs/17/tutorial-transactions.html",
+          "https://www.postgresql.org/docs/17/explicit-locking.html",
+          "https://supabase.com/docs/guides/database/postgres/row-level-security"
+        ]
       }
     }
   ],

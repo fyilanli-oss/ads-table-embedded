@@ -224,6 +224,35 @@
     "sources_checked": ["https://www.postgresql.org/docs/17/explicit-locking.html", "https://supabase.com/docs/guides/database/postgres/row-level-security"]
   },
   "end_to_end_alarm_design": "contracts/eo-05-refresh-alarm-matrix-v1.json",
+  "daily_refresh_operating_contract_2026_11_21": {
+    "document": "docs/EO_05A_REFRESH_CONTRACT.md",
+    "authority": "Approved daily product design. Supersedes the historical workspace hourly cadence and hourly-hot-window defaults for normal provider data refresh. Preserves existing source, OAuth, retention, Dataset and production approval gates.",
+    "normal_cadence": "Once per closed source business day, using the verified reporting-account IANA timezone and eligible connection and selection period. The existing queue polling interval is a separate control. Exact production dispatch time, deadline reserve and provider-specific historical corrections remain open.",
+    "standard_measurement_steps": ["queue_enqueued", "queue_and_admission", "provider_collection", "raw_store_and_readback", "dataset_handoff", "postgresql_source_evidence_read", "report_preparation", "postgresql_report_write", "report_receipt_readback", "job_completed"],
+    "report_write_detail": ["shared_lock_claim_and_authority", "package_validation", "source_proof_and_retention", "row_controls", "canonical_JSON_and_digests", "existing_row_lookup_and_locking", "triggers", "insert_or_authorized_update", "physical_fact_verification", "single_report_receipt_and_checkpoint"],
+    "completion": "All packages are verified before atomic publication. One verified receipt, one checkpoint and one completed work order per provider account and day. The store-level result is complete only after every expected eligible provider closes independently. Missing or unconfirmed outcomes cannot advance freshness.",
+    "evidence": {
+      "examined_commit": "1f1cef8c1b22a16fdf94f6313c39f1a2aefec74d",
+      "record": "https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/44914944926/job/136878434619",
+      "day_utc": "2026-11-20",
+      "shops": 1,
+      "queue_scans": 1,
+      "provider_order": ["google_ads", "klaviyo", "meta"],
+      "dataset_rows_per_provider": 1000,
+      "packages_per_provider": [200, 200, 200, 200, 200],
+      "verified_receipts": 3,
+      "completed_jobs": 3,
+      "settled_provider_requests": {"google_ads": 18, "klaviyo": 15, "meta": 12},
+      "settled_shopify_partner_requests": 3,
+      "queue_seconds": 0.027,
+      "total_seconds": 40.621,
+      "active_provider_seconds": {"google_ads": 14.764, "klaviyo": 11.408, "meta": 14.350},
+      "provider_receipt_readback_included_in_close": ["google_ads", "klaviyo"],
+      "verification": "Shared synthetic run passed. Staged and full database replays produced matching schema inventory. The overall verification reached its time limit in the final separate OAuth rehearsal. Live provider latency, durable commit and multiple-store throughput remain outside this evidence."
+    },
+    "open_decisions": ["production_daily_schedule_and_cutoff_reserve", "provider_specific_historical_reconciliation", "live_Meta_product_identity_and_sales_evidence", "multi_lane_refresh_design", "EO07_or_EO08_capacity_acceptance"],
+    "authorization": {"runtime": false, "live_provider": false, "live_database": false, "deployment": false, "merge": false}
+  },
   "shared_three_provider_refresh_rehearsal_2026_11_21": {
     "scope": "One isolated PostgreSQL rollback run, one Shopify installation, and one fully closed UTC business day. One real inventory tick queues Google Ads, Klaviyo and Meta under one budget and one concurrent claim. The test coordinator drains that tick serially in Google Ads, Klaviyo, Meta order, with fresh SQL admission and fencing for each job. The second and third drains consume the already verified tick receipt and load current preflight snapshots. There is no scheduler frequency claim.",
     "acceptance": "Each provider writes exactly 1,000 Dataset facts in five 200-row packages with its own verified Shopify mapping, consumer receipt and completed job. All three completions, receipts and 3,000 facts coexist and share the same day and installation in the isolated transaction. Provider quota debits and three Shopify Partner entitlement quota debits are verified in actual PostgreSQL. A missing or shortened fifth Meta package remains an independently checked rejection.",

@@ -841,7 +841,7 @@
       "contracts/eo-05-step15-google-live-acceptance-v1.json": "1444654b503858b047b2bd1dc0a1c41d0e7bca2e192023a63c7ebb5c95e4dbd5",
       "contracts/eo-05-step15-google-source-role-v1.json": "00e7820d1b0537f42d6af09d593857169d6f1a7b8baf200953c86b8358977835",
       "contracts/eo-05-step15-storage-design-v1.json": "6aea99251e3b467c3ac2c48cec3d81a201c35527e135c0ebac2b957ddd7c8d2c",
-      "contracts/eo-05a-global-refresh-design-v1.json": "254fad3e6b84865911af4cd68c91e04a69ac8f820580166458466977561aaa17",
+      "contracts/eo-05a-global-refresh-design-v1.json": "463d9a745c0a6520eea0ce30883a58bf95efda178c24bb10c66fc9e49f835cec",
       "contracts/eo-05a-quota-authority-binding-v1.json": "36513785f0c62a18f0a4d81169f77b534b7aaa85e80e9821becde522401eec0a",
       "contracts/eo-05a-quota-native-transport-v1.json": "867509849717c4500cf206e1a4f05c0487bddfea1fe9fdcf8130299ad5dae461",
       "contracts/eo-05a-quota-scope-resolver-v1.json": "9162628db08897eb901e65b6dde438edc4ca5cce42b8c138e942ee1e4536c881",
@@ -864,7 +864,7 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "325da96ae5f4f320f06a0abd5545fd2032297cafc57c844d0cf5864cae661752",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "db7d90c6d66c53964593426e6578590538f9b3920d63fc7a8d493e0ea835e677",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "3d8862fb75c5e89fe6e04c2c6c6e44c1d368c8f460fb35c6346e55c9acd295a0",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -2958,6 +2958,26 @@
           "https://developers.google.com/google-ads/api/docs/reporting/overview",
           "https://developers.klaviyo.com/en/reference/get_events",
           "https://shopify.dev/docs/api/usage/gids"
+        ]
+      },
+      "daily_refresh_operating_contract_2026_11_21": {
+        "explicit_owner_approval": "tamam dır refresh sözleşmesinin için bu bütün süreçlerin tüm kalemlerini alt kalemlerini varsa en alt kalemlerinide ekleyelim hiçbir boşluk bırakmakayım çünkü burası çok kritik bir akış.",
+        "scope": "Documentation-only consolidation of the approved closed-day refresh decision and the existing isolated shared-queue evidence. Describe inputs, authority and quota, raw evidence, Dataset projection, Shopify mapping, packages, PostgreSQL fact write, isolated timing, receipt, checkpoint, completion and open decisions. No OAuth behavior, raw-source implementation, runtime, SQL, live provider or database, merge or deployment change.",
+        "paths": [
+          "contracts/eo-05a-global-refresh-design-v1.json",
+          "docs/EO_05A_REFRESH_CONTRACT.md"
+        ],
+        "verification": [
+          "relative_links_and_14_sections",
+          "phase_evidence_consistency",
+          "oauth_and_raw_source_guards",
+          "focused_refresh_and_reconciliation_regressions"
+        ],
+        "official_checked_at": "2026-11-21",
+        "official_sources": [
+          "https://www.postgresql.org/docs/17/tutorial-transactions.html",
+          "https://www.postgresql.org/docs/17/explicit-locking.html",
+          "https://supabase.com/docs/guides/database/postgres/row-level-security"
         ]
       }
     }

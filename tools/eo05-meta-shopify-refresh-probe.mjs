@@ -66,10 +66,9 @@ async function seedQuota(client,owner,{provider,apiVersion,organizationId=null,f
 
 export async function metaShopifyRefreshProbe(client,owner) {
   await prepareGoogleTimingLocalRoles(client);
-  for(const path of ["../supabase/migrations/20261104142557_eo05_meta_raw_datasets.sql","./sql/eo05-meta-source-role-install.sql"]){
-    await client.query("set local role postgres");
-    await client.query(readFileSync(new URL(path,import.meta.url),"utf8").trim().replace(/^begin;/,"").replace(/commit;$/, ""));
-  }
+  const roleSql=readFileSync(new URL("./sql/eo05-meta-source-role-install.sql",import.meta.url),"utf8");
+  await client.query("set local role postgres");
+  await client.query(roleSql.trim().replace(/^begin;/,"").replace(/commit;$/, ""));
   await client.query("set local role postgres");
   await client.query(`grant ${sourceRole} to adstable_owner with inherit false,set true,admin false`);
   await client.query("set local role adstable_owner");
@@ -197,6 +196,7 @@ export async function metaShopifyRefreshProbe(client,owner) {
           assert.equal(capture.contentVerified,true);
           assert.equal(capture.recordCount,3);
           for(const dataset of Object.values(capture.datasets)){
+            assert.equal(dataset.eligibility?.includesPreConnectionHours,false);
             const attempt=captureAttempts.get(dataset.batchId);
             assert.ok(attempt);
             batches.push(attempt);

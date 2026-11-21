@@ -15,6 +15,7 @@ import {klaviyoDailyTimingProbe} from "./eo05-klaviyo-daily-timing-probe.mjs";
 import {observabilityProbe} from "./eo05e-observability-probe.mjs";
 import {googleDailyPackagesProbe} from "./eo05-google-daily-packages-probe.mjs";
 import {googleDailyTimingProbe,prepareGoogleTimingLocalRoles,installGoogleCombinedCandidate,installGoogleWriterPreparationCandidate,installGooglePackageReuseCandidate,proveGoogleReportCanonicalParity} from "./eo05-google-daily-timing-probe.mjs";
+import {metaShopifyRefreshProbe} from "./eo05-meta-shopify-refresh-probe.mjs";
 
 async function rejected(client, action, pattern) {
   await client.query("savepoint dataset_expected_failure"); let error;
@@ -233,6 +234,8 @@ export async function datasetStorageProbe(client, connection, environment = proc
       }
     }
     if(finalSynthetic){
+      const meta=await metaShopifyRefreshProbe(client,await ownerFixture(client,"meta",installation));
+      console.log("EO05_META_SHOPIFY_MAPPING_QUEUE_TO_CLOSE_PASS",JSON.stringify(meta));
       await client.query("rollback to savepoint shared_shopify_mapping_installation");
       await client.query("release savepoint shared_shopify_mapping_installation");
     }

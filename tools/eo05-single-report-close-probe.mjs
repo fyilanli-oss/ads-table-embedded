@@ -35,8 +35,15 @@ export async function loadSingleReportCloseCandidate(client, provider, {shopifyM
   const signature = `analytics.finish_${provider}_daily_report_job(jsonb,text,bigint,uuid,text)`;
   const {rows: [{definition}]} = await client.query("select pg_get_functiondef($1::regprocedure) definition", [signature]);
   await client.query(singleReportCloseSql(definition));
+  return loadScheduledReportRehearsal({shopifyMapping,singleClose:true});
+}
 
-  const variant = `?singleReportClose=${randomUUID()}`;
+export async function loadMappedScheduledRefresh() {
+  return (await loadScheduledReportRehearsal({shopifyMapping:true,singleClose:false})).runScheduledRefreshWithDataset;
+}
+
+async function loadScheduledReportRehearsal({shopifyMapping,singleClose}) {
+  const variant = `?scheduledReportRehearsal=${randomUUID()}`;
   const files = ["../app/lib/database/dataset-reconciliation.server.js", "../app/lib/refresh/preflight-bridge.server.js", "../app/lib/refresh/scheduled-queue-check.server.js"]
     .map(file => new URL(file, import.meta.url));
   const sources = new Map(files.map((url, index) => {
@@ -47,7 +54,7 @@ export async function loadSingleReportCloseCandidate(client, provider, {shopifyM
       current = replaceOnce(current, "expectedRevision,fxResolver,googleDailyPackages,now,", "expectedRevision,fxResolver,googleDailyPackages,bindSyntheticMappings,now,");
     }
     if (shopifyMapping && index === 2) current = replaceOnce(current, "expectedRevision: inputs.expectedRevision,", "expectedRevision: inputs.expectedRevision, bindSyntheticMappings: inputs.bindSyntheticMappings,");
-    const source = index === 0 ? singleReportCloseSource(current) : replaceOnce(current,
+    const source = index === 0 ? (singleClose ? singleReportCloseSource(current) : current) : replaceOnce(current,
       index === 1 ? '"../database/dataset-reconciliation.server.js"' : '"./preflight-bridge.server.js"',
       JSON.stringify(files[index - 1].href + variant));
     return [url.href + variant, source];

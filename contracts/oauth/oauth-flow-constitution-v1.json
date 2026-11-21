@@ -1784,6 +1784,7 @@
       "tools/eo05-merchant-quota-context-probe.mjs": "699aae3f090c490ca59abba882ea3e36fbe25e817d7ce697a55a0cb294269deb",
       "tools/eo05-meta-first-day-probe.mjs": "54759310dd8a25fbacd710ef3ed130e62a862d498b8e81b2e1ebd7d9154e4abe",
       "tools/eo05-meta-raw-datasets-probe.mjs": "2ce162397322c014e8c9029e5d08beb53578a1fdc68d941476dae04b1dc2d3d5",
+      "tools/eo05-meta-shopify-refresh-probe.mjs": "7b8ef00014b8caaf72bfc859c9e30687058815cadfc6a67b3fbb5b647f2c67f0",
       "tools/eo05-meta-source-capture-probe.mjs": "a8cea28c2c80ced0436fe660dd201b73351d02336a4a3bcba5540cb63f2135b4",
       "tools/eo05-pmax-history-probe.mjs": "97a7338edab5f58455cad9acba5638490d7cb2fab737afa77eb663cd78037e82",
       "tools/eo05-privacy-source-worker-probe.mjs": "c120d7f57b50390e8da14c4975994759a662dd87333bb6dbaaee36eec4e0adfd",
@@ -1803,7 +1804,7 @@
       "tools/eo05-refresh-work-stops-probe.mjs": "3ca5e3a66981d045fc5004c3f40f984c2a4546246c813ece1887198d7b4f844e",
       "tools/eo05-shared-quota-probe.mjs": "653dc43e21f5c7f1a9fdd9b7dac4ceea3f96ef4ecce0916438cc27db3fd97290",
       "tools/eo05-shopify-installation-owner-probe.mjs": "83455ad97e85cae388aeb92b72ab314cc582384233c40fdeb0ed569997ca1668",
-      "tools/eo05-shopify-mapping-timing-fixture.mjs": "5a34db40b7f728248b5c0e1a1e7d8621681da47e82d64b7f983434e691242ecd",
+      "tools/eo05-shopify-mapping-timing-fixture.mjs": "1e5cbb63183fab7233dae7d329a8e75bce2105dcdf42e3ef72761847173cda3b",
       "tools/eo05-shopify-order-admin-probe.mjs": "f32b9cc99f3aab0e78c81bd1c481c2478534666ff00a5cbf51cebe0ae4b0d608",
       "tools/eo05-shopify-order-entitlement-probe.mjs": "02b9291e443cad2e90b98837dde3ed6a39afcb4c3ca01b2ea227177b1ae91ef9",
       "tools/eo05-shopify-order-fair-dispatch-probe.mjs": "8d9235325cf6ac6b6050beb9824b49672b1ee4aaecabacf42470d29581f83cfa",
@@ -1811,14 +1812,14 @@
       "tools/eo05-shopify-order-reconciliation-probe.mjs": "06eac560b4e00bbcdb2b83cdb5fc7d8c5f980f7589bef8b332794238ab185d24",
       "tools/eo05-shopify-order-work-probe.mjs": "1b3045b0c28ec2e8acaaa92e1308185becc02a03655ada9accf823cd52445bd9",
       "tools/eo05-single-account-selection-probe.mjs": "c87be931bf049384ceb339ec77c57f185f8245a9ff7764879c5eafa629bdfbf0",
-      "tools/eo05-single-report-close-probe.mjs": "6bbf0ca36387d08f178ecf48789b40bffd280829120ee996c0c8c1fb22db8ec9",
+      "tools/eo05-single-report-close-probe.mjs": "84d934b42ffffed1c86d31f4c7c60868ddab0e4b542d8d9aa6804ab78e336e6d",
       "tools/eo05-source-evidence-probe.mjs": "1a3e0245c32a6478c3ec5d845f01eea5b496fa0e7eec361802e0dbb6a809c718",
       "tools/eo05-source-retention-policy-probe.mjs": "8a137f4325fd407abf97deb721f1f81b3ac197f8b42d35273bb5927b08426d57",
       "tools/eo05-source-retention-probe.mjs": "621641d587b4622bf6b72e526932b83963ec46a57df4e346a17b6d78141f0d29",
       "tools/eo05-source-rule-probe.mjs": "bdba143e69a0ac680687dfbfce815bf8c97c7fa2228179e22cc5d5d4626477ab",
       "tools/eo05-verified-mapping-probe.mjs": "875aadd0c47e64d66f5fef187b2a803cd9716ff04b0ac0871f17cc97f84f88eb",
       "tools/eo05b-dataset-server-probe.mjs": "d6177954ab377f697209d5753651f7403e82b1c1349e0425405187ce33c3b02c",
-      "tools/eo05b-dataset-storage-probe.mjs": "38f07dab972057e4191f177419c98e00c6f3997dcef39e381b54c805e6536021",
+      "tools/eo05b-dataset-storage-probe.mjs": "3ca636fc3f79ef61942319ff93db32666980425e9d0535d2d43d69b16d7fd5b2",
       "tools/eo05b-demo-fixture.mjs": "c91cf0e2b82ae6bb4db46d4dfa4ffbc0e1415877075995a5bf5cbc1f30afdd73",
       "tools/eo05b-fx-reporting-currency-probe.mjs": "c5decd13fad2a1aebccacbdf6229bcfec590c429db8ab3380008c318c479a9d5",
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
@@ -4547,6 +4548,7 @@
         "tools/eo05-google-hosted-benchmark.mjs",
         "tools/eo05-klaviyo-daily-timing-probe.mjs",
         "tools/eo05-klaviyo-hosted-benchmark.mjs",
+        "tools/eo05-meta-shopify-refresh-probe.mjs",
         "tools/eo05-shopify-mapping-timing-fixture.mjs",
         "tools/eo05-single-report-close-probe.mjs",
         "tools/eo05b-dataset-storage-probe.mjs",
@@ -4891,6 +4893,26 @@
         ],
         "fixture_recovery": "Attempt 44891649753 reached Klaviyo report write and failed EO05_DAY_PROOF_INVALID. Mapping retention updates change the source tables and invalidate the optional Klaviyo whole-day proof. Only the mapped local rehearsal selects the existing independent full source validators. All checks are kept; the earlier unmapped branch and product runtime stay unchanged.",
         "fixture_timeout_recovery": "Attempt 44892275752 reached final physical fact verification after preserving the source and mapping checks and then hit the synthetic raw adapter's 5s statement timeout. The raw transaction ends through a RELEASE SAVEPOINT on the shared local connection, so SET LOCAL persists unlike a normal committed connection. Set the mapped Klaviyo report adapter to the configured scheduled report 30s test boundary, bounded by actual remaining job time. All verification and prior workloads remain protected; no production environment or SQL change."
+      },
+      "synthetic_meta_shopify_queue_to_close_2026_11_21": {
+        "explicit_owner_approval": "Onaylıyorum Codex.",
+        "scope": "Exercise the existing Meta token debug and Insights reader and scheduled Dataset reconciliation for one fully eligible day on the same synthetic installation as the Google Ads and Klaviyo rehearsals. Use scoped PostgreSQL roles, real quota reservation and settlement for Meta and Shopify Partner, encrypted raw source write/readback, one reconciled consumer receipt, and a completed work order. Three synthetic facts within the existing 200-row writer boundary: one ad performance fact and two product performance facts. Bind only the product with a unique exact synthetic report-to-catalog link to its independently verified Shopify Product ID. Assert the second product stays unmapped and no Meta product sales facts exist. Test-only binding after authenticated raw-source projection and before Dataset write. Physical HTTP responses are synthetic. No live provider, hosted database, runtime role grants or activation. Meta Insights identity namespace proof, native sales roles, and a 1,000-row comparison remain open.",
+        "paths": [
+          "contracts/eo-05d-reconciliation-v1.json",
+          "tests/fixtures/refresh-shopify-mapping-probe.js",
+          "tools/eo05-meta-shopify-refresh-probe.mjs",
+          "tools/eo05-shopify-mapping-timing-fixture.mjs",
+          "tools/eo05-single-report-close-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs"
+        ],
+        "local_tests_passed": 79,
+        "official_checked_at": "2026-11-21",
+        "official_sources": [
+          "https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/breakdowns",
+          "https://shopify.dev/docs/api/usage/gids",
+          "https://www.postgresql.org/docs/current/sql-savepoint.html",
+          "https://supabase.com/changelog.md"
+        ]
       }
     }
   ],

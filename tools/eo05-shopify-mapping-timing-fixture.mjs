@@ -9,9 +9,10 @@ import {createSyntheticReportMapping} from "../tests/fixtures/refresh-shopify-ma
 export async function seedShopifyMappingTimingFixture(client,{owner,cipher,window}) {
   assert.equal(client.connectionParameters.host,"127.0.0.1");
   assert.equal(Number(client.connectionParameters.port),54322);
-  assert.ok(["google_ads","klaviyo"].includes(owner.provider));
+  assert.ok(["google_ads","klaviyo","meta"].includes(owner.provider));
   const google=owner.provider==="google_ads";
-  const fixture=verifiedMappingFixture(owner.provider,{owner,cipher,...google?{}:{context:{metric_id:"m3"}}});
+  const meta=owner.provider==="meta";
+  const fixture=verifiedMappingFixture(owner.provider,{owner,cipher,...owner.provider==="klaviyo"?{context:{metric_id:"m3"}}:{}});
   const node=(type,id)=>({id:`gid://shopify/${type}/${id}`,legacyResourceId:id});
   const product=node("Product","123");
   const verified=await verifyShopifyProductCandidate({
@@ -33,8 +34,10 @@ export async function seedShopifyMappingTimingFixture(client,{owner,cipher,windo
   // evidence; the measured lookup and all Dataset guards still read real SQL.
   const origin=await commit(randomUUID(),emptyBatch());
   const completedAt=new Date().toISOString();
+  const [readKey,readContext]=google?["googleRead",{merchantId:identity.context.merchant_id}]
+    : meta?["metaRead",{target:{catalogId:identity.context.catalog_id}}]:["klaviyoRead",{sourceContext:{metricId:"m3"}}];
   await client.query("update evidence.source_batches set manifest=manifest||jsonb_build_object($1::text,$2::jsonb) where id=$3",
-    [google?"googleRead":"klaviyoRead",google?{merchantId:identity.context.merchant_id,completedAt}:{sourceContext:{metricId:"m3"},completedAt},origin.batchId]);
+    [readKey,{...readContext,completedAt},origin.batchId]);
   const attempt=randomUUID(),body=emptyBatch();
   body.rules.push({key:"r",ruleKey:fixture.rule.ruleKey,version:"1",kind:"product_identity",context:identity.context,
     parserVersion:fixture.rule.parserVersion,state:"reviewed",basis:fixture.rule.basis,applicability:fixture.rule.applicability});
@@ -69,7 +72,8 @@ export async function seedShopifyMappingTimingFixture(client,{owner,cipher,windo
   }};
   const googleLinks=google?[{state:"reviewed_synthetic_report_link",owner,nativeId:identity.nativeId,window,
     reportKey:{merchant_id:"99",feed_label:"US",content_language:"en"},merchantContext:identity.context}]:[];
-  const bind=createSyntheticReportMapping({googleLinks,mappingDatabase});
+  const metaLinks=meta?[{state:"reviewed_synthetic_report_link",owner,nativeId:identity.nativeId,window,catalogContext:identity.context}]:[];
+  const bind=createSyntheticReportMapping({googleLinks,metaLinks,mappingDatabase});
   const bindSyntheticMappings=async input=>{
     try{await bind(input);}catch(error){
       const code=/^(?:MAPPING|SOURCE|DATASET)_[A-Z_]+$/.test(error.message)?error.message:"ASSERTION_FAILED";
@@ -78,5 +82,5 @@ export async function seedShopifyMappingTimingFixture(client,{owner,cipher,windo
     }
   };
   return {bindSyntheticMappings,mappingId:receipt.manifest.ids["mapping:m"],
-    productId:verified.candidate.product_id,summary:()=>({reads,lookupMs})};
+    productId:verified.candidate.product_id,nativeId:identity.nativeId,summary:()=>({reads,lookupMs})};
 }

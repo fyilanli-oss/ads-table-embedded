@@ -52,12 +52,20 @@ function klaviyoContext(source, row, nativeId) {
     variant: field(properties, "Variant ID"), legacy_variant: field(properties, "VariantID")};
 }
 
-export function createSyntheticReportMapping({googleLinks = [], now = Date.now, mappingDatabase} = {}) {
-  const links = structuredClone(googleLinks);
+function metaContext(source, row, nativeId, links) {
+  if (row.product_context.product_id !== nativeId || row.source_identity.namespace !== "product_performance") return null;
+  const matches = links.filter(link => link.state === "reviewed_synthetic_report_link"
+    && equal(link.owner, source.owner) && equal(link.window, source.scope.window) && link.nativeId === nativeId);
+  const context = matches.length === 1 ? matches[0].catalogContext : null;
+  return context?.identity_namespace === "catalog_product_id" ? context : null;
+}
+
+export function createSyntheticReportMapping({googleLinks = [], metaLinks = [], now = Date.now, mappingDatabase} = {}) {
+  const google = structuredClone(googleLinks), meta = structuredClone(metaLinks);
   return async ({source, projection, database, cipher}) => {
     assert.ok(isStoredDatasetSource(source));
     const {owner} = source;
-    assert.ok(["google_ads", "klaviyo"].includes(owner.provider));
+    assert.ok(["google_ads", "klaviyo", "meta"].includes(owner.provider));
     const repository = createVerifiedMappingRepository({database: mappingDatabase ?? database, cipher, now});
     const current = new Map();
     for (const {table, row} of projection.rows) {
@@ -66,8 +74,8 @@ export function createSyntheticReportMapping({googleLinks = [], now = Date.now, 
       for (const [nativeField, mappingField] of fieldsByTable[table] ?? []) {
         const nativeId = row[nativeField];
         if (nativeId === null) continue;
-        const context = owner.provider === "google_ads"
-          ? googleContext(source, row, nativeId, links) : klaviyoContext(source, row, nativeId);
+        const context = owner.provider === "meta" ? metaContext(source, row, nativeId, meta)
+          : owner.provider === "google_ads" ? googleContext(source, row, nativeId, google) : klaviyoContext(source, row, nativeId);
         if (!context) continue;
         const identity = {provider: owner.provider, accountId: owner.accountId, nativeId, context};
         const key = canonicalSourceJson(identity);

@@ -101,6 +101,18 @@
       "https://supabase.com/docs/guides/database/query-optimization"
     ]
   },
+  "synthetic_meta_shopify_queue_to_close_2026_11_21": {
+    "scope": "Exercise the existing Meta token debug and Insights reader and scheduled Dataset reconciliation for one fully eligible day on the same synthetic installation as the Google Ads and Klaviyo rehearsals. Use scoped PostgreSQL roles, real quota reservation and settlement for Meta and Shopify Partner, encrypted raw source write/readback, one reconciled consumer receipt, and a completed work order.",
+    "workload": "Three synthetic facts within the existing 200-row writer boundary: one ad performance fact and two product performance facts. Bind only the product with a unique exact synthetic report-to-catalog link to its independently verified Shopify Product ID. Assert the second product stays unmapped and no Meta product sales facts exist.",
+    "boundary": "Test-only binding after authenticated raw-source projection and before Dataset write. Physical HTTP responses are synthetic. No live provider, hosted database, runtime role grants or activation. Meta Insights identity namespace proof, native sales roles, and a 1,000-row comparison remain open.",
+    "official_checked_at": "2026-11-21",
+    "official_sources": [
+      "https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/breakdowns",
+      "https://shopify.dev/docs/api/usage/gids",
+      "https://www.postgresql.org/docs/current/sql-savepoint.html",
+      "https://supabase.com/changelog.md"
+    ]
+  },
   "verification": {
     "unit": [
       "tests/dataset-bootstrap.test.js",

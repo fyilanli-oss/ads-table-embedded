@@ -7,6 +7,7 @@ import {loadSingleReportCloseCandidate,singleReportCloseSql,singleReportCloseSou
 import {klaviyoQuotaContextSource,klaviyoQuotaProfileSource,reuseGoogleProfileOids,reuseVerifiedRawHash,loadKlaviyoRawHashCandidate} from "../tools/eo05-final-synthetic-candidate.mjs";
 import {GOOGLE_SOURCE_ROLE_CHECK_SQL} from "../app/lib/database/google-source-postgres.server.js";
 import {GOOGLE_ACCEPTANCE_COORDINATOR_ROLE_CHECK_SQL} from "../app/lib/database/google-acceptance-coordinator-postgres.server.js";
+import {googleDatasetNativeRows} from "./fixtures/dataset-source-binding-fixture.js";
 import {collectComparableReportTiming,installComparableReportTiming} from "../tools/eo05-klaviyo-daily-timing-probe.mjs";
 import {assertGoogleTimingTarget,googleTimingParameter,createGoogleTimingLedger,loadObservedGoogleReader,googleCollectionCallKind,summarizeGoogleCollection,summarizeGoogleReportWrite,summarizeGooglePublishTrace,installGoogleFactTriggerTrace,summarizeGoogleFactTriggerTrace,installGoogleWriterPreparationCandidate,installGooglePackageReuseCandidate,installGooglePublishTrace} from "../tools/eo05-google-daily-timing-probe.mjs";
 
@@ -25,8 +26,17 @@ test("single-close rehearsal keeps the locked inspection and compares the exact 
   assert.ok(changed.indexOf("r is distinct from h::jsonb")<changed.indexOf("return operations.finish_refresh_work_before_stops"));
   const client={connectionParameters:{host:"127.0.0.1",port:54322},async query(_sql,args){return args?{rows:[{definition:finish}]}:{rows:[]};}};
   assert.equal(typeof (await loadSingleReportCloseCandidate(client,provider)).runScheduledRefreshWithDataset,"function");
+  assert.equal(typeof (await loadSingleReportCloseCandidate(client,provider,{shopifyMapping:true})).runScheduledRefreshWithDataset,"function");
  }
  await assert.rejects(loadSingleReportCloseCandidate({connectionParameters:{host:"remote",port:54322}},"google"));
+});
+
+test("Shopify timing replaces one Google performance and one sales row without changing report cardinality",()=>{
+ const native=family=>googleDatasetNativeRows(family,"123",{googleProducts:500,googleSalesProducts:499,mappedTimingSample:true});
+ assert.equal(native("shopping_product_daily").length+native("pmax_product_daily").length,500);
+ assert.equal(native("shopping_cart_data_product_sales_daily").length+native("pmax_cart_data_product_sales_daily").length,499);
+ assert.equal(native("pmax_product_daily")[0].segments.productLanguage,"en");
+ assert.equal(native("pmax_cart_data_product_sales_daily")[0].segments.productSoldItemId,"shopify_US_123_456");
 });
 
 test("final candidate keeps fresh profile, quota, and authenticated raw content checks",async()=>{

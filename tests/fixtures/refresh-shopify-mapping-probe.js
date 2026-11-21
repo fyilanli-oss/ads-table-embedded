@@ -35,6 +35,7 @@ function field(properties, key) {
 }
 
 function klaviyoContext(source, row, nativeId) {
+  if (!/^[1-9][0-9]{0,19}$/.test(nativeId) || BigInt(nativeId) > 18446744073709551615n) return null;
   const product = source.datasets.find(dataset => dataset.dataset === "product_performance");
   const pages = product?.pages ?? [];
   const metric = row.product_context.metric_id;
@@ -51,13 +52,13 @@ function klaviyoContext(source, row, nativeId) {
     variant: field(properties, "Variant ID"), legacy_variant: field(properties, "VariantID")};
 }
 
-export function createSyntheticReportMapping({googleLinks = [], now = Date.now} = {}) {
+export function createSyntheticReportMapping({googleLinks = [], now = Date.now, mappingDatabase} = {}) {
   const links = structuredClone(googleLinks);
   return async ({source, projection, database, cipher}) => {
     assert.ok(isStoredDatasetSource(source));
     const {owner} = source;
     assert.ok(["google_ads", "klaviyo"].includes(owner.provider));
-    const repository = createVerifiedMappingRepository({database, cipher, now});
+    const repository = createVerifiedMappingRepository({database: mappingDatabase ?? database, cipher, now});
     const current = new Map();
     for (const {table, row} of projection.rows) {
       assert.ok(!row.product_mapping_id && !row.sold_product_mapping_id && !row.advertised_product_mapping_id);
@@ -94,16 +95,19 @@ export function createSyntheticReportMapping({googleLinks = [], now = Date.now} 
 
 // This fixture loads an isolated copy at the real pre-write seam. The runtime
 // entry point and its accepted argument list never receive a mapping override.
-export async function loadSyntheticMappingReconciliation() {
-  const url = new URL("../../app/lib/database/dataset-reconciliation.server.js", import.meta.url);
-  const candidateUrl = `${url.href}?syntheticShopifyReportMapping`;
-  const original = readFileSync(url, "utf8");
+export function syntheticMappingReconciliationSource(original) {
   const argumentsEnd = "scheduled = false, googleDailyPackages = false}) {";
   const seam = "  const projection = projectors[bound.provider](source);";
   assert.equal(original.split(argumentsEnd).length, 2);
   assert.equal(original.split(seam).length, 2);
-  const candidate = original.replace(argumentsEnd, "scheduled = false, googleDailyPackages = false, bindSyntheticMappings}) {")
-    .replace(seam, `${seam}\n  if (!projection.holds.length) await bindSyntheticMappings({source, projection, database, cipher});\n  stop();`);
+  return original.replace(argumentsEnd, "scheduled = false, googleDailyPackages = false, bindSyntheticMappings}) {")
+    .replace(seam, `${seam}\n  if (!projection.holds.length && bindSyntheticMappings) await bindSyntheticMappings({source, projection, database, cipher});\n  stop();`);
+}
+
+export async function loadSyntheticMappingReconciliation() {
+  const url = new URL("../../app/lib/database/dataset-reconciliation.server.js", import.meta.url);
+  const candidateUrl = `${url.href}?syntheticShopifyReportMapping`;
+  const candidate = syntheticMappingReconciliationSource(readFileSync(url, "utf8"));
   const hooks = registerHooks({load(href, context, next) {
     if (href === candidateUrl) return {format: "module", source: candidate, shortCircuit: true};
     return next(href, context);

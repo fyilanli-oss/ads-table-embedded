@@ -1766,7 +1766,7 @@
       "tools/eo05-four-phase-diagnostics.mjs": "c95afca832e974a24f69f819813a4eb003dd2cded579856f6a0923f7de6b29b9",
       "tools/eo05-google-acceptance-probe.mjs": "6895c9f7f2180de717b27e2c86572cfcd79967bb7b84c0b0f1c450ffcf372797",
       "tools/eo05-google-daily-packages-probe.mjs": "06303e6a0e0bdef025d847c1e78b928e122a70e76c1340b756e3e90e59a1b5f0",
-      "tools/eo05-google-daily-timing-probe.mjs": "47905ce906a158b0e0836fa958aff72ab0cf10f9b89b586570668d8207347e42",
+      "tools/eo05-google-daily-timing-probe.mjs": "98278d300b381202615f2053ae997cc15643dbe1248461fe5588b9fdf6913c69",
       "tools/eo05-google-hosted-benchmark.mjs": "2724b75f248a74a447108afb0a35b804be8c13bee98f1da3ba43b8bd26fbd77e",
       "tools/eo05-google-identity-renewal-probe.mjs": "2f429c983600225ccdc9cadeede2611de9d48522dc575d5cb583b324b6f07fd1",
       "tools/eo05-google-mapping-flow-probe.mjs": "4cbdd4f19fb6db6ae199daa1ffcc5921ec885e467d45a1ec4abf2e6e14650d2d",
@@ -1777,7 +1777,7 @@
       "tools/eo05-google-source-role-probe.mjs": "fba96de648dd50a099dae4cdfd1e17807e5eb250cbc139d967a3f6e96b8ad19a",
       "tools/eo05-identity-authority-snapshot-probe.mjs": "0136e8dc5a5720b78d1cb4dca081f19e8b473812b6d66129b94f64fd5edf672c",
       "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
-      "tools/eo05-klaviyo-daily-timing-probe.mjs": "9dc22e88991317ed875a672d12abd6e2381987e1b4de728811080907bd63bf47",
+      "tools/eo05-klaviyo-daily-timing-probe.mjs": "8d07b26c870210e1a10d1fdb9a9f8dc061dfd033959d9b0b47fca761ec828f0d",
       "tools/eo05-klaviyo-hosted-benchmark.mjs": "1a21a53113d2a87cebc4426d3d8ef5f99b9e746a399ab088dc48381766e77dd9",
       "tools/eo05-klaviyo-raw-datasets-probe.mjs": "e7d504cd848ad8380575fa8a9dd6755fc95354d9a208db4d7f1a40693cc50888",
       "tools/eo05-klaviyo-source-capture-probe.mjs": "c9b9f604a72611fb0f39a8e6a178dadd72fcc6ee2f340a4396d0d6058bbaf5ab",
@@ -1803,6 +1803,7 @@
       "tools/eo05-refresh-work-stops-probe.mjs": "3ca5e3a66981d045fc5004c3f40f984c2a4546246c813ece1887198d7b4f844e",
       "tools/eo05-shared-quota-probe.mjs": "653dc43e21f5c7f1a9fdd9b7dac4ceea3f96ef4ecce0916438cc27db3fd97290",
       "tools/eo05-shopify-installation-owner-probe.mjs": "83455ad97e85cae388aeb92b72ab314cc582384233c40fdeb0ed569997ca1668",
+      "tools/eo05-shopify-mapping-timing-fixture.mjs": "5a34db40b7f728248b5c0e1a1e7d8621681da47e82d64b7f983434e691242ecd",
       "tools/eo05-shopify-order-admin-probe.mjs": "f32b9cc99f3aab0e78c81bd1c481c2478534666ff00a5cbf51cebe0ae4b0d608",
       "tools/eo05-shopify-order-entitlement-probe.mjs": "02b9291e443cad2e90b98837dde3ed6a39afcb4c3ca01b2ea227177b1ae91ef9",
       "tools/eo05-shopify-order-fair-dispatch-probe.mjs": "8d9235325cf6ac6b6050beb9824b49672b1ee4aaecabacf42470d29581f83cfa",
@@ -1810,14 +1811,14 @@
       "tools/eo05-shopify-order-reconciliation-probe.mjs": "06eac560b4e00bbcdb2b83cdb5fc7d8c5f980f7589bef8b332794238ab185d24",
       "tools/eo05-shopify-order-work-probe.mjs": "1b3045b0c28ec2e8acaaa92e1308185becc02a03655ada9accf823cd52445bd9",
       "tools/eo05-single-account-selection-probe.mjs": "c87be931bf049384ceb339ec77c57f185f8245a9ff7764879c5eafa629bdfbf0",
-      "tools/eo05-single-report-close-probe.mjs": "8ca6a833e274da9dbaa3db97b042759f7a7a3a7e27447b685ac4292efa1795ef",
+      "tools/eo05-single-report-close-probe.mjs": "6bbf0ca36387d08f178ecf48789b40bffd280829120ee996c0c8c1fb22db8ec9",
       "tools/eo05-source-evidence-probe.mjs": "1a3e0245c32a6478c3ec5d845f01eea5b496fa0e7eec361802e0dbb6a809c718",
       "tools/eo05-source-retention-policy-probe.mjs": "8a137f4325fd407abf97deb721f1f81b3ac197f8b42d35273bb5927b08426d57",
       "tools/eo05-source-retention-probe.mjs": "621641d587b4622bf6b72e526932b83963ec46a57df4e346a17b6d78141f0d29",
       "tools/eo05-source-rule-probe.mjs": "bdba143e69a0ac680687dfbfce815bf8c97c7fa2228179e22cc5d5d4626477ab",
       "tools/eo05-verified-mapping-probe.mjs": "875aadd0c47e64d66f5fef187b2a803cd9716ff04b0ac0871f17cc97f84f88eb",
       "tools/eo05b-dataset-server-probe.mjs": "d6177954ab377f697209d5753651f7403e82b1c1349e0425405187ce33c3b02c",
-      "tools/eo05b-dataset-storage-probe.mjs": "12aa0f1e88f5270bd8fce2dc99e3fc58a7f29d48313ffc4760e8d24394928f9d",
+      "tools/eo05b-dataset-storage-probe.mjs": "957cb11cb8653898cffb6b8351d49dcd00e804878acde0d517c83bce7092120c",
       "tools/eo05b-demo-fixture.mjs": "c91cf0e2b82ae6bb4db46d4dfa4ffbc0e1415877075995a5bf5cbc1f30afdd73",
       "tools/eo05b-fx-reporting-currency-probe.mjs": "c5decd13fad2a1aebccacbdf6229bcfec590c429db8ab3380008c318c479a9d5",
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
@@ -4546,6 +4547,7 @@
         "tools/eo05-google-hosted-benchmark.mjs",
         "tools/eo05-klaviyo-daily-timing-probe.mjs",
         "tools/eo05-klaviyo-hosted-benchmark.mjs",
+        "tools/eo05-shopify-mapping-timing-fixture.mjs",
         "tools/eo05-single-report-close-probe.mjs",
         "tools/eo05b-dataset-storage-probe.mjs",
         "tools/f01-database-replay.mjs"
@@ -4865,6 +4867,28 @@
         "local_tests_passed": 125,
         "official_checked_at": "2026-11-21",
         "proof": "Two fixture-driven composition tests use the existing Shopify verifier, AEAD source, mapping repository validation and real reconciliation JS with a synthetic PostgreSQL adapter. They assert the exact write/readback/closure request boundary, not physical Dataset or mapping SQL acceptance. PMax provides observed content language; the standard Shopping fixture lacks it."
+      },
+      "synthetic_shopify_mapping_queue_to_close_2026_11_21": {
+        "explicit_owner_approval": "Tamam oanylıyorum başlayalım.",
+        "scope": "Owner approved an isolated PostgreSQL only, one Google Ads and Klaviyo end-to-end rehearsal, with the approved Shopify report identity dry-run bound to existing full authority/quota, five packages, one verified receipt and completed closure. Prepare one synthetic encrypted verified catalog/rule fixture per provider before timing on the same synthetic Shopify installation. Use true PostgreSQL owner-only scoped mapping read in the isolated adapter without any new grant and assert the real mapped fact and Shopify Product ID plus unchanged full row and package totals. One Google performance and one Google sales PMax sample and one Klaviyo event are mapped. No broad capacity inference, no workflow disablement, and no runtime/migration, OAuth flow, hosted provider or database, Meta, merge or release changes.",
+        "paths": [
+          "contracts/eo-05d-reconciliation-v1.json",
+          "tests/fixtures/dataset-source-binding-fixture.js",
+          "tests/fixtures/refresh-shopify-mapping-probe.js",
+          "tests/google-daily-timing-probe.test.js",
+          "tools/eo05-google-daily-timing-probe.mjs",
+          "tools/eo05-klaviyo-daily-timing-probe.mjs",
+          "tools/eo05-shopify-mapping-timing-fixture.mjs",
+          "tools/eo05-single-report-close-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs"
+        ],
+        "local_tests_passed": 67,
+        "official_checked_at": "2026-11-21",
+        "references": [
+          "https://www.postgresql.org/docs/17/sql-savepoint.html",
+          "https://supabase.com/docs/guides/local-development/overview",
+          "https://shopify.dev/docs/api/admin-graphql/latest/objects/ProductVariant"
+        ]
       }
     }
   ],

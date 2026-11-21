@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {randomUUID} from "node:crypto";
 import {readFileSync} from "node:fs";
 import {registerHooks} from "node:module";
+import {syntheticMappingReconciliationSource} from "../tests/fixtures/refresh-shopify-mapping-probe.js";
 
 const providers = ["google", "klaviyo"];
 
@@ -27,7 +28,7 @@ export function singleReportCloseSql(definition) {
   "r->>'digest' is distinct from h", "r is distinct from h::jsonb");
 }
 
-export async function loadSingleReportCloseCandidate(client, provider) {
+export async function loadSingleReportCloseCandidate(client, provider, {shopifyMapping=false}={}) {
   assert.equal(client.connectionParameters.host, "127.0.0.1");
   assert.equal(Number(client.connectionParameters.port), 54322);
   assert.ok(providers.includes(provider));
@@ -39,7 +40,13 @@ export async function loadSingleReportCloseCandidate(client, provider) {
   const files = ["../app/lib/database/dataset-reconciliation.server.js", "../app/lib/refresh/preflight-bridge.server.js", "../app/lib/refresh/scheduled-queue-check.server.js"]
     .map(file => new URL(file, import.meta.url));
   const sources = new Map(files.map((url, index) => {
-    const current = readFileSync(url, "utf8").replaceAll("\r\n", "\n");
+    let current = readFileSync(url, "utf8").replaceAll("\r\n", "\n");
+    if (shopifyMapping && index === 0) current = syntheticMappingReconciliationSource(current);
+    if (shopifyMapping && index === 1) {
+      current = replaceOnce(current, "expectedRevision,fxResolver,googleDailyPackages=false}=inputs;", "expectedRevision,fxResolver,googleDailyPackages=false,bindSyntheticMappings}=inputs;");
+      current = replaceOnce(current, "expectedRevision,fxResolver,googleDailyPackages,now,", "expectedRevision,fxResolver,googleDailyPackages,bindSyntheticMappings,now,");
+    }
+    if (shopifyMapping && index === 2) current = replaceOnce(current, "expectedRevision: inputs.expectedRevision,", "expectedRevision: inputs.expectedRevision, bindSyntheticMappings: inputs.bindSyntheticMappings,");
     const source = index === 0 ? singleReportCloseSource(current) : replaceOnce(current,
       index === 1 ? '"../database/dataset-reconciliation.server.js"' : '"./preflight-bridge.server.js"',
       JSON.stringify(files[index - 1].href + variant));

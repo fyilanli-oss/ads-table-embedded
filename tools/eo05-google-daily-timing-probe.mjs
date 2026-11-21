@@ -5,6 +5,7 @@ import {collectComparableReportTiming,installComparableReportTiming} from "./eo0
 import {createFourPhaseDiagnostics} from "./eo05-four-phase-diagnostics.mjs";
 import {loadSingleReportCloseCandidate, verifySingleReportCloseRejections} from "./eo05-single-report-close-probe.mjs";
 import {reuseGoogleProfileOids,reuseVerifiedRawHash} from "./eo05-final-synthetic-candidate.mjs";
+import {seedShopifyMappingTimingFixture} from "./eo05-shopify-mapping-timing-fixture.mjs";
 import {registerHooks} from "node:module";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {createRefreshEntitlementVerifier} from "../app/lib/refresh/entitlement-check.server.js";
@@ -659,7 +660,7 @@ export function summarizeGooglePublishTrace(notices) {
  return {...publish,...writer,writerBoundaryOverheadMs};
 }
 
-export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false,factTriggerTrace=false,writerPreparationCandidate=false,comparableReport=false,packageReuseCandidate=false,fourPhaseDiagnostics=false,singleReportClose=false,finalSynthetic=false}){
+export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiagnostics=false,quotaClaimComparison=false,combinedCandidate=false,reportCandidate=false,reportBreakdown=false,publishTrace=false,factTriggerTrace=false,writerPreparationCandidate=false,comparableReport=false,packageReuseCandidate=false,fourPhaseDiagnostics=false,singleReportClose=false,finalSynthetic=false,shopifyMapping=false}){
  const target=assertGoogleTimingTarget(client.connectionParameters);
  if(quotaClaimComparison)assert.equal(target,"local");
  assert.ok(!combinedCandidate||!quotaClaimComparison);
@@ -673,7 +674,8 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  assert.ok(!fourPhaseDiagnostics||(target==="local"&&packageReuseCandidate&&!writerPreparationCandidate&&!publishTrace&&!collectionDiagnostics&&!comparableReport));
  assert.ok(!singleReportClose||(target==="local"&&packageReuseCandidate&&!writerPreparationCandidate&&!publishTrace&&!collectionDiagnostics&&!comparableReport&&!fourPhaseDiagnostics));
  assert.ok(!finalSynthetic||(singleReportClose&&combinedCandidate));
- const runScheduled=singleReportClose?(await loadSingleReportCloseCandidate(client,"google")).runScheduledRefreshWithDataset:runScheduledRefreshWithDataset;
+ assert.ok(!shopifyMapping||finalSynthetic);
+ const runScheduled=singleReportClose?(await loadSingleReportCloseCandidate(client,"google",{shopifyMapping})).runScheduledRefreshWithDataset:runScheduledRefreshWithDataset;
  const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger,combinedCandidate,finalSynthetic);
  let ordinal=0,failed,reader,roleChecks=0,comparable,fourPhase,closeArgs,reportPublished=false,profileReuses=0;
  const publishNotices=[];
@@ -796,6 +798,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   await client.query("update operations.refresh_queue_control set max_workspaces=8,max_accounts=8,max_snapshot_bytes=100000,max_snapshot_age_ms=60000 where singleton");
   const verified=await loadGoogleBackgroundOwner({database:runtime,owner:{workspaceId:owner.workspaceId,installGeneration:Number(owner.generation),shopId:owner.shopId,shopDomain:owner.shopDomain}});
   const tokenVault=createTokenVault({database:runtime,environment}),cipher=createConfiguredSourceEvidenceCipher(environment);
+  const mapping=shopifyMapping?await seedShopifyMappingTimingFixture(client,{owner,cipher,window}):null;
   const limits={deadlineAt:now()+120000,requestTimeoutMs:100000,finishReserveMs:2000,maxRows:2000,maxBytes:cost.bytes};
   const appId="gid://shopify/App/456",entitlementVerifier=createRefreshEntitlementVerifier({store,appId,now,limits,authorizeRead:async()=>true,
    partnerApi:{appId,activeSubscription:async()=>({data:{activeSubscription:{shop:{id:owner.shopId,myshopifyDomain:owner.shopDomain},billingPeriod:"EVERY_30_DAYS",cancelAtEndOfCycle:false,trialEndsAt:null,
@@ -820,15 +823,16 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
      storageLimits:{maxRows:1000,maxBytes:2097152},sourcePolicy:sourceStoreFixture().input.policy,merchant:null},signal,now,poolFactory:poolFactory("adstable_google_source_runner"),
      fetchFn:async(url,init)=>{assert.equal(new URL(url).hostname,"googleads.googleapis.com");requests++;const query=JSON.parse(init.body).query;
       if(query.includes("FROM product_link"))return Response.json({results:[]});const family=Object.keys(queries).find(f=>queries[f]===query);assert.ok(family);
-      return Response.json({results:googleDatasetNativeRows(family,owner.accountId,{googleProducts:500,googleSalesProducts:499})});}});
+      return Response.json({results:googleDatasetNativeRows(family,owner.accountId,{googleProducts:500,googleSalesProducts:499,mappedTimingSample:shopifyMapping})});}});
     const capture=await reader.run();await reader.close();reader=null;
     if(failed)throw Object.assign(Error(failed.message),failed);
     assert.equal(capture.status,"partial",JSON.stringify({capture,failed}));assert.equal(capture.contentVerified,true);
-    assert.equal(capture.datasets.account_performance.recordCount,3);assert.equal(capture.datasets.product_performance.recordCount,1498);
+    assert.equal(capture.datasets.account_performance.recordCount,3);assert.equal(capture.datasets.product_performance.recordCount,shopifyMapping?1497:1498);
     for(const kind of ["account_performance","product_performance"]){const d=capture.datasets[kind];for(const p of d.packageReceipts??[d])batches.push({attemptId:p.attemptId,ordinal:p.ordinal});}
     ledger.phaseAt("handoff");return {kind:"complete",payload:{batchCount:batches.length}};
    },validatePage:({payload})=>({complete:payload.batchCount>=2,rows:[]}),
-   async loadDatasetInputs(){ledger.phaseAt("reportPreparation");return {owner,batches,cipher,expectedRevision:0,googleDailyPackages:true};}
+   async loadDatasetInputs(){ledger.phaseAt("reportPreparation");return {owner,batches,cipher,expectedRevision:0,googleDailyPackages:true,
+    ...(mapping?{bindSyntheticMappings:mapping.bindSyntheticMappings}:{})};}
   }});
   const measured=ledger.stop();if(failed)throw Object.assign(Error(failed.message),failed);
   assert.equal(run.work?.status,"completed",JSON.stringify(run));assert.equal(requests,18);assert.equal(measured.rawDatasets,3);assert.ok(roleChecks>0);
@@ -837,6 +841,16 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
    (select count(*)::int from analytics.cpd_product_performance_facts where installation_id=$1) performance,
    (select count(*)::int from analytics.cpd_product_sales_facts where installation_id=$1) sales`,[owner.installationId])).rows[0];
   assert.deepEqual(rows,{pd:1,performance:500,sales:499});
+  let shopifyMappingMeasurement;
+  if(mapping){
+   const {rows:[linked]}=await client.query(`select
+      (select count(*)::int from analytics.cpd_product_performance_facts where installation_id=$1 and product_mapping_id=$2) performance,
+      (select count(*)::int from analytics.cpd_product_sales_facts where installation_id=$1 and sold_product_mapping_id=$2 and advertised_product_mapping_id=$2) sales,
+      (select shopify_product_id from identity.product_identity_mappings where installation_id=$1 and id=$2) product`,[owner.installationId,mapping.mappingId]);
+   assert.deepEqual(linked,{performance:1,sales:1,product:mapping.productId});
+   shopifyMappingMeasurement={...mapping.summary(),mappedRows:2};
+   assert.equal(shopifyMappingMeasurement.reads,1);
+  }
   const receipts=(await client.query("select manifest->'googleDailyReceipt' receipt from evidence.source_batches where authority=$1::jsonb and manifest ? 'googleDailyReceipt'",[JSON.stringify(owner)])).rows;
   assert.equal(receipts.length,1);assert.equal(receipts[0].receipt.rowCount,1000);assert.deepEqual(receipts[0].receipt.packages.map(p=>p.rowCount),[200,200,200,200,200]);
   assert.equal((await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",[owner.workspaceId,claimId])).rows[0].status,"completed");
@@ -858,7 +872,8 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
    receipts[0].receipt.rowCount,publishDetails.physicalWriteMs,
   ):null;
   const reportComparison=comparable?await comparable.result(reportWriteBreakdown.reportWriteMs,reportWriteBreakdown.stageCallWallMs):undefined;
-  return {provider:"google_ads",synthetic:true,rollbackOnly:true,combinedCandidate,reportCandidate,reportRows:1000,nativeRows:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,
+  return {provider:"google_ads",synthetic:true,rollbackOnly:true,combinedCandidate,reportCandidate,reportRows:1000,nativeRows:shopifyMapping?1500:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,
+   ...(shopifyMappingMeasurement?{shopifyMappingMeasurement}:{}),
    ...(finalSynthetic?{profileReuses}:{}),
    adstableWallMs:measured.totalMs-measured.postgresCallWallMs,providerNetworkMeasured:false,sqlInnerTimers:collectionDiagnostics||publishTrace||comparableReport,durableCommitMeasured:false,
    ...(reportComparison?{reportComparison}:{}),

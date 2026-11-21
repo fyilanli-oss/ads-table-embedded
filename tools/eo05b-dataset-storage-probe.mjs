@@ -23,10 +23,12 @@ async function rejected(client, action, pattern) {
   assert.ok(error, "invalid SQL operation must fail"); if (pattern) assert.match(error.message, pattern);
 }
 
-export async function ownerFixture(client, provider = "google_ads") {
-  const shopId = "gid://shopify/Shop/" + BigInt("0x" + randomBytes(6).toString("hex")), shopDomain = "dataset-" + randomBytes(6).toString("hex") + ".myshopify.com";
-  const boot = (await client.query("select * from shopify.bootstrap_installation($1,$2,$3,statement_timestamp())", [shopId, shopDomain, randomBytes(32)])).rows[0];
-  const iid = (await client.query("select id::text from shopify.installations where workspace_id=$1", [boot.workspace_id])).rows[0].id;
+export async function ownerFixture(client, provider = "google_ads", sharedInstallation) {
+  const shopId = sharedInstallation?.shopId ?? "gid://shopify/Shop/" + BigInt("0x" + randomBytes(6).toString("hex"));
+  const shopDomain = sharedInstallation?.shopDomain ?? "dataset-" + randomBytes(6).toString("hex") + ".myshopify.com";
+  const boot = sharedInstallation ? {workspace_id:sharedInstallation.workspaceId,install_generation:sharedInstallation.generation}
+    : (await client.query("select * from shopify.bootstrap_installation($1,$2,$3,statement_timestamp())", [shopId, shopDomain, randomBytes(32)])).rows[0];
+  const iid = sharedInstallation?.installationId ?? (await client.query("select id::text from shopify.installations where workspace_id=$1", [boot.workspace_id])).rows[0].id;
   const credential = randomUUID(), connection = randomUUID(), accountId = provider === "google_ads" ? "123" : provider === "meta" ? "act_123" : "account-123";
   await client.query("insert into integrations.provider_credential_envelopes(id,installation_id,workspace_id,install_generation,provider,purpose,payload_ciphertext,nonce,auth_tag,key_version) values($1,$2,$3,$4,$5,'provider_token_set',$6,$7,$8,1)",
     [credential, iid, boot.workspace_id, boot.install_generation, provider, randomBytes(32), randomBytes(12), randomBytes(16)]);
@@ -199,11 +201,15 @@ export async function datasetStorageProbe(client, connection, environment = proc
     }
     console.log("EO05_FOUR_PHASE_COMPARISON_PASS",JSON.stringify(sharedDiagnostics));
     const singleReportCloseComparison={};
+    if(finalSynthetic)await client.query("savepoint shared_shopify_mapping_installation");
+    const installation=finalSynthetic?await ownerFixture(client,"google_ads"):null;
     for(const [i,provider] of ["google","klaviyo"].entries()){
       await client.query("savepoint eo05_single_close_comparison");
       try{
         if(provider==="google")await prepareGoogleTimingLocalRoles(client);
-        const options={ownerFixture,singleReportClose:true,finalSynthetic};
+        const options={ownerFixture:installation?(db,nativeProvider)=>nativeProvider==="google_ads"
+          ?Promise.resolve(installation):ownerFixture(db,nativeProvider,installation):ownerFixture,
+          singleReportClose:true,finalSynthetic,shopifyMapping:finalSynthetic};
         const candidate=provider==="google"
           ?await googleDailyTimingProbe(client,{...options,combinedCandidate:true,reportBreakdown:true,packageReuseCandidate:true})
           :await klaviyoDailyTimingProbe(client,{...options,connection,environment,mode:"retention-boundary",retentionVariant:"cached",
@@ -215,6 +221,7 @@ export async function datasetStorageProbe(client, connection, environment = proc
         assert.ok(Object.values(durationsMs).every(ms=>Number.isFinite(ms)&&ms>=0));
         assert.ok(Math.abs(Object.values(durationsMs).reduce((a,b)=>a+b,0)-totalMs)<0.01);
         singleReportCloseComparison[provider]={control:queueToClose[i],candidate:{reportRows,reportPackages,requests,receipts,durationsMs,totalMs},
+          ...(finalSynthetic?{shopifyMapping:candidate.shopifyMappingMeasurement}:{}),
           ...(finalSynthetic&&provider==="google"?{profileReuses:candidate.profileReuses}:{}),
           ...(finalSynthetic&&provider==="klaviyo"?{authorityChecks:candidate.authorityChecks,quotaDebits:candidate.quotaDebits}:{})};
       }finally{
@@ -222,7 +229,11 @@ export async function datasetStorageProbe(client, connection, environment = proc
         await client.query("release savepoint eo05_single_close_comparison");
       }
     }
-    console.log(finalSynthetic?"EO05_FINAL_SYNTHETIC_COMPARISON_PASS":"EO05_SINGLE_REPORT_CLOSE_COMPARISON_PASS",JSON.stringify(singleReportCloseComparison));
+    if(finalSynthetic){
+      await client.query("rollback to savepoint shared_shopify_mapping_installation");
+      await client.query("release savepoint shared_shopify_mapping_installation");
+    }
+    console.log(finalSynthetic?"EO05_SHOPIFY_MAPPING_QUEUE_TO_CLOSE_PASS":"EO05_SINGLE_REPORT_CLOSE_COMPARISON_PASS",JSON.stringify(singleReportCloseComparison));
     await client.query("savepoint google_package_reuse_correctness");
     try{
       await installGoogleCombinedCandidate(client);

@@ -20,6 +20,7 @@ import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
 import {createFourPhaseDiagnostics} from "./eo05-four-phase-diagnostics.mjs";
 import {loadSingleReportCloseCandidate, verifySingleReportCloseRejections} from "./eo05-single-report-close-probe.mjs";
 import {installKlaviyoQuotaCandidate,loadKlaviyoRawHashCandidate} from "./eo05-final-synthetic-candidate.mjs";
+import {seedShopifyMappingTimingFixture} from "./eo05-shopify-mapping-timing-fixture.mjs";
 
 const productEvents=1000;
 const pageSize=200;
@@ -1209,7 +1210,7 @@ async function installPublishTimers(client,{reportOnly,optimized=false}) {
   }
 }
 
-function syntheticResponse(endpoint,owner,day,changedEvents=0) {
+function syntheticResponse(endpoint,owner,day,changedEvents=0,shopifyMapping=false) {
   const url=new URL(endpoint);
   assert.equal(url.origin,"https://a.klaviyo.com");
   if (url.pathname.includes("/accounts")) return Response.json({data:[
@@ -1230,7 +1231,8 @@ function syntheticResponse(endpoint,owner,day,changedEvents=0) {
   return Response.json({
     data:Array.from({length:pageSize},(_,i)=>({
       type:"event",id:"e"+(offset+i),attributes:{datetime:day+"T12:00:00Z",
-        event_properties:{ProductID:"p"+(offset+i),Quantity:offset+i<changedEvents?2:1,$value:offset+i<changedEvents?"39.98":"19.99"}},
+        event_properties:{ProductID:shopifyMapping&&offset+i===0?"123":"p"+(offset+i),
+          ...(shopifyMapping&&offset+i===0?{"Variant ID":"456"}:{}),Quantity:offset+i<changedEvents?2:1,$value:offset+i<changedEvents?"39.98":"19.99"}},
       relationships:{metric:{data:{type:"metric",id:"m3"}}},
     })),
     links:{next:offset+pageSize<productEvents?url.origin+url.pathname+"?page%5Bcursor%5D="+(offset+pageSize):null},
@@ -1402,7 +1404,7 @@ async function installHostedReportClocks(client) {
     end $clock$;`);
 }
 
-async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,repeat,revisionPermit=false,verifyRevisionPermit=false,matchedTransport,comparableReport=false,fourPhaseDiagnostics=false,singleReportClose=false,finalSynthetic=false}) {
+async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",retentionVariant,combinedVerification=false,reduceReportRepeats=false,hosted=false,hostedDetail=false,reportWriteCleanup=false,phaseCandidate,reuseStagedCanonical=false,triggerPhaseDetail=false,reuseCanonicalRows=false,endToEnd=false,optimizeReadback=false,sharedDaySources=false,verifyDaySources=false,callBreakdown=false,repeat,revisionPermit=false,verifyRevisionPermit=false,matchedTransport,comparableReport=false,fourPhaseDiagnostics=false,singleReportClose=false,finalSynthetic=false,shopifyMapping=false}) {
   assert.ok(["report","wall","detailed","retention","retention-wall","retention-boundary"].includes(mode));
   const reportBoundary=mode==="retention-boundary";
   const retentionOnly=mode==="retention",retentionWall=mode==="retention-wall"||reportBoundary;
@@ -1412,7 +1414,8 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   const fullAuthority=matchedTransport==="authority";
   if(fourPhaseDiagnostics)assert.ok(fullAuthority&&!comparableReport&&!callBreakdown);
   if(singleReportClose)assert.ok(fullAuthority&&!comparableReport&&!fourPhaseDiagnostics&&!callBreakdown&&!optimizeReadback);
-  const runScheduled=singleReportClose?(await loadSingleReportCloseCandidate(client,"klaviyo")).runScheduledRefreshCheck:runScheduledRefreshCheck;
+  assert.ok(!shopifyMapping||finalSynthetic);
+  const runScheduled=singleReportClose?(await loadSingleReportCloseCandidate(client,"klaviyo",{shopifyMapping})).runScheduledRefreshCheck:runScheduledRefreshCheck;
   assert.ok(!finalSynthetic||singleReportClose);
   const rawStore=finalSynthetic?await loadKlaviyoRawHashCandidate():{storeKlaviyoRawDataset,storeKlaviyoRawProductPackages};
   if(finalSynthetic)await installKlaviyoQuotaCandidate(client);
@@ -1425,6 +1428,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   const day=repeat?.day??new Date(now()-86400000).toISOString().slice(0,10),window={from:day,to:day};
   const generation=randomUUID(),operationId=randomUUID(),hash=()=>randomBytes(32).toString("hex");
   const cipher=createSourceEvidenceCipher({keys:new Map([[1,randomBytes(32)]]),activeVersion:1,forbiddenKeys:[]});
+  const mapping=shopifyMapping?await seedShopifyMappingTimingFixture(client,{owner,cipher,window}):null;
   const policy=sourceStoreFixture().input.policy;
   // The second pass reuses exactly the SQL installed for its seed.
   let matchedQuota,createReadAuthority,authorityChecks=0,fourPhase;
@@ -1687,7 +1691,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
             if (!detailed&&!endToEnd) return syntheticResponse(endpoint,owner,day,repeat?.changedEvents??0);
             const before=performance.now();
             try {
-              const response=syntheticResponse(endpoint,owner,day,repeat?.changedEvents??0);
+              const response=syntheticResponse(endpoint,owner,day,repeat?.changedEvents??0,shopifyMapping);
               if(matchedTransport){
                 response.headers.set("ratelimit-limit","1000");
                 response.headers.set("ratelimit-remaining",String(1000-requests));
@@ -1741,7 +1745,8 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
           if(endToEnd) reportCpuStart=process.cpuUsage();
           durations.handoff=reportAt-collectedAt;
         }
-        return {owner,batches,cipher,expectedRevision:repeat?1:0,database:reportDatabase};
+        return {owner,batches,cipher,expectedRevision:repeat?1:0,database:reportDatabase,
+          ...(mapping?{bindSyntheticMappings:mapping.bindSyntheticMappings}:{})};
       },
     }});
     if (failed) throw failed;
@@ -1777,6 +1782,15 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     const sales=(await client.query("select count(*)::int n from analytics.cpd_product_sales_facts where installation_id=$1",
       [owner.installationId])).rows[0].n;
     assert.equal(sales,productEvents);
+    let shopifyMappingMeasurement;
+    if(mapping){
+      const {rows:[linked]}=await client.query(`select count(*)::int sales,min(m.shopify_product_id) product
+        from analytics.cpd_product_sales_facts f join identity.product_identity_mappings m on m.id=f.sold_product_mapping_id
+        where f.installation_id=$1 and m.id=$2`,[owner.installationId,mapping.mappingId]);
+      assert.deepEqual(linked,{sales:1,product:mapping.productId});
+      shopifyMappingMeasurement={...mapping.summary(),mappedRows:1};
+      assert.equal(shopifyMappingMeasurement.reads,1);
+    }
     const receipts=(await client.query(`select count(*)::int n from evidence.source_batches
       where authority=$1::jsonb and manifest->'klaviyoDailyReceipt'->>'jobId'=$2`,
       [JSON.stringify(owner),claimId])).rows[0].n;
@@ -1805,6 +1819,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
         await client.query("release savepoint eo05_single_close_proof");
       }
       return {...summary,matchedTransport,quotaDebits,authorityChecks,reportComparison,totalMs:ended-start,durationsMs,
+        ...(shopifyMappingMeasurement?{shopifyMappingMeasurement}:{}),
         ...(fourPhase?{fourPhaseDiagnostics:fourPhase.result(durationsMs,requests)}:{})};
     }
     if(retentionOnly) {

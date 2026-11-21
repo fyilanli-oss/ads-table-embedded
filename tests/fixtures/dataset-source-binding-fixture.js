@@ -34,11 +34,11 @@ async function nativeKlaviyoPage(path, body, request = null) {
 
 // Shared synthetic native rows for capture and stored-source tests. Cardinalities
 // describe the input; no projected report row is removed to meet a target count.
-export function googleDatasetNativeRows(family,account,{nonempty=true,googlePurchase="2.5",googleProducts=1,googleSalesProducts=googleProducts,shopifyMapping=false}={}) {
+export function googleDatasetNativeRows(family,account,{nonempty=true,googlePurchase="2.5",googleProducts=1,googleSalesProducts=googleProducts,shopifyMapping=false,mappedTimingSample=false}={}) {
   if(!Number.isInteger(googleProducts)||googleProducts<1||googleProducts>500||shopifyMapping&&googleProducts!==1
     ||!Number.isInteger(googleSalesProducts)||googleSalesProducts<0||googleSalesProducts>googleProducts)throw Error("SYNTHETIC_GOOGLE_PRODUCTS_INVALID");
   if(shopifyMapping&&["shopping_product_daily","shopping_cart_data_product_sales_daily","cart_data_product_sales_daily"].includes(family))return [];
-  if(shopifyMapping&&["pmax_product_daily","pmax_cart_data_product_sales_daily"].includes(family)){
+  if((shopifyMapping||mappedTimingSample)&&["pmax_product_daily","pmax_cart_data_product_sales_daily"].includes(family)){
     const sales=family.includes("cart_data");
     const equivalent=sales?"shopping_cart_data_product_sales_daily":"shopping_product_daily";
     return nativeGoogle(equivalent,account,nonempty,googlePurchase).slice(0,sales?googleSalesProducts:1).map(row=>({
@@ -51,7 +51,7 @@ export function googleDatasetNativeRows(family,account,{nonempty=true,googlePurc
     if(!["shopping_product_daily","shopping_cart_data_product_sales_daily","cart_data_product_sales_daily"].includes(family))return [row];
     const sales=family.includes("cart_data");
     return Array.from({length:sales?googleSalesProducts:googleProducts},(_,n)=>({...row,segments:{...row.segments,
-      productItemId:"product-"+(n+1),...(sales?{productSoldItemId:"product-"+(n+1)}:{})}}));
+      productItemId:"product-"+(n+1),...(sales?{productSoldItemId:"product-"+(n+1)}:{})}})).slice(mappedTimingSample?1:0);
   });
 }
 

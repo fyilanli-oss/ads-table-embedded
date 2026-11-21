@@ -172,7 +172,7 @@ Kuyruk taramasının tazeliği, sağlayıcının son doğrulanmış günü, bekl
 - Aynı iş günü, aynı satır sayısı, aynı veri ailesi ve kapsam, aynı paket sınırı, yetki/kota modu, aynı yazıcı sürümü ve ortam kaydı tutulur. Bir koşunun şekli değişirse fark tabloda açıklanır.
 - PostgreSQL rapor yazımı kendi başına ölçülen bir dış aşamadır. Uygulama işlemi, veritabanı çağrısının dış süresi, sorgu içi kontrol ve salt ekleme ayrı ölçüm sınırlarıdır. Zamanlar birbirini içeriyorsa bir kez toplama girer. Detay sayaçları ayrı teşhis koşusunda kullanılır.
 - Başarı için taze claim ve kota, eksiksiz şifreli kaynak, geçerli rapor kapsamı, tam paket sayısı, doğru fiziksel satırlar, tek makbuz, checkpoint, doğrulanmış kapanış ve kurallara uygun saklama birlikte görülür. Boş, kısmi, çakışmalı, süresi dolmuş, yanıtı kayıp ve eksik paket örnekleri ilgili sınırda kanıtlanır.
-- Ortak prova ve iki temiz PostgreSQL şema kontrolü geçti. Paket düzeyindeki genel kontrol, sondaki ayrı OAuth provasındayken 30 dakikalık süre sınırına ulaştı. Genel kabul açık.
+- Önceki genel kontrol 30 dakikalık süre sınırına ulaştı. İşin toplam sınırı 45 dakikaya alınınca aynı kontrol paketi tamamlandı. Üç sağlayıcılı ortak sentetik prova, iki temiz PostgreSQL kurulumu ve şema karşılaştırması ile son ayrı OAuth provası geçti. Önceki 40,621 sn ölçümü kendi koşusunun referansı olarak kalır. Canlı kabul koşulları Bölüm 13’te izlenir. [Son veritabanı kontrolü](https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/44929858330/job/136923882139)
 
 ## 13. Uygulama ve kapasite kararları
 

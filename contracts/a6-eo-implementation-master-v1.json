@@ -1,4 +1,27 @@
 {
+  "eo05_daily_refresh_repository_closure_2026_11_21": {
+    "status": "synthetic_refresh_repository_delivery_closed_parent_acceptance_separate",
+    "actual_output": "Closed-day refresh contract and a single-shop multi-lane design with one owning lane per shop. The isolated shared queue processed Google Ads, Klaviyo and Meta through permission and quota checks, 1,000 Dataset rows and one verified receipt per provider, and job closure.",
+    "acceptance_evidence": {
+      "merged_pr": 379,
+      "merged_commit": "4056421c325c2225b81a217181409af1003b271a",
+      "verified_pr_head": "21681874f18d8d7d0c6a545a8238724139c333bf",
+      "database_integrity_job": "https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/44929858330/job/136923882139",
+      "repository_governance_job": "https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/44929858322/job/136923882011",
+      "scope": "Isolated three-provider refresh, equivalent staged and clean PostgreSQL schemas, and the scoped OAuth rehearsal passed."
+    },
+    "reference_obligations_satisfied_or_open": {
+      "satisfied_in_synthetic_scope": ["shared_queue_to_job_closure", "provider_permission_and_quota_checks", "shopify_product_mapping_and_dataset_receipts", "isolated_database_and_governance_checks"],
+      "open": ["production_daily_schedule_and_cutoff_reserve", "provider_specific_historical_reconciliation", "live_Meta_product_identity_and_sales_role_evidence", "real_shop_and_provider_acceptance", "multi_lane_implementation_and_capacity_acceptance"],
+      "reference_package_status": "Tracked under existing acceptance rules. The synthetic refresh slice supplies evidence for the applicable obligations. Parent and reference acceptance require their own evidence.",
+      "capacity_review": "EO-07 end with reporting and UI load, or EO-08 end if still needed."
+    },
+    "refresh_contract": "docs/EO_05A_REFRESH_CONTRACT.md",
+    "multi_lane_design": "docs/EO_05A_MULTI_LANE_REFRESH_DESIGN.md",
+    "single_next_parent": "A6-EO-06",
+    "next_parent_start_brief_pending": true,
+    "production_mutation_authorized": false
+  },
   "EO05C_maturity_finality_2026_11_10": {
     "parent_package": "A6-EO-05-C",
     "owner_approval": "Tamam onaylıyorum Codex — explicit reply to three EO05C jobs: native setting/source binding, maturity decision and durable proof, code/SQL preparation/isolated tests/one PR",

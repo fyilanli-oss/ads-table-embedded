@@ -17,7 +17,6 @@ begin
   if o->>'provider' is distinct from 'meta' or c->>'expectedRevision' is distinct from '0'
    or jsonb_array_length(p)<>5 then raise exception 'META_REPORT_PACKAGE_COUNT';end if;
   extra_packages:=p;
-  h:=analytics.dataset_digest(jsonb_build_object('write',p,'context',c));
   for pack in select value from jsonb_array_elements(extra_packages) with ordinality t(value,n) order by n loop
    if jsonb_typeof(pack) is distinct from 'object' or (select count(*) from jsonb_object_keys(pack))<>4
     or not pack ?& array['version','operationId','policy','rows'] or pack->>'version' is distinct from 'eo05b-storage-v1'
@@ -26,9 +25,10 @@ begin
     or octet_length(analytics.dataset_json(jsonb_build_object('write',pack,'context',c)))>1048576
     then raise exception 'META_REPORT_PACKAGE_INVALID';end if;
    pack_summary:=pack_summary||jsonb_build_array(jsonb_build_object('ordinal',jsonb_array_length(pack_summary),
-    'rowCount',200,'digest',analytics.dataset_digest(pack)));
+    'rowCount',200,'digest',analytics.dataset_digest(jsonb_build_object('write',pack,'context',c))));
    combined_rows:=combined_rows||(pack->'rows');
   end loop;
+  h:=analytics.dataset_digest(jsonb_build_object('packages',pack_summary));
   p:=jsonb_set(extra_packages->0,'{rows}',combined_rows);
  end if;`);
   sql=replaceOnce(sql,"jsonb_array_length(p->'rows') not between 0 and 200\n or octet_length(analytics.dataset_json(p))>1048576",
@@ -85,7 +85,9 @@ export function metaDailyReconciliationSource(source) {
     `  const prepared=prepareDailyDatasetPackages({owner:bound,rows:projection.rows,policy,operationId,now:new Date(now()).toISOString(),context,maxPackages:metaDaily?5:1});
   if(metaDaily && (prepared.length!==5 || prepared.some(p=>p.rows.length!==200))) fail("META_PACKAGE_COVERAGE");
   const write=metaDaily?prepared:prepared[0];
-  const expectedPackages=metaDaily?prepared.map((pack,ordinal)=>({ordinal,rowCount:pack.rows.length,digest:sourcePayloadHash(pack)})):null;`);
+  const expectedPackages=metaDaily?prepared.map((pack,ordinal)=>({ordinal,rowCount:pack.rows.length,digest:sourcePayloadHash({write:pack,context})})):null;`);
+  source=replaceOnce(source,'  const requestDigest = sourcePayloadHash({write, context});',
+    '  const requestDigest = metaDaily ? sourcePayloadHash({packages:expectedPackages}) : sourcePayloadHash({write, context});');
   return replaceOnce(source,'      || receipt.rowCount !== write.rows.length || receipt.comparison !== "matched") fail("RESULT_INVALID");',
     '      || receipt.rowCount !== projection.rows.length || receipt.comparison !== "matched"\n      || metaDaily && canonicalSourceJson(receipt.packages??null)!==canonicalSourceJson(expectedPackages)) fail("RESULT_INVALID");')
     .replace('reportValuesChanged: receipt.changes?.length > 0','reportValuesChanged: metaDaily ? receipt.rowCount > 0 : receipt.changes?.length > 0');

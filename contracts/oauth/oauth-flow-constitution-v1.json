@@ -1782,9 +1782,10 @@
       "tools/eo05-klaviyo-raw-datasets-probe.mjs": "e7d504cd848ad8380575fa8a9dd6755fc95354d9a208db4d7f1a40693cc50888",
       "tools/eo05-klaviyo-source-capture-probe.mjs": "c9b9f604a72611fb0f39a8e6a178dadd72fcc6ee2f340a4396d0d6058bbaf5ab",
       "tools/eo05-merchant-quota-context-probe.mjs": "699aae3f090c490ca59abba882ea3e36fbe25e817d7ce697a55a0cb294269deb",
+      "tools/eo05-meta-daily-report-probe.mjs": "148fd529e4e770d9728722bd154055f1de7b13068e6d63e33d43239602fb623e",
       "tools/eo05-meta-first-day-probe.mjs": "54759310dd8a25fbacd710ef3ed130e62a862d498b8e81b2e1ebd7d9154e4abe",
       "tools/eo05-meta-raw-datasets-probe.mjs": "2ce162397322c014e8c9029e5d08beb53578a1fdc68d941476dae04b1dc2d3d5",
-      "tools/eo05-meta-shopify-refresh-probe.mjs": "02a7f87ceb53043fe7020eceb505b2a877e241a05ff0046796a168e11d1d2adb",
+      "tools/eo05-meta-shopify-refresh-probe.mjs": "6918b0a069ed26c9356e9af33b277ea6a7218aa25893d15f633e01bd5866961e",
       "tools/eo05-meta-source-capture-probe.mjs": "a8cea28c2c80ced0436fe660dd201b73351d02336a4a3bcba5540cb63f2135b4",
       "tools/eo05-pmax-history-probe.mjs": "97a7338edab5f58455cad9acba5638490d7cb2fab737afa77eb663cd78037e82",
       "tools/eo05-privacy-source-worker-probe.mjs": "c120d7f57b50390e8da14c4975994759a662dd87333bb6dbaaee36eec4e0adfd",
@@ -1812,14 +1813,14 @@
       "tools/eo05-shopify-order-reconciliation-probe.mjs": "06eac560b4e00bbcdb2b83cdb5fc7d8c5f980f7589bef8b332794238ab185d24",
       "tools/eo05-shopify-order-work-probe.mjs": "1b3045b0c28ec2e8acaaa92e1308185becc02a03655ada9accf823cd52445bd9",
       "tools/eo05-single-account-selection-probe.mjs": "c87be931bf049384ceb339ec77c57f185f8245a9ff7764879c5eafa629bdfbf0",
-      "tools/eo05-single-report-close-probe.mjs": "84d934b42ffffed1c86d31f4c7c60868ddab0e4b542d8d9aa6804ab78e336e6d",
+      "tools/eo05-single-report-close-probe.mjs": "dcd852d53a3c36ceb0277b45e2adf1543d3bbe284f346c1d2492d681964ec48b",
       "tools/eo05-source-evidence-probe.mjs": "1a3e0245c32a6478c3ec5d845f01eea5b496fa0e7eec361802e0dbb6a809c718",
       "tools/eo05-source-retention-policy-probe.mjs": "8a137f4325fd407abf97deb721f1f81b3ac197f8b42d35273bb5927b08426d57",
       "tools/eo05-source-retention-probe.mjs": "621641d587b4622bf6b72e526932b83963ec46a57df4e346a17b6d78141f0d29",
       "tools/eo05-source-rule-probe.mjs": "bdba143e69a0ac680687dfbfce815bf8c97c7fa2228179e22cc5d5d4626477ab",
       "tools/eo05-verified-mapping-probe.mjs": "875aadd0c47e64d66f5fef187b2a803cd9716ff04b0ac0871f17cc97f84f88eb",
       "tools/eo05b-dataset-server-probe.mjs": "d6177954ab377f697209d5753651f7403e82b1c1349e0425405187ce33c3b02c",
-      "tools/eo05b-dataset-storage-probe.mjs": "3ca636fc3f79ef61942319ff93db32666980425e9d0535d2d43d69b16d7fd5b2",
+      "tools/eo05b-dataset-storage-probe.mjs": "2ef458037ef3b1b382991c15f3bc472ee71aa57c28dfbe9bbfff2b4d0f0e399c",
       "tools/eo05b-demo-fixture.mjs": "c91cf0e2b82ae6bb4db46d4dfa4ffbc0e1415877075995a5bf5cbc1f30afdd73",
       "tools/eo05b-fx-reporting-currency-probe.mjs": "c5decd13fad2a1aebccacbdf6229bcfec590c429db8ab3380008c318c479a9d5",
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
@@ -4548,6 +4549,7 @@
         "tools/eo05-google-hosted-benchmark.mjs",
         "tools/eo05-klaviyo-daily-timing-probe.mjs",
         "tools/eo05-klaviyo-hosted-benchmark.mjs",
+        "tools/eo05-meta-daily-report-probe.mjs",
         "tools/eo05-meta-shopify-refresh-probe.mjs",
         "tools/eo05-shopify-mapping-timing-fixture.mjs",
         "tools/eo05-single-report-close-probe.mjs",
@@ -4911,6 +4913,24 @@
           "https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/breakdowns",
           "https://shopify.dev/docs/api/usage/gids",
           "https://www.postgresql.org/docs/current/sql-savepoint.html",
+          "https://supabase.com/changelog.md"
+        ]
+      },
+      "synthetic_meta_daily_packages_2026_11_21": {
+        "explicit_owner_approval": "Onaylıyorum devam edelim",
+        "scope": "Isolated PostgreSQL rollback rehearsal on the same Shopify installation with exactly 1,000 Meta Dataset facts: 20 ad performance and 980 product performance rows. Existing Meta debug, Insights cursor paging and encrypted raw proof plus full Meta and Shopify Partner authorization and quota are exercised with synthetic HTTP. Verify one actual scoped Shopify mapping and one deliberately unlinked product. Validate five exact 200-row packages and their digests and per-package byte ceiling before atomic first-publication reconciliation. Reuse the original fenced SQL path, source and retention checks, and physical per-row verification. Keep the existing receipt size limit by avoiding duplicate per-insert change details in this rehearsal. Verify one readback digest and durable completed status in the isolated transaction. Separate negative cases challenge a missing fifth package and a fifth package short by one row; each must leave zero facts, zero source consumption and the original running job. Tools-only. Keep native Meta identity and product sales acceptance pending. No changes to application runtime, provider OAuth, migrations, live database, release or merge.",
+        "paths": [
+          "contracts/eo-05d-reconciliation-v1.json",
+          "tools/eo05-meta-daily-report-probe.mjs",
+          "tools/eo05-meta-shopify-refresh-probe.mjs",
+          "tools/eo05-single-report-close-probe.mjs",
+          "tools/eo05b-dataset-storage-probe.mjs"
+        ],
+        "local_tests_passed": 79,
+        "official_checked_at": "2026-11-21",
+        "official_sources": [
+          "https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/breakdowns",
+          "https://www.postgresql.org/docs/17/tutorial-transactions.html",
           "https://supabase.com/changelog.md"
         ]
       }

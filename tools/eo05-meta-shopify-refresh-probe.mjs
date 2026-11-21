@@ -18,6 +18,7 @@ import {createGoogleTimingLedger,prepareGoogleTimingLocalRoles} from "./eo05-goo
 import {metaFirstDayRehearsalEnvironment} from "./eo05-meta-first-day-probe.mjs";
 import {seedShopifyMappingTimingFixture} from "./eo05-shopify-mapping-timing-fixture.mjs";
 import {loadMappedScheduledRefresh} from "./eo05-single-report-close-probe.mjs";
+import {installMetaDailyReportRehearsal} from "./eo05-meta-daily-report-probe.mjs";
 
 const sourceRole="adstable_meta_source_runner", datasetRole="adstable_refresh_dataset_runner";
 const coordinatorRole="adstable_refresh_coordinator", digest=()=>randomBytes(32).toString("hex");
@@ -72,6 +73,7 @@ export async function metaShopifyRefreshProbe(client,owner) {
   await client.query("set local role postgres");
   await client.query(`grant ${sourceRole} to adstable_owner with inherit false,set true,admin false`);
   await client.query("set local role adstable_owner");
+  await installMetaDailyReportRehearsal(client);
 
   const now=Date.now, issued=now(), day=new Date(issued-86400000).toISOString().slice(0,10), window={from:day,to:day};
   const connectedAt=new Date(issued-3*86400000).toISOString();
@@ -91,7 +93,7 @@ export async function metaShopifyRefreshProbe(client,owner) {
   await client.query("update integrations.reporting_account_bindings set effective_from=$2 where connection_id=$1",[owner.connectionId,connectedAt]);
   const metaPolicy=await seedQuota(client,owner,{provider:"meta",apiVersion:"v26.0",families:["token_debug","insights","product_insights"]});
   const partnerPolicy=await seedQuota(client,owner,{provider:"shopify_partner",apiVersion:"2026-07",organizationId:"10",families:["partner_graphql"]});
-  const cost={requests:8,dbWrites:1000,connections:6,rows:200,bytes:4194304};
+  const cost={requests:16,dbWrites:8000,connections:6,rows:1000,bytes:4194304};
   await client.query("update operations.refresh_control set budget=$1,bounds=$2 where singleton",[
     {global:cost,interactiveReserve:{requests:0,dbWrites:0,connections:0,rows:0,bytes:0},providers:[{provider:"meta",limit:cost}],
       workspaces:[{workspaceId:owner.workspaceId,limit:cost}],accounts:[{provider:"meta",accountId:owner.accountId,limit:cost}]},
@@ -102,7 +104,7 @@ export async function metaShopifyRefreshProbe(client,owner) {
   const cipher=createConfiguredSourceEvidenceCipher(environment), ledger=createGoogleTimingLedger();
   const mapping=await seedShopifyMappingTimingFixture(client,{owner,cipher,window});
   const captureAttempts=new Map(), calls={meta:0,partner:0};
-  let serial=0,failure;
+  let serial=0,failure,publicationArgs;
   const query=(sql,args=[],kind)=>ledger.sql(()=>client.query(sql,args),kind);
   const asRole=async(role,sql,args,kind)=>{
     await query(`set local role ${role}`,[],kind);
@@ -144,7 +146,7 @@ export async function metaShopifyRefreshProbe(client,owner) {
         return {rows:[]};
       }
       if(sql.startsWith("select pg_catalog.set_config("))return query(sql,args,kind);
-      if(sql===SCHEDULED_DATASET_RECONCILE_SQL){write=true;ledger.phaseAt("reportWrite",connected);}
+      if(sql===SCHEDULED_DATASET_RECONCILE_SQL){write=true;publicationArgs=args;ledger.phaseAt("reportWrite",connected);}
       if(sql===DATASET_RECONCILE_READ_SQL)ledger.phaseAt("receiptReadback",connected);
       if(sql===SCHEDULED_DATASET_FINISH_SQL)ledger.phaseAt("jobClose",connected);
       const result=await asRole(role,sql,args,kind);
@@ -155,7 +157,7 @@ export async function metaShopifyRefreshProbe(client,owner) {
 
   const verified=await loadMetaBackgroundOwner({database:runtime,owner:{workspaceId:owner.workspaceId,installGeneration:Number(owner.generation),shopId:owner.shopId,shopDomain:owner.shopDomain}});
   const tokenVault=createTokenVault({database:runtime,environment});
-  const limits={deadlineAt:now()+90000,requestTimeoutMs:65000,finishReserveMs:2000,maxRows:200,maxBytes:cost.bytes};
+  const limits={deadlineAt:now()+115000,requestTimeoutMs:80000,finishReserveMs:2000,maxRows:1000,maxBytes:cost.bytes};
   const entitlementVerifier=createAuthorityQuotaEntitlementVerifier({store,quotaStore:createSharedQuotaRepository(coordinator),
     appId:environment.SHOPIFY_APP_GID,environment,now,limits,async fetchFn(endpoint){
       assert.equal(new URL(endpoint).hostname,"partners.shopify.com");
@@ -164,7 +166,7 @@ export async function metaShopifyRefreshProbe(client,owner) {
         cancelAtEndOfCycle:false,trialEndsAt:null,currentBillingCycle:{startTime:new Date(issued-86400000).toISOString(),endTime:new Date(issued+86400000).toISOString()},
         items:[{handle:"monthly",price:{active:true}}],pendingUpdate:null}}});
     }});
-  const runScheduled=await loadMappedScheduledRefresh(), observer=await loadMeasuredReader(ledger), batches=[];
+  const runScheduled=await loadMappedScheduledRefresh({metaDaily:true}), observer=await loadMeasuredReader(ledger), batches=[];
   let result;
   try{
     ledger.start();
@@ -176,8 +178,8 @@ export async function metaShopifyRefreshProbe(client,owner) {
       async readPage({claim,entitlementReceipt,signal}){
         ledger.phaseAt("providerCollection");
         const reader=observer.createMetaRawDatasetReader({environment,verified,tokenVault,execution:{claim,window,entitlementReceipt},signal,now,
-          configuration:{operationId:randomUUID(),limits:{maxElapsedMs:60000,maxBytes:1048576,maxRequests:3,maxPages:1,maxRows:200},
-            storageLimits:{maxRows:200,maxBytes:1048576},sourcePolicy:sourceStoreFixture().input.policy},poolFactory:pool(sourceRole),
+          configuration:{operationId:randomUUID(),limits:{maxElapsedMs:70000,maxBytes:1048576,maxRequests:12,maxPages:10,maxRows:1000},
+            storageLimits:{maxRows:1000,maxBytes:1048576},sourcePolicy:sourceStoreFixture().input.policy},poolFactory:pool(sourceRole),
           async fetchFn(endpoint){
             const url=new URL(endpoint);
             assert.equal(url.hostname,"graph.facebook.com");
@@ -185,16 +187,21 @@ export async function metaShopifyRefreshProbe(client,owner) {
             if(url.pathname.endsWith("debug_token"))return Response.json({data:{is_valid:true,app_id:"123",scopes,
               expires_at:Math.floor(expires/1000),data_access_expires_at:Math.floor(expires/1000)}});
             assert.ok(url.pathname.endsWith(`/${owner.accountId}/insights`));
-            const base={account_id:owner.accountId.slice(4),campaign_id:"11",adset_id:"12",ad_id:"13",
+            const base={account_id:owner.accountId.slice(4),campaign_id:"11",adset_id:"12",
               date_start:day,date_stop:day,spend:"1.23",impressions:"42",clicks:"2"};
-            return Response.json({data:url.searchParams.get("breakdowns")==="product_id"
-              ?[{...base,product_id:mapping.nativeId},{...base,product_id:"901"}]:[base]});
+            if(url.searchParams.get("breakdowns")!=="product_id")return Response.json({data:Array.from({length:20},(_,ad)=>({...base,ad_id:String(100+ad)}))});
+            const page=calls.meta-3;
+            assert.ok(page>=0&&page<10);
+            assert.equal(url.searchParams.get("after"),page===0?null:`page-${page}`);
+            const data=Array.from({length:98},(_,i)=>({...base,ad_id:String(100+page),
+              product_id:page===0&&i===0?mapping.nativeId:page===0&&i===1?"901":String(20000+page*98+i)}));
+            return Response.json({data,...page<9?{paging:{next:"https://graph.facebook.com/unused",cursors:{after:`page-${page+1}`}}}:{}});
           }});
         try {
           const capture=await reader.run();
           assert.equal(capture.status,"stored",JSON.stringify(capture));
           assert.equal(capture.contentVerified,true);
-          assert.equal(capture.recordCount,3);
+          assert.equal(capture.recordCount,1000);
           for(const dataset of Object.values(capture.datasets)){
             assert.equal(dataset.eligibility?.includesPreConnectionHours,false);
             const attempt=captureAttempts.get(dataset.batchId);
@@ -206,7 +213,11 @@ export async function metaShopifyRefreshProbe(client,owner) {
         return {kind:"complete",payload:{batchCount:batches.length}};
       },
       validatePage:({payload})=>({complete:payload.batchCount===2,rows:[]}),
-      async loadDatasetInputs(){ledger.phaseAt("reportPreparation");return {owner,batches,cipher,expectedRevision:0,bindSyntheticMappings:mapping.bindSyntheticMappings};},
+      async loadDatasetInputs(){
+        ledger.phaseAt("reportPreparation");
+        await client.query("savepoint meta_daily_before_publication");
+        return {owner,batches,cipher,expectedRevision:0,bindSyntheticMappings:mapping.bindSyntheticMappings};
+      },
     }});
   } finally {observer.close();}
   const measured=ledger.stop();
@@ -215,8 +226,8 @@ export async function metaShopifyRefreshProbe(client,owner) {
   assert.equal(result.work.dataset.consumerReceipt,true);
   assert.equal(result.work.dataset.checkpointAdvanced,true);
   assert.equal(measured.rawDatasets,2);
-  assert.deepEqual(calls,{meta:3,partner:1});
-  for(const [policy,expected] of [[metaPolicy,3],[partnerPolicy,1]]){
+  assert.deepEqual(calls,{meta:12,partner:1});
+  for(const [policy,expected] of [[metaPolicy,12],[partnerPolicy,1]]){
     const {rows:[count]}=await client.query("select count(*)::int reserved,count(*) filter(where settled)::int settled from operations.api_quota_debits where policy_id=$1",[policy]);
     assert.deepEqual(count,{reserved:expected,settled:expected});
   }
@@ -227,11 +238,37 @@ export async function metaShopifyRefreshProbe(client,owner) {
     (select count(*)::int from analytics.cpd_product_performance_facts where installation_id=$1 and product_mapping_id=$2) mapped,
     (select count(*)::int from analytics.cpd_product_performance_facts where installation_id=$1 and native_product_id='901' and product_mapping_id is null) unmapped,
     (select shopify_product_id from identity.product_identity_mappings where installation_id=$1 and id=$2) product`,[owner.installationId,mapping.mappingId]);
-  assert.deepEqual(facts,{account:1,performance:2,sales:0,mapped:1,unmapped:1,product:mapping.productId});
+  assert.deepEqual(facts,{account:20,performance:980,sales:0,mapped:1,unmapped:1,product:mapping.productId});
   assert.equal(mapping.summary().reads,1);
   const {rows:receipts}=await client.query("select manifest->'datasetReconciliation' receipt from evidence.source_batches where authority=$1::jsonb and manifest ? 'datasetReconciliation'",[owner]);
   assert.equal(receipts.length,1);
-  assert.equal(receipts[0].receipt.rowCount,3);
+  assert.equal(receipts[0].receipt.rowCount,1000);
+  const packageSizes=receipts[0].receipt.packages.map(p=>p.rowCount);
+  assert.deepEqual(packageSizes,[200,200,200,200,200]);
   assert.equal((await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",[owner.workspaceId,result.work.claim.id])).rows[0].status,"completed");
-  return {...measured,facts,calls,mapping:mapping.summary(),receipts:receipts.length};
+
+  // Separate negative controls after the measured successful close. Return to
+  // the same real, admitted job and authenticated source for each rejection.
+  await client.query("rollback to savepoint meta_daily_before_publication");
+  const [ownerJson,packagesJson,context]=publicationArgs;
+  const packages=JSON.parse(packagesJson), incomplete=structuredClone(packages);
+  incomplete[4].rows.pop();
+  for(const [invalid,reason] of [[packages.slice(0,4),/META_REPORT_PACKAGE_COUNT/],[incomplete,/META_REPORT_PACKAGE_INVALID/]]){
+    await client.query("savepoint meta_daily_negative");
+    try {
+      await client.query(`set local role ${datasetRole}`);
+      await assert.rejects(client.query(SCHEDULED_DATASET_RECONCILE_SQL,[ownerJson,JSON.stringify(invalid),context,publicationArgs[3]]),reason);
+    } finally {
+      await client.query("rollback to savepoint meta_daily_negative");
+      await client.query("release savepoint meta_daily_negative");
+    }
+    const {rows:[after]}=await client.query(`select
+      (select count(*)::int from analytics.pd_facts where installation_id=$1 and platform='meta') account,
+      (select count(*)::int from analytics.cpd_product_performance_facts where installation_id=$1 and platform='meta') performance,
+      (select count(*)::int from evidence.source_batches where authority=$2::jsonb and handoff_state='consumed') consumed,
+      (select status from operations.refresh_runs where workspace_id=$3 and job_id=$4) status`,[owner.installationId,ownerJson,owner.workspaceId,result.work.claim.id]);
+    assert.deepEqual(after,{account:0,performance:0,consumed:0,status:"running"});
+  }
+  await client.query("release savepoint meta_daily_before_publication");
+  return {...measured,facts,calls,mapping:mapping.summary(),receipts:receipts.length,packageSizes,incompletePackRejected:true};
 }

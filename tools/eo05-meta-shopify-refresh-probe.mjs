@@ -247,14 +247,16 @@ export async function metaShopifyRefreshProbe(client,owner) {
   assert.equal(receipts[0].receipt.rowCount,1000);
   const packageSizes=receipts[0].receipt.packages.map(p=>p.rowCount);
   assert.deepEqual(packageSizes,[200,200,200,200,200]);
-  const {rows:[retention]}=await client.query(`select count(*)::int reference_count,
+  assert.equal((await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",[owner.workspaceId,result.work.claim.id])).rows[0].status,"completed");
+  console.log("EO05_META_1000_CLOSE_VERIFIED",JSON.stringify({totalMs:measured.totalMs,rows:receipts[0].receipt.rowCount,packageSizes}));
+  const {rows:[retention]}=await client.query(`with floor as materialized (select analytics.report_retention_until($2::date,'UTC') target)
+    select count(*)::int reference_count,
     count(*) filter(where b.retain_until>=e.target and p.retain_until>=e.target and r.retain_until>=e.target)::int retained
     from evidence.source_batches b join evidence.source_pages p on p.batch_id=b.id
     join evidence.source_references r on r.page_id=p.id
-    cross join lateral (select analytics.report_retention_until($2::date,'UTC') target) e
+    cross join floor e
     where b.authority=$1::jsonb and b.handoff_state='consumed'`,[owner,day]);
   assert.deepEqual(retention,{reference_count:1000,retained:1000});
-  assert.equal((await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",[owner.workspaceId,result.work.claim.id])).rows[0].status,"completed");
 
   // Separate negative controls after the measured successful close. Return to
   // the same real, admitted job and authenticated source for each rejection.

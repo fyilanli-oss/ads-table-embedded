@@ -1785,7 +1785,7 @@
       "tools/eo05-meta-daily-report-probe.mjs": "89b64766f0895189bb4b8bda033f2da3d5bfa76d2f2d03514475803c1d9d4ded",
       "tools/eo05-meta-first-day-probe.mjs": "54759310dd8a25fbacd710ef3ed130e62a862d498b8e81b2e1ebd7d9154e4abe",
       "tools/eo05-meta-raw-datasets-probe.mjs": "2ce162397322c014e8c9029e5d08beb53578a1fdc68d941476dae04b1dc2d3d5",
-      "tools/eo05-meta-shopify-refresh-probe.mjs": "a99b9f1f0250fd0a6ce94ae5c9caa39e489bff4743c7491c3ffa9952e81fe42c",
+      "tools/eo05-meta-shopify-refresh-probe.mjs": "bfd2ba22f0f9fed7ce7f394946554d9d11997d8cd3058430f6a6e62a4473dbe1",
       "tools/eo05-meta-source-capture-probe.mjs": "a8cea28c2c80ced0436fe660dd201b73351d02336a4a3bcba5540cb63f2135b4",
       "tools/eo05-pmax-history-probe.mjs": "97a7338edab5f58455cad9acba5638490d7cb2fab737afa77eb663cd78037e82",
       "tools/eo05-privacy-source-worker-probe.mjs": "c120d7f57b50390e8da14c4975994759a662dd87333bb6dbaaee36eec4e0adfd",

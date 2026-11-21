@@ -862,9 +862,9 @@
       "contracts/eo-05b-fx-reporting-currency-v1.json": "f8971fc94bc63d89d3eea1b7916fae94de4fd5f1e4ed8fa32914464d1a28f332",
       "contracts/eo-05b-report-retention-v1.json": "cc4673fe9be0f77567bc6f2c0171a93eb95d1a4f637d0ccb10481de28bcb67d4",
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
-      "contracts/eo-05d-reconciliation-v1.json": "2232709c64414e9c1cb9276a197092a0c77833b32715480f8cb0eab325d5936b",
+      "contracts/eo-05d-reconciliation-v1.json": "7992d5f64af66457f0660ca5007e5d4a15a42afa53cb7d11833de5eadc7d19b6",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "7a4bbe8fe944d19391533f2d65d1d81650fd31285d84533f09dda14712676949",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "aad39f37ea50688a4aaaaeba87cd1fc10d3be3f94974907b1eb441821ee90979",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -1291,7 +1291,7 @@
       "tools/eo05-source-rule-probe.mjs": "bdba143e69a0ac680687dfbfce815bf8c97c7fa2228179e22cc5d5d4626477ab",
       "tools/eo05-verified-mapping-probe.mjs": "875aadd0c47e64d66f5fef187b2a803cd9716ff04b0ac0871f17cc97f84f88eb",
       "tools/eo05b-dataset-server-probe.mjs": "d6177954ab377f697209d5753651f7403e82b1c1349e0425405187ce33c3b02c",
-      "tools/eo05b-dataset-storage-probe.mjs": "957cb11cb8653898cffb6b8351d49dcd00e804878acde0d517c83bce7092120c",
+      "tools/eo05b-dataset-storage-probe.mjs": "38f07dab972057e4191f177419c98e00c6f3997dcef39e381b54c805e6536021",
       "tools/eo05b-demo-fixture.mjs": "c91cf0e2b82ae6bb4db46d4dfa4ffbc0e1415877075995a5bf5cbc1f30afdd73",
       "tools/eo05b-fx-reporting-currency-probe.mjs": "c5decd13fad2a1aebccacbdf6229bcfec590c429db8ab3380008c318c479a9d5",
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
@@ -2888,7 +2888,8 @@
           "https://www.postgresql.org/docs/17/sql-savepoint.html",
           "https://supabase.com/docs/guides/local-development/overview",
           "https://shopify.dev/docs/api/admin-graphql/latest/objects/ProductVariant"
-        ]
+        ],
+        "fixture_recovery": "Attempt 44891649753 reached Klaviyo report write and failed EO05_DAY_PROOF_INVALID. Mapping retention updates change the source tables and invalidate the optional Klaviyo whole-day proof. Only the mapped local rehearsal selects the existing independent full source validators. All checks are kept; the earlier unmapped branch and product runtime stay unchanged."
       }
     }
   ],

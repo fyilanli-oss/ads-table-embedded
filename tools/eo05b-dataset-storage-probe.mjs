@@ -214,7 +214,10 @@ export async function datasetStorageProbe(client, connection, environment = proc
           ?await googleDailyTimingProbe(client,{...options,combinedCandidate:true,reportBreakdown:true,packageReuseCandidate:true})
           :await klaviyoDailyTimingProbe(client,{...options,connection,environment,mode:"retention-boundary",retentionVariant:"cached",
             combinedVerification:true,reduceReportRepeats:true,reportWriteCleanup:true,phaseCandidate:"ordered-json",
-            reuseStagedCanonical:true,reuseCanonicalRows:true,endToEnd:true,sharedDaySources:true,matchedTransport:"authority"});
+            reuseStagedCanonical:true,reuseCanonicalRows:true,endToEnd:true,
+            // Mapping retention writes invalidate the optional whole-day memo.
+            // This rehearsal uses the independent physical/source validators.
+            sharedDaySources:!finalSynthetic,matchedTransport:"authority"});
         const {reportRows,reportPackages,requests,receipts,durationsMs,totalMs}=candidate;
         assert.deepEqual([reportRows,reportPackages,requests,receipts],[1000,5,queueToClose[i].requests,1]);
         assert.deepEqual(Object.keys(durationsMs),Object.keys(queueToClose[i].durationsMs));

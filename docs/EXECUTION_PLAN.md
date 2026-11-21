@@ -1,3 +1,11 @@
+## EO-05 — Günlük refresh teknik kapanış kaydı, 21 Kasım 2026
+
+PR #379, `4056421c325c2225b81a217181409af1003b271a` ile `main`e birleşti. Günlük refresh provası Google Ads, Klaviyo ve Meta için aynı sentetik Shopify mağazasının kapanmış gününü kuyruktan son iş emrinin kapanışına kadar işledi. Yetki ve kota kontrolleri dahil, sağlayıcı başına 1.000 Dataset satırı ve bir makbuz doğrulandı. İzole veritabanı kontrolünde iki temiz kurulum aynı şemayı üretti ve son OAuth provası geçti. [PR #379](https://github.com/fyilanli-oss/ads-table-embedded/pull/379) · [Veritabanı kontrolü](https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/44929858330/job/136923882139) · [Depo kontrolü](https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/44929858322/job/136923882011)
+
+Canlı günlük zamanlama ve kapanış rezervi, sağlayıcı bazında geçmiş veri düzeltmeleri ve atıf, Meta’nın gerçek mağaza ürün kimliği ve satış rolü kanıtı, gerçek sağlayıcı ve mağaza kabulü açık kalır. Çoklu hat tasarımı mağaza başına tek hat kuralıyla kaydedildi. Çoklu hat uygulaması ve kapasite kabulü rapor ve arayüz yüküyle EO-07 sonunda, gerekirse EO-08 sonunda değerlendirilir. [Günlük refresh sözleşmesi](EO_05A_REFRESH_CONTRACT.md) · [Çoklu hat tasarımı](EO_05A_MULTI_LANE_REFRESH_DESIGN.md)
+
+Bu kayıt EO-05’in sentetik refresh teslimini kapatır. Ana paket kabulü ve referans yükümlülüklerinin durumu ana sözleşmede izlenir. Sıradaki tek ana paket EO-06’dır. Başlangıç brief’i EO-06-A formül motorunun kapsamını, sentetik örneklerini ve kabul ölçütlerini belirler. [Ana sözleşme](../contracts/a6-eo-implementation-master-v1.json#eo05_daily_refresh_repository_closure_2026_11_21)
+
 ## EO-05 — Bağımsız kuyruk izleme ve Gmail denemesi, 11 Kasım 2026
 
 Yerel Gmail denemesi dev@adstable.app gelen kutusunda doğrulandı. Owner onayıyla

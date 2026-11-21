@@ -1736,7 +1736,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
         } catch(error) {failed??=error;throw error;}
       },
       validatePage:({payload})=>({complete:payload.batchCount>3,rows:[]}),
-      async loadDatasetInputs({claim}) {
+      async loadDatasetInputs({claim,deadlineAt}) {
         assert.equal(claim.id,claimId);
         phase="report";
         timingStep="reportPreparation";
@@ -1744,6 +1744,14 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
           reportAt=performance.now();
           if(endToEnd) reportCpuStart=process.cpuUsage();
           durations.handoff=reportAt-collectedAt;
+        }
+        if(shopifyMapping){
+          // Releasing the raw adapter savepoint leaves SET LOCAL active in
+          // this rollback transaction. The normal report connection has its own bound.
+          const reportTimeout=Math.min(30000,deadlineAt-now());
+          assert.ok(reportTimeout>0);
+          await client.query("select pg_catalog.set_config('statement_timeout',$1,true),pg_catalog.set_config('lock_timeout',$1,true)",
+            [`${reportTimeout}ms`]);
         }
         return {owner,batches,cipher,expectedRevision:repeat?1:0,database:reportDatabase,
           ...(mapping?{bindSyntheticMappings:mapping.bindSyntheticMappings}:{})};

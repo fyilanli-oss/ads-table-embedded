@@ -862,9 +862,9 @@
       "contracts/eo-05b-fx-reporting-currency-v1.json": "f8971fc94bc63d89d3eea1b7916fae94de4fd5f1e4ed8fa32914464d1a28f332",
       "contracts/eo-05b-report-retention-v1.json": "cc4673fe9be0f77567bc6f2c0171a93eb95d1a4f637d0ccb10481de28bcb67d4",
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
-      "contracts/eo-05d-reconciliation-v1.json": "7992d5f64af66457f0660ca5007e5d4a15a42afa53cb7d11833de5eadc7d19b6",
+      "contracts/eo-05d-reconciliation-v1.json": "4bc592c7298dc2657943fcac9d56be0dd317b52b4e15f0118ebe13fd9e36b559",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "aad39f37ea50688a4aaaaeba87cd1fc10d3be3f94974907b1eb441821ee90979",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "4e05910d19d2ad47993fd92e5af6304cfa176018433434cfdfe9302921aac836",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -1250,7 +1250,7 @@
       "tools/eo05-google-source-role-probe.mjs": "fba96de648dd50a099dae4cdfd1e17807e5eb250cbc139d967a3f6e96b8ad19a",
       "tools/eo05-identity-authority-snapshot-probe.mjs": "0136e8dc5a5720b78d1cb4dca081f19e8b473812b6d66129b94f64fd5edf672c",
       "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
-      "tools/eo05-klaviyo-daily-timing-probe.mjs": "8d07b26c870210e1a10d1fdb9a9f8dc061dfd033959d9b0b47fca761ec828f0d",
+      "tools/eo05-klaviyo-daily-timing-probe.mjs": "cd095191c6dec05e3201a3e61219e7a699fc06a965f5c4ced435e68342e3dace",
       "tools/eo05-klaviyo-hosted-benchmark.mjs": "1a21a53113d2a87cebc4426d3d8ef5f99b9e746a399ab088dc48381766e77dd9",
       "tools/eo05-klaviyo-raw-datasets-probe.mjs": "e7d504cd848ad8380575fa8a9dd6755fc95354d9a208db4d7f1a40693cc50888",
       "tools/eo05-klaviyo-source-capture-probe.mjs": "c9b9f604a72611fb0f39a8e6a178dadd72fcc6ee2f340a4396d0d6058bbaf5ab",
@@ -2889,7 +2889,8 @@
           "https://supabase.com/docs/guides/local-development/overview",
           "https://shopify.dev/docs/api/admin-graphql/latest/objects/ProductVariant"
         ],
-        "fixture_recovery": "Attempt 44891649753 reached Klaviyo report write and failed EO05_DAY_PROOF_INVALID. Mapping retention updates change the source tables and invalidate the optional Klaviyo whole-day proof. Only the mapped local rehearsal selects the existing independent full source validators. All checks are kept; the earlier unmapped branch and product runtime stay unchanged."
+        "fixture_recovery": "Attempt 44891649753 reached Klaviyo report write and failed EO05_DAY_PROOF_INVALID. Mapping retention updates change the source tables and invalidate the optional Klaviyo whole-day proof. Only the mapped local rehearsal selects the existing independent full source validators. All checks are kept; the earlier unmapped branch and product runtime stay unchanged.",
+        "fixture_timeout_recovery": "Attempt 44892275752 reached final physical fact verification after preserving the source and mapping checks and then hit the synthetic raw adapter's 5s statement timeout. The raw transaction ends through a RELEASE SAVEPOINT on the shared local connection, so SET LOCAL persists unlike a normal committed connection. Set the mapped Klaviyo report adapter to the configured scheduled report 30s test boundary, bounded by actual remaining job time. All verification and prior workloads remain protected; no production environment or SQL change."
       }
     }
   ],

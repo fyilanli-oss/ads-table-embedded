@@ -3,13 +3,51 @@ import assert from "node:assert/strict";
 import {datasetSourceBindingFixture} from "./fixtures/dataset-source-binding-fixture.js";
 import {prepareGoogleRawDatasetPackages} from "../app/lib/database/google-dataset-source-store.server.js";
 import {reconcileStoredDatasetSources} from "../app/lib/database/dataset-reconciliation.server.js";
-import {GOOGLE_DAILY_STAGE_SQL as STAGE,GOOGLE_DAILY_PUBLISH_SQL as PUBLISH,GOOGLE_DAILY_INSPECT_SQL as INSPECT,GOOGLE_DAILY_FINISH_SQL as FINISH} from "../app/lib/database/dataset-rpc.server.js";
+import {GOOGLE_DAILY_STAGE_SQL as STAGE,GOOGLE_DAILY_PUBLISH_SQL as PUBLISH,GOOGLE_DAILY_INSPECT_SQL as INSPECT,GOOGLE_DAILY_FINISH_SQL as FINISH,
+ GOOGLE_DAILY_PRODUCT_LINKS_SQL, GOOGLE_DAILY_PRODUCT_MAPPING_SQL} from "../app/lib/database/dataset-rpc.server.js";
 import {sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
 import {readStoredDatasetSources} from "../app/lib/database/dataset-source-reader.server.js";
 import {googleRawDatasetsFixture} from "./fixtures/google-raw-datasets-fixture.js";
 import {createGoogleRawCaptureExecution} from "../app/lib/refresh/google-raw-server.server.js";
 import {projectStoredGoogleDataset} from "../app/lib/providers/stored-dataset-projection.server.js";
 import {GOOGLE_DAILY_PRODUCT_REPORT_PLAN} from "../app/lib/providers/google-reporting.server.js";
+import {bindGoogleDailyProductMappings} from "../app/lib/database/google-daily-product-mapping.server.js";
+import {verifiedMappingFixture} from "./fixtures/verified-mapping-fixture.js";
+
+test("Google daily mapping verifies exact reviewed roles and shares a single evidence read across repeated rows", async () => {
+ const f=verifiedMappingFixture("google_ads");
+ const mapping=f.snapshot();
+ Object.assign(mapping.mapping,{state:"verified",productId:"gid://shopify/Product/123",variantId:"gid://shopify/ProductVariant/456"});
+ const run=async mode=>{
+  const context={merchant_id:"99",feed_label:"US",language:"en"};
+  const performance=()=>({table:"cpd_product_performance_facts",row:{product_context:{...context},native_product_id:mapping.mapping.nativeId,product_mapping_id:null}});
+  const sale={table:"cpd_product_sales_facts",row:{product_context:{...context},native_sold_product_id:mapping.mapping.nativeId,
+   native_advertised_product_id:mapping.mapping.nativeId,sold_product_mapping_id:null,advertised_product_mapping_id:null}};
+  const missing=performance();missing.row.native_product_id="unlinked";
+  const rows=[performance(),performance(),sale,missing];
+  let reads=0;
+  const database={async query(sql,args){
+   if(sql===GOOGLE_DAILY_PRODUCT_LINKS_SQL){
+    const keys=JSON.parse(args[3]);
+    assert.deepEqual(keys.map(k=>k.role),["performance","sold","advertised","performance"]);
+    assert.equal(keys[3].nativeId,"unlinked");
+    return {rows:[{result:[0,1].map(index=>({index,mappingId:"1",context:mapping.mapping.context}))}]};
+   }
+   assert.equal(sql,GOOGLE_DAILY_PRODUCT_MAPPING_SQL);assert.equal(args[3],"1");reads++;
+   return {rows:[{result:mode==="stale"?null:mode==="wrong_shop"?{...mapping,owner:{...mapping.owner,shopId:"gid://shopify/Shop/999"}}:mapping}]};
+  }};
+  const promise=bindGoogleDailyProductMappings({database,owner:f.owner,rows,cipher:f.cipher,now:()=>f.now,stop(){}});
+  if(mode==="wrong_shop")await assert.rejects(promise,/MAPPING_STORE_SNAPSHOT_INVALID/);
+  else await promise;
+  assert.equal(reads,1);
+  const id=mode==="current"?"1":null;
+  assert.deepEqual(rows.slice(0,2).map(r=>r.row.product_mapping_id),[id,id]);
+  assert.equal(sale.row.sold_product_mapping_id,id);
+  assert.equal(sale.row.advertised_product_mapping_id,null);
+  assert.equal(missing.row.product_mapping_id,null);
+ };
+ for(const mode of ["current","wrong_shop","stale"])await run(mode);
+});
 
 test("Google daily plan omits only the auxiliary cart report and preserves the 1000 Dataset facts", async () => {
  const options={googleProducts:500,googleSalesProducts:499,googlePageSize:10000,googleStorageMaxBytes:2097152};

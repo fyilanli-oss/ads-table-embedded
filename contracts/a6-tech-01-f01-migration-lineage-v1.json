@@ -1106,6 +1106,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261122104235",
+      "name": "eo05_google_daily_verified_product_links",
+      "file": "supabase/migrations/20261122104235_eo05_google_daily_verified_product_links.sql",
+      "created_with": "supabase@2.121.0 migration new eo05_google_daily_verified_product_links",
+      "repository_sql_sha256": "7d29018b2201ae360f1bdfbdf0f2b5dede558c96531209d23e4cf945e4f82365",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

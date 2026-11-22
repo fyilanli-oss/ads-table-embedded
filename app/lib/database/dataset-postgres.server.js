@@ -1,5 +1,5 @@
 import pg from "pg";
-import {GOOGLE_DAILY_REPORT_RPC, DATASET_STORAGE_RPC, DATASET_RECONCILIATION_RPC, SCHEDULED_DATASET_RPC, KLAVIYO_DAILY_REPORT_RPC} from "./dataset-rpc.server.js";
+import {GOOGLE_DAILY_REPORT_RPC, GOOGLE_DAILY_MAPPING_RPC, DATASET_STORAGE_RPC, DATASET_RECONCILIATION_RPC, SCHEDULED_DATASET_RPC, KLAVIYO_DAILY_REPORT_RPC} from "./dataset-rpc.server.js";
 import {SUPABASE_ROOT_CA_2021} from "./supabase-root-ca-2021.server.js";
 import {GOOGLE_DATASET_SOURCE_RPC, GOOGLE_SOURCE_ROLE, GOOGLE_SOURCE_ROLE_CHECK_SQL, readGoogleSourceDatabaseConfig} from "./google-source-postgres.server.js";
 import {META_SOURCE_RPC, META_SOURCE_ROLE, META_SOURCE_ROLE_CHECK_SQL, readMetaSourceDatabaseConfig} from "./meta-source-postgres.server.js";
@@ -58,9 +58,10 @@ export function createScheduledDatasetPostgresClient({environment, deadlineAt, s
     url.search = "";
     config = {connectionString: url.toString(), timeoutMs: Number(timeout), ssl: {ca: SUPABASE_ROOT_CA_2021, rejectUnauthorized: true}};
   } catch {throw failure();}
-  const rpc = googleDailyPackages ? [...SCHEDULED_DATASET_RPC,...GOOGLE_DAILY_REPORT_RPC] : klaviyoDailyPackages ? [...SCHEDULED_DATASET_RPC,...KLAVIYO_DAILY_REPORT_RPC] : SCHEDULED_DATASET_RPC;
-  const signatures = rpc.map(([, signature]) => signature);
-  const recognizedSignatures = [...SCHEDULED_DATASET_RPC,...KLAVIYO_DAILY_REPORT_RPC,...GOOGLE_DAILY_REPORT_RPC].map(([, signature]) => signature);
+  const required = googleDailyPackages ? [...SCHEDULED_DATASET_RPC,...GOOGLE_DAILY_REPORT_RPC] : klaviyoDailyPackages ? [...SCHEDULED_DATASET_RPC,...KLAVIYO_DAILY_REPORT_RPC] : SCHEDULED_DATASET_RPC;
+  const rpc = googleDailyPackages ? [...required,...GOOGLE_DAILY_MAPPING_RPC] : required;
+  const signatures = required.map(([, signature]) => signature);
+  const recognizedSignatures = [...SCHEDULED_DATASET_RPC,...KLAVIYO_DAILY_REPORT_RPC,...GOOGLE_DAILY_REPORT_RPC,...GOOGLE_DAILY_MAPPING_RPC].map(([, signature]) => signature);
   return createBoundedDatasetClient({config, rpc, signatures, recognizedSignatures,
     profile: scheduledProfile, role: scheduledRole, deadlineAt, signal, now, poolFactory, transactionSupport: true});
 }

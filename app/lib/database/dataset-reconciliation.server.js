@@ -7,6 +7,8 @@ import {projectStoredGoogleDataset} from "../providers/stored-dataset-projection
 import {projectStoredMetaDataset} from "../providers/stored-meta-dataset.server.js";
 import {projectStoredKlaviyoDataset} from "../providers/stored-klaviyo-dataset.server.js";
 import {applyStoredDatasetFx} from "./dataset-fx-resolver.server.js";
+import {bindGoogleDailyProductMappings} from "./google-daily-product-mapping.server.js";
+import {GOOGLE_DAILY_PRODUCT_REPORT_PLAN} from "../providers/google-reporting.server.js";
 import {maturityInstant, maturityDate, freezeMaturity} from "../refresh/maturity-policy.server.js";
 import {SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL,
   GOOGLE_DAILY_STAGE_SQL, GOOGLE_DAILY_PUBLISH_SQL, GOOGLE_DAILY_INSPECT_SQL, GOOGLE_DAILY_FINISH_SQL,
@@ -116,11 +118,13 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
     startedAt: clocks.map(c => c.started).sort()[0], completedAt: clocks.map(c => c.completed).sort().at(-1)};
   const policy=projection.rows.length ? reportRetentionPolicy() : resolveReportRetentionPolicy({businessDate,timeZone});
   if (dailyPackages || googleDaily) {
-    const writes=prepareDailyDatasetPackages({owner:bound,rows:projection.rows,policy,operationId,
+    const prepareWrites=()=>prepareDailyDatasetPackages({owner:bound,rows:projection.rows,policy,operationId,
       now:new Date(now()).toISOString(),context,maxPackages:20});
-    const receipt=await (googleDaily?commitScheduledGoogleDailyReport:commitScheduledKlaviyoDailyReport)({
-      database,owner:bound,writes,context,operationId,deadlineAt:limits.deadlineAt,admittedScope,stop,
-    });
+    const commit={database,owner:bound,context,operationId,deadlineAt:limits.deadlineAt,admittedScope,stop};
+    const bindMappings=googleDaily && source.datasets.some(dataset=>dataset.read.reportPlan===GOOGLE_DAILY_PRODUCT_REPORT_PLAN);
+    const receipt=googleDaily
+      ? await commitScheduledGoogleDailyReport({...commit,prepareWrites, writes:bindMappings?null:prepareWrites(),rows:projection.rows,cipher,now})
+      : await commitScheduledKlaviyoDailyReport({...commit,writes:prepareWrites()});
     const result=freezeMaturity({...receipt,sourceVerified:true,rowsStored:receipt.rowCount,reportValuesChanged:true,
       jobCompleted:true,hourlyRefreshActivated:false,authorizesActivation:false,publishable:false});
     confirmed.set(result,bound);return result;
@@ -216,15 +220,20 @@ export function datasetConsumptionMatches(receipt, owner, businessDate, timeZone
     && receipt.businessDate === businessDate && receipt.timeZone === timeZone;
 }
 
-async function commitScheduledGoogleDailyReport({database,owner,writes,context,operationId,deadlineAt,admittedScope,stop}) {
+async function commitScheduledGoogleDailyReport({database,owner,prepareWrites,writes,rows,cipher,now,context,operationId,deadlineAt,admittedScope,stop}) {
   const ownerJson=JSON.stringify(owner),contextJson=JSON.stringify(context),deadline=new Date(deadlineAt).toISOString();
-  const packages=writes.map((write,ordinal)=>({ordinal,rowCount:write.rows.length,digest:sourcePayloadHash({write,context})}));
-  const rowCount=packages.reduce((sum,part)=>sum+part.rowCount,0);
-  const digests=packages.map(part=>part.digest);
   let receipt;
   try {
     stop();
     receipt=await database.transaction(async tx=>{
+      if(writes===null) {
+        const mappingContext=JSON.stringify({sourceContext:context.sourceContext,businessDate:context.businessDate});
+        await bindGoogleDailyProductMappings({database:tx,ownerJson,contextJson:mappingContext,deadline,owner,rows,cipher,now,stop});
+        writes=prepareWrites();
+      }
+      const packages=writes.map((write,ordinal)=>({ordinal,rowCount:write.rows.length,digest:sourcePayloadHash({write,context})}));
+      const rowCount=packages.reduce((sum,part)=>sum+part.rowCount,0);
+      const digests=packages.map(part=>part.digest);
       for (const {ordinal,rowCount,digest} of packages) {
         stop();
         const staged=(await tx.query(GOOGLE_DAILY_STAGE_SQL,[ownerJson,JSON.stringify(writes[ordinal]),

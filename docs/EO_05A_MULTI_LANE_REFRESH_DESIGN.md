@@ -68,6 +68,8 @@ Planlı devirde önce mağazanın gönderimi kapatılır, sonra açık işlemler
 
 **3.000 mağaza için Meta kararı.** Mağazaların reklam hesapları ayrıysa her hesap günde yaklaşık **12 istek** alır ve hesap kotasına takılması beklenmez. Meta, AdsTable’ın ortak Insights kotasına ilişkin hesabı bitirecek sabit bir istek sınırı yayımlamadığı için **36.000 istek sayısından ortak kotanın dolup dolmayacağı çıkarılamaz**. 24 saate yayılmış iş yükü planlama açısından makul. Açık kalan kapasite ölçüsü, ağır ürün raporları çalışırken `app_id_util_pct` değerinin ne kadar yükseldiğidir. [Meta Insights kullanım göstergeleri](https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/best-practices)
 
+**Meta ürün raporunda 100 sınırı (22 Kasım 2026).** AdsTable, `product_id` kırılımı için `product_id_limit=100` değerini kullanmaya devam eder. Meta `limit` ve `product_id_limit` parametrelerini ayrı listeler. Sayfalama mevcut sorgunun sonuçlarında ilerler. 100’e ulaşan tek bir reklam için sonraki sayfaların kalan ürünleri getirip getirmediği belirsizdir. Bir reklamın ürün raporu 100 benzersiz ürün kimliğine ulaştığında aynı reklam ve tarih aralığında gerçek Meta yanıtıyla doğrulama konusu yeniden açılır. [Meta Insights API referansı](https://developers.facebook.com/docs/graph-api/reference/adaccount/insights/) · [Meta sayfalama dokümanı](https://developers.facebook.com/docs/graph-api/guides/field-expansion)
+
 ## 5. Uygulama öncesi kabul senaryoları
 
 | Senaryo | Aranacak kanıt |

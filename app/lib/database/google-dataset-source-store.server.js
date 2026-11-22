@@ -55,7 +55,7 @@ async function storeGooglePackage({database,owner,attemptId,pages,read,cipher,wr
  onCommitted();
  const known=await repository.inspect({owner,attemptId,ordinal});
  if(canonicalSourceJson(known)!==canonicalSourceJson(receipt))fail();
- if(read.packageCount!==undefined&&canonicalSourceJson(receipt.manifest?.googleDatasetRead??null)!==canonicalSourceJson(read))fail();
+ if((read.packageCount!==undefined||read.reportPlan!==undefined)&&canonicalSourceJson(receipt.manifest?.googleDatasetRead??null)!==canonicalSourceJson(read))fail();
  let cursor="0",seen=0;
  while(seen<write.body.pages.length){
   const stored=await repository.readPages({owner,attemptId,ordinal,after:cursor,limit:Math.min(100,write.body.pages.length-seen)});

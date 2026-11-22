@@ -176,6 +176,8 @@ Kuyruk taramasının tazeliği, sağlayıcının son doğrulanmış günü, bekl
 
 ## 13. Uygulama ve kapasite kararları
 
+22 Kasım 2026 günlük Google Ads sorgu planı, `cart_data_product_sales_daily` genel satış raporunu günlük toplamdan çıkarır. Shopping, Search ve Performance Max satış sorguları günlük Dataset satırlarını üretmeye devam eder. Bu plan provadaki 18 Google Ads isteğini, ek sayfalama veya Merchant Center okuması olmayan aynı senaryoda 17’ye indirir. Eski tam ham kayıt planı ve mevcut kayıtların okunması desteklenir. Günlük planın canlı etkinleştirilmesi ve veritabanı migration uygulaması ayrı kabul gerektirir.
+
 | Başlık | Durum ve karar için gereken kanıt |
 |---|---|
 | Canlı günlük zamanlama | Düşük ticaret hacimli saat, her mağazanın doğrulanmış saat dilimi, başlangıç vadesi, kaçırılmış gün ve uygun kapatma rezervi için karar bekliyor. |

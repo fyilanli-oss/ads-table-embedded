@@ -1,5 +1,5 @@
 import {randomUUID} from "node:crypto";
-import {buildGoogleReportingQueries,GOOGLE_REPORTING_QUERY_FAMILIES} from "../providers/google-reporting.server.js";
+import {buildGoogleReportingQueries,GOOGLE_REPORTING_QUERY_FAMILIES,GOOGLE_DAILY_PRODUCT_QUERY_FAMILIES,GOOGLE_DAILY_PRODUCT_REPORT_PLAN} from "../providers/google-reporting.server.js";
 import {createGoogleAdsRestClient} from "../providers/google-ads-rest.server.js";
 import {GOOGLE_MERCHANT_LINK_QUERY} from "../providers/google-merchant-account-link.server.js";
 import {readMerchantProductSourceSnapshot,takeMerchantSourcePages} from "../providers/google-product-identity-reader.server.js";
@@ -27,8 +27,9 @@ const boundary={mappingVerified:false,DatasetWritePerformed:false,authorizesActi
 // Fixed three datasets, no caller query/family/URL selector and no report writes.
 // Each completed dataset is committed independently, but one operation links all
 // envelopes. A failure halts further native requests and never becomes zero.
-export function createGoogleRawDatasetReader({environment,verified,tokenVault,execution,configuration,signal,now=Date.now,poolFactory,fetchFn=globalThis.fetch}) {
+export function createGoogleRawDatasetReader({environment,verified,tokenVault,execution,configuration,dailyReport=false,signal,now=Date.now,poolFactory,fetchFn=globalThis.fetch}) {
  if(!isGoogleBackgroundOwner(verified))fail("GOOGLE_RAW_DATASET_OWNER_REQUIRED");
+ if(typeof dailyReport!=="boolean")fail("GOOGLE_RAW_DATASET_PLAN_INVALID");
  const c=structuredClone(configuration),env={...environment},scope=structuredClone(execution),l=c.limits;
  const database=createGoogleSourcePostgresClient({environment:env,poolFactory,datasetMode:true});
  const workStore=createRefreshWorkRepository(database),quotaStore=createSharedQuotaRepository(database),cipher=createConfiguredSourceEvidenceCipher(env);
@@ -75,15 +76,17 @@ export function createGoogleRawDatasetReader({environment,verified,tokenVault,ex
    }});
    const save=async(dataset,pages,complete,reason=null)=>{
     await guard();const recordCount=pages.reduce((n,p)=>n+(p.records?.length??0),0);
+    const reportPlan=dailyReport&&dataset==="product_performance"?{reportPlan:GOOGLE_DAILY_PRODUCT_REPORT_PLAN}:{};
     writeSent=true;writeKnown=false;
     const receipt=await storeGoogleRawDataset({database,owner,attemptId:randomUUID(),dataset,pages,complete,cipher,policy:c.sourcePolicy,limits:c.storageLimits,now:new Date(now()).toISOString(),guard,onSending:()=>{writeKnown=false;},onCommitted:()=>{writeKnown=true;},
-     read:{jobId:scope.claim.id,fence:String(scope.claim.fence),window:scope.window,observedAt:scope.entitlementReceipt.observedAt,
+     read:{...reportPlan,jobId:scope.claim.id,fence:String(scope.claim.fence),window:scope.window,observedAt:scope.entitlementReceipt.observedAt,
       operationId:c.operationId,quotaContext:initial,completedAt:new Date(now()).toISOString(),deadlineAt:new Date(started+l.maxElapsedMs).toISOString()}});
     writeKnown=true;await guard();
     datasets[dataset]={status:complete?"stored":"unavailable",reason,recordCount:complete?recordCount:null,empty:complete?recordCount===0:null,...receipt};
    };
    for(const dataset of ["account_performance","product_performance"]){activeDataset=dataset;writeSent=false;writeKnown=false;const pages=[];
-    for(const family of GOOGLE_RAW_DATASETS[dataset]){let cursor=null,queryRows=0,expectedTotal=null;const seen=new Set();
+    const families=dailyReport&&dataset==="product_performance"?GOOGLE_DAILY_PRODUCT_QUERY_FAMILIES:GOOGLE_RAW_DATASETS[dataset];
+    for(const family of families){let cursor=null,queryRows=0,expectedTotal=null;const seen=new Set();
      for(let n=0;;n++){
       if(n>=l.maxPages)fail("page_limit");active={query:queries[family],family,ordinal:n};captured=null;
       const page=await client.search({customerId:current.account.id,query:queries[family],pageToken:cursor});await guard();

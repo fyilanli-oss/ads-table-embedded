@@ -1096,6 +1096,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261122095213",
+      "name": "eo05_google_daily_query_plan",
+      "file": "supabase/migrations/20261122095213_eo05_google_daily_query_plan.sql",
+      "created_with": "supabase@2.121.0 migration new eo05_google_daily_query_plan",
+      "repository_sql_sha256": "a84094e9ea548ee3c5086b50a1d61e711e926b2b1f8a0cd6c2eea92542193076",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

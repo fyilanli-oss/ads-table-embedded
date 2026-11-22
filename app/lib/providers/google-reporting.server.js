@@ -28,6 +28,11 @@ export const GOOGLE_REPORTING_QUERY_FAMILIES = Object.freeze([
   "pmax_product_group_aggregate_daily",
 ]);
 
+export const GOOGLE_DAILY_PRODUCT_REPORT_PLAN = "google-daily-product-v1";
+export const GOOGLE_DAILY_PRODUCT_QUERY_FAMILIES = Object.freeze(
+  GOOGLE_REPORTING_QUERY_FAMILIES.slice(9).filter(family => family !== "cart_data_product_sales_daily"),
+);
+
 export class GoogleReportingError extends Error {
   constructor(code, message, details = null) {
     super(message);

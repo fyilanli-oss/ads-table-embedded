@@ -824,8 +824,9 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
     }
     ledger.phaseAt("providerCollection");
     reader=createReader({verified,environment,tokenVault,execution:scope,configuration:{operationId,limits:{maxRows:2000,maxBytes:1048576,maxElapsedMs:60000,maxRequests:40,maxPages:10,maxLinkPages:1,maxLinks:100},
-     storageLimits:{maxRows:1000,maxBytes:2097152},sourcePolicy:sourceStoreFixture().input.policy,merchant:null},signal,now,poolFactory:poolFactory("adstable_google_source_runner"),
-     fetchFn:async(url,init)=>{assert.equal(new URL(url).hostname,"googleads.googleapis.com");requests++;const query=JSON.parse(init.body).query;
+     storageLimits:{maxRows:1000,maxBytes:2097152},sourcePolicy:sourceStoreFixture().input.policy,merchant:null},dailyReport:!!sharedRefresh,signal,now,poolFactory:poolFactory("adstable_google_source_runner"),
+    fetchFn:async(url,init)=>{assert.equal(new URL(url).hostname,"googleads.googleapis.com");requests++;const query=JSON.parse(init.body).query;
+      if(sharedRefresh)assert.notEqual(query,queries.cart_data_product_sales_daily);
       if(query.includes("FROM product_link"))return Response.json({results:[]});const family=Object.keys(queries).find(f=>queries[f]===query);assert.ok(family);
       const results=googleDatasetNativeRows(family,owner.accountId,{googleProducts:500,googleSalesProducts:499,mappedTimingSample:shopifyMapping});
       if(sharedRefresh)for(const row of results)if(row.segments?.date)row.segments={...row.segments,date:day};
@@ -833,7 +834,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
     const capture=await reader.run();await reader.close();reader=null;
     if(failed)throw Object.assign(Error(failed.message),failed);
     assert.equal(capture.status,"partial",JSON.stringify({capture,failed}));assert.equal(capture.contentVerified,true);
-    assert.equal(capture.datasets.account_performance.recordCount,3);assert.equal(capture.datasets.product_performance.recordCount,shopifyMapping?1497:1498);
+    assert.equal(capture.datasets.account_performance.recordCount,3);assert.equal(capture.datasets.product_performance.recordCount,sharedRefresh?999:shopifyMapping?1497:1498);
     for(const kind of ["account_performance","product_performance"]){const d=capture.datasets[kind];for(const p of d.packageReceipts??[d])batches.push({attemptId:p.attemptId,ordinal:p.ordinal});}
     ledger.phaseAt("handoff");return {kind:"complete",payload:{batchCount:batches.length}};
    },validatePage:({payload})=>({complete:payload.batchCount>=2,rows:[]}),
@@ -842,7 +843,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   }});
   const measured=ledger.stop();if(failed)throw Object.assign(Error(failed.message),failed);
   if(sharedRefresh)await sharedRefresh.afterClose(owner,run);
-  assert.equal(run.work?.status,"completed",JSON.stringify(run));assert.equal(requests,18);assert.equal(measured.rawDatasets,3);assert.ok(roleChecks>0);
+  assert.equal(run.work?.status,"completed",JSON.stringify(run));assert.equal(requests,sharedRefresh?17:18);assert.equal(measured.rawDatasets,3);assert.ok(roleChecks>0);
   if(finalSynthetic)assert.ok(profileReuses>0&&profileReuses<=roleChecks);
   const rows=(await client.query(`select (select count(*)::int from analytics.pd_facts where installation_id=$1 and platform='google_ads') pd,
    (select count(*)::int from analytics.cpd_product_performance_facts where installation_id=$1 and platform='google_ads') performance,
@@ -882,7 +883,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   const quotaDebits=sharedRefresh?(await client.query(`select count(*)::int reserved,count(*) filter(where settled)::int settled
     from operations.api_quota_debits where policy_id=$1`,[policyId])).rows[0]:undefined;
   if(sharedRefresh)assert.deepEqual(quotaDebits,{reserved:requests,settled:requests});
-  return {provider:"google_ads",synthetic:true,rollbackOnly:true,combinedCandidate,reportCandidate,reportRows:1000,nativeRows:shopifyMapping?1500:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,quotaDebits,
+  return {provider:"google_ads",synthetic:true,rollbackOnly:true,combinedCandidate,reportCandidate,reportRows:1000,nativeRows:sharedRefresh?1002:shopifyMapping?1500:1501,requests,reportPackages:5,receipts:1,completed:true,roleChecks,...measured,quotaDebits,
    ...(shopifyMappingMeasurement?{shopifyMappingMeasurement}:{}),
    ...(finalSynthetic?{profileReuses}:{}),
    adstableWallMs:measured.totalMs-measured.postgresCallWallMs,providerNetworkMeasured:false,sqlInnerTimers:collectionDiagnostics||publishTrace||comparableReport,durableCommitMeasured:false,

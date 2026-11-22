@@ -1,4 +1,6 @@
 export const GOOGLE_REPORTING_QUERY_FAMILIES: readonly string[];
+export const GOOGLE_DAILY_PRODUCT_REPORT_PLAN: "google-daily-product-v1";
+export const GOOGLE_DAILY_PRODUCT_QUERY_FAMILIES: readonly string[];
 export const GOOGLE_PD_QUERY_FAMILIES: readonly string[];
 export function mapGooglePdMetrics(row: Readonly<Record<string, any>>, queryFamily: string): Readonly<Record<string, any>>;
 

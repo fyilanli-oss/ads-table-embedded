@@ -9,6 +9,27 @@ import {readStoredDatasetSources} from "../app/lib/database/dataset-source-reade
 import {googleRawDatasetsFixture} from "./fixtures/google-raw-datasets-fixture.js";
 import {createGoogleRawCaptureExecution} from "../app/lib/refresh/google-raw-server.server.js";
 import {projectStoredGoogleDataset} from "../app/lib/providers/stored-dataset-projection.server.js";
+import {GOOGLE_DAILY_PRODUCT_REPORT_PLAN} from "../app/lib/providers/google-reporting.server.js";
+
+test("Google daily plan omits only the auxiliary cart report and preserves the 1000 Dataset facts", async () => {
+ const options={googleProducts:500,googleSalesProducts:499,googlePageSize:10000,googleStorageMaxBytes:2097152};
+ const baseline=await datasetSourceBindingFixture("google_ads",options);
+ const daily=await datasetSourceBindingFixture("google_ads",{...options,googleDailyReport:true});
+ const read=f=>readStoredDatasetSources({...f,limits:{...f.limits,maxRows:2000,maxBytes:16000000}});
+ const before=await read(baseline),after=await read(daily);
+ const families=bundle=>bundle.datasets.flatMap(d=>d.pages.map(page=>page.family));
+ assert.deepEqual(families(after),families(before).filter(f=>f!=="cart_data_product_sales_daily"));
+ const facts=bundle=>projectStoredGoogleDataset(bundle).rows.map(({table,row:{provenance,source_batch_id,...row}})=>({table,row}));
+ assert.equal(facts(after).length,1000);
+ assert.deepEqual(facts(after),facts(before));
+ const productEnvelopes=f=>[...f.envelopes.values()].filter(e=>e.dataset==="product_performance");
+ for(const e of productEnvelopes(baseline))e.receipt.manifest.googleDatasetRead.reportPlan=GOOGLE_DAILY_PRODUCT_REPORT_PLAN;
+ const invalidDaily=await read(baseline);
+ assert.throws(()=>projectStoredGoogleDataset(invalidDaily),/FAMILY_INVALID/);
+ for(const e of productEnvelopes(daily))delete e.receipt.manifest.googleDatasetRead.reportPlan;
+ const incompleteHistorical=await read(daily);
+ assert.throws(()=>projectStoredGoogleDataset(incompleteHistorical),/FAMILY_MISSING/);
+});
 
 test("Google raw packaging keeps native pages intact, bounded and ordered",async()=>{
  const f=await datasetSourceBindingFixture("google_ads",{googleProducts:100});

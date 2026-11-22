@@ -326,6 +326,13 @@
     "live_database_authorized": false,
     "official_checked_at": "2026-11-22"
   },
+  "refresh_closure_update_2026_11_22": {
+    "authority": "contracts/a6-eo-implementation-master-v1.json#eo05_refresh_closure_update_2026_11_22",
+    "verified_shared_probe_seconds": 48.983,
+    "provider_requests": {"google_ads": 17, "klaviyo": 11, "meta": 12},
+    "capacity_and_multi_lane_review": "after_A6-EO-08",
+    "live_acceptance": "pending"
+  },
   "verification_limit": "Repository admission, work tracking and stop guards have synthetic and isolated SQL evidence; not executable scheduling, production race safety, DB capacity or live provider behavior. Contract assertions alone remain design evidence.",
   "sources_checked_at": "2026-10-20",
   "sources": ["https://www.postgresql.org/docs/current/sql-select.html", "https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request", "https://nodejs.org/docs/latest-v24.x/api/crypto.html", "https://nodejs.org/docs/latest-v24.x/api/test.html"],

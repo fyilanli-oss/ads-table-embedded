@@ -204,6 +204,8 @@ Kuyruk taramasının tazeliği, sağlayıcının son doğrulanmış günü, bekl
 
 ## 13. Uygulama ve kapasite kararları
 
+**22 Kasım 2026 kapanış ölçümü.** Bir sentetik Shopify mağazasının kapanmış günü, ilk kuyruk taramasından üçüncü iş emrinin kapanışına **48,983 sn** sürdü. Google Ads **17 istek / 16,484 sn**, Klaviyo **11 istek / 17,403 sn**, Meta **12 istek / 15,015 sn**. Klaviyo'nun normal istek aralıkları açıktı. Sağlayıcı başına 1.000 Dataset satırı ve bir makbuz doğrulandı. Önceki 40,621 sn kendi koşusuna aittir. [Prova ve veritabanı kontrolü](https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/45033065265/job/137248715698)
+
 Shopify, Google Ads ve Meta kotalarının kime ait olduğu, yenilenme süreleri ve 3.000 mağazalık günlük örnek hesap [sağlayıcı kotaları bilgi notunda](EO_05A_MULTI_LANE_REFRESH_DESIGN.md#sağlayıcı-kotaları-bilgi-notu) yer alır.
 
 22 Kasım 2026 günlük Google Ads sorgu planı, `cart_data_product_sales_daily` genel satış raporunu günlük toplamdan çıkarır. Shopping, Search ve Performance Max satış sorguları günlük Dataset satırlarını üretmeye devam eder. Bu plan provadaki 18 Google Ads isteğini, ek sayfalama veya Merchant Center okuması olmayan aynı senaryoda 17’ye indirir. Eski tam ham kayıt planı ve mevcut kayıtların okunması desteklenir. Günlük planın canlı etkinleştirilmesi ve veritabanı migration uygulaması ayrı kabul gerektirir.
@@ -218,7 +220,7 @@ Günlük Google planı, yayın işlemi içinde kayıtlı ürün eşlemesini arar
 | Geçmiş düzeltme ve atıf | Sağlayıcı bazında tarih temeli, minimum gerekli geriye okuma, sıklık ve yayın revizyonu ayrı karar bekliyor. |
 | Gerçek Meta verisi | Aynı gerçek mağazanın rapor `product_id`, katalog kimliği, Shopify Product ID ve satış rolü kanıtları bekleniyor. |
 | Canlı kabul | Gerçek mağaza ve hesap erişimi, gerçek sağlayıcı ağ ve yanıt davranışı ile eksiksiz canlı iş kanıtı ayrı doğrulanacak. |
-| Birden fazla refresh hattı | Bir mağazaya tek hat, isteğe çıkmadan önce sahiplik kontrolü ve güvenli devir kuralları tasarıma işlendi. Uygulama ve kabul ölçümü açık. [Çoklu hat tasarımı](EO_05A_MULTI_LANE_REFRESH_DESIGN.md) |
-| Kapasite | Bu tek mağaza sentetik referansına rapor ve arayüz yükünü ekleyen asıl değerlendirme EO-07 sonunda, gerekirse EO-08 sonunda yapılacak. Çok mağaza, ortak kota, veritabanı ve dayanıklılık kanıtı birlikte değerlendirilecek. |
+| Birden fazla refresh hattı | Bir mağazaya tek hat, isteğe çıkmadan önce sahiplik kontrolü ve güvenli devir kuralları tasarıma işlendi. Uygulama ve kabul ölçümü EO-08 sonrasında yeniden değerlendirilecek. [Çoklu hat tasarımı](EO_05A_MULTI_LANE_REFRESH_DESIGN.md) |
+| Kapasite | Ürün sahibi kararıyla EO-08 sonrasında yeniden değerlendirilecek. Çok mağaza, ortak kota, veritabanı, rapor ve arayüz yükü ile dayanıklılık kanıtı birlikte ele alınacak. |
 
 Resmî kaynaklar 21 Kasım 2026’da kontrol edildi. [PostgreSQL işlemleri](https://www.postgresql.org/docs/17/tutorial-transactions.html) · [PostgreSQL kilitleri](https://www.postgresql.org/docs/17/explicit-locking.html) · [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security) · [Google Ads raporlama](https://developers.google.com/google-ads/api/docs/reporting/overview) · [Klaviyo olayları](https://developers.klaviyo.com/en/reference/get_events) · [Meta Insights kırılımları](https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/breakdowns) · [Shopify ürün kimlikleri](https://shopify.dev/docs/api/usage/gids)

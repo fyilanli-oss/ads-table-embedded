@@ -1,3 +1,13 @@
+## EO-05 — Refresh kapanış güncellemesi ve EO-06 başlangıcı, 22 Kasım 2026
+
+Üç sağlayıcılı son sentetik prova ilk kuyruk taramasından üçüncü iş emrinin kapanışına **48,983 sn** sürdü. Google Ads 17, Klaviyo 11, Meta 12 istek yaptı. Sağlayıcı başına 1.000 Dataset satırı ve bir makbuz doğrulandı. Klaviyo'nun normal istek aralıkları açıktı. Canlı sağlayıcı yanıt süresi ve canlı kapasite bu provada ölçülmedi. [Prova kaydı](https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/45033065265/job/137248715698) · [Klaviyo PR #387](https://github.com/fyilanli-oss/ads-table-embedded/pull/387) · [Meta notu PR #386](https://github.com/fyilanli-oss/ads-table-embedded/pull/386)
+
+Kapasite ve çoklu hat uygulaması ürün sahibi kararıyla **EO-08 sonrasında** yeniden değerlendirilecek. Canlı zamanlama, geçmiş düzeltme, gerçek mağaza kabulü ve Meta ürün/satış kanıtı [refresh sözleşmesinde](EO_05A_REFRESH_CONTRACT.md#13-uygulama-ve-kapasite-kararları) açık kalır.
+
+**OpenAI Ads araştırması şimdilik kapatıldı.** 22 Kasım 2026'da incelenen herkese açık OpenAPI 2.3.0 şemasında, reklam veya kampanyaya atfedilen satışın ürün kimliğini döndüren bir alan ya da doğrulanabilir bir bağlantı bulunmadı. Yeniden değerlendirme eşiği, reklam veya kampanyaya bağlı satılan ürün kimliğinin belgelenmesidir. [OpenAPI şeması](https://developers.openai.com/ads/openapi.json) · [Dönüşüm raporu](https://developers.openai.com/ads/api-reference/insights#conversion-insights)
+
+**EO-06 başlangıç hazırlığı tamamlandı.** İlk dilim ve kabul örneği [EO-06-A formül motoru başlangıç notunda](EO_06A_FORMULA_ENGINE_START_BRIEF.md) kayıtlıdır. Paket uygulaması ve kabulü ana sözleşmede ayrı izlenir. [Ana sözleşme](../contracts/a6-eo-implementation-master-v1.json#eo05_refresh_closure_update_2026_11_22)
+
 ## EO-05 — Günlük refresh teknik kapanış kaydı, 21 Kasım 2026
 
 PR #379, `4056421c325c2225b81a217181409af1003b271a` ile `main`e birleşti. Günlük refresh provası Google Ads, Klaviyo ve Meta için aynı sentetik Shopify mağazasının kapanmış gününü kuyruktan son iş emrinin kapanışına kadar işledi. Yetki ve kota kontrolleri dahil, sağlayıcı başına 1.000 Dataset satırı ve bir makbuz doğrulandı. İzole veritabanı kontrolünde iki temiz kurulum aynı şemayı üretti ve son OAuth provası geçti. [PR #379](https://github.com/fyilanli-oss/ads-table-embedded/pull/379) · [Veritabanı kontrolü](https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/44929858330/job/136923882139) · [Depo kontrolü](https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/44929858322/job/136923882011)

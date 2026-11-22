@@ -202,6 +202,8 @@ Kuyruk taramasının tazeliği, sağlayıcının son doğrulanmış günü, bekl
 
 ## 13. Uygulama ve kapasite kararları
 
+Shopify, Google Ads ve Meta kotalarının kime ait olduğu, yenilenme süreleri ve 3.000 mağazalık günlük örnek hesap [sağlayıcı kotaları bilgi notunda](EO_05A_MULTI_LANE_REFRESH_DESIGN.md#sağlayıcı-kotaları-bilgi-notu) yer alır.
+
 22 Kasım 2026 günlük Google Ads sorgu planı, `cart_data_product_sales_daily` genel satış raporunu günlük toplamdan çıkarır. Shopping, Search ve Performance Max satış sorguları günlük Dataset satırlarını üretmeye devam eder. Bu plan provadaki 18 Google Ads isteğini, ek sayfalama veya Merchant Center okuması olmayan aynı senaryoda 17’ye indirir. Eski tam ham kayıt planı ve mevcut kayıtların okunması desteklenir. Günlük planın canlı etkinleştirilmesi ve veritabanı migration uygulaması ayrı kabul gerektirir.
 
 Günlük Google planı, yayın işlemi içinde kayıtlı ürün eşlemesini arar. Bağ, aynı mağaza ve reklam hesabının rapor günü, ürün rolü, Google ürün kodu, Merchant hesabı, feed etiketi ve gözlenen dil için tekil olmalıdır. Shopify Product ID kanıtı ve güncel eşleme sürümü doğrulanır. Aynı eşlemenin kanıtı iş başına bir kez okunur. Reklamı yapılan ve satılan ürün ayrı doğrulanır. Eksik, çakışmalı veya süresi dolmuş bağda satır Google ürün koduyla kalır. Bu adım veritabanındaki kayıtlardan yürür.

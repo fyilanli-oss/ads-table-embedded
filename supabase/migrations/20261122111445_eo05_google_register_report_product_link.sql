@@ -93,7 +93,13 @@ begin
 end $fn$;
 
 revoke all on function identity.register_google_report_product_link(jsonb,jsonb)
-  from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_google_source_runner,adstable_refresh_dataset_runner;
+  from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner;
+do $grant$
+begin
+  if exists(select 1 from pg_catalog.pg_roles where rolname='adstable_google_source_runner') then
+    revoke all on function identity.register_google_report_product_link(jsonb,jsonb) from adstable_google_source_runner;
+  end if;
+end $grant$;
 
 -- Use the same lock ordering as registration so review and publication cannot race.
 create or replace function analytics.read_google_daily_product_links(o jsonb,c jsonb,d timestamptz,keys jsonb) returns jsonb

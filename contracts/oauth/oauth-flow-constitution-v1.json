@@ -1709,7 +1709,7 @@
       "supabase/migrations/20261119112554_eo05_google_daily_packages.sql": "4926f56467c5c0d5d0c212074c9d9f5bb25ad3cdeb837c07df19377ddfbd612b",
       "supabase/migrations/20261122095213_eo05_google_daily_query_plan.sql": "b7003f755b8fa292f8d696b133a2b51e3570702c464ce6dc4306b406e2704ef5",
       "supabase/migrations/20261122104235_eo05_google_daily_verified_product_links.sql": "0a27ac94c00e58e9282e2ead014f5ef7a818017db8ea116b565b5b89b0bc0d5a",
-      "supabase/migrations/20261122111445_eo05_google_register_report_product_link.sql": "a0e1991c5167f89cf811c5750e604a1b8f58f6ddaed2f23903721700b5299984",
+      "supabase/migrations/20261122111445_eo05_google_register_report_product_link.sql": "bf38547d3109221720f29a281935e11cdc65e1e6372cdbc20083f63f425aded4",
       "tests/a6-docs-01-turkish-standardization.test.js": "90df09b309720d65e97d71c9c6bcfa75ddf43ff8935b9f060b32ae33cf664d46",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",

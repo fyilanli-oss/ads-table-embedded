@@ -1,4 +1,36 @@
 {
+  "eo05_refresh_closure_update_2026_11_22": {
+    "owner_decision": "Fırat: OpenAI is deferred because the sold product is not available by attributed ad or campaign. Update refresh closure and start EO-06. Revisit capacity and multiple lanes after EO-08.",
+    "status": "synthetic_slice_closed_live_acceptance_open",
+    "shared_proof": {
+      "job": "https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/45033065265/job/137248715698",
+      "seconds_from_queue_scan_to_last_close": 48.983,
+      "requests": {"google_ads": 17, "klaviyo": 11, "meta": 12},
+      "rows_per_provider": 1000,
+      "verified_receipts_per_provider": 1,
+      "normal_klaviyo_pacing": true,
+      "provider_http": "synthetic"
+    },
+    "capacity_and_multi_lane_review": "after_A6-EO-08",
+    "openai_ads": {
+      "status": "deferred",
+      "reopen_when": "A documented read path yields the sold product identity with attributed ad or campaign evidence.",
+      "checked_at": "2026-11-22",
+      "openapi_version": "2.3.0",
+      "sources": ["https://developers.openai.com/ads/openapi.json", "https://developers.openai.com/ads/api-reference/insights#conversion-insights"]
+    },
+    "next_parent": "A6-EO-06",
+    "next_parent_start_brief": "docs/EO_06A_FORMULA_ENGINE_START_BRIEF.md",
+    "production_mutation_authorized": false
+  },
+  "eo06a_start_2026_11_22": {
+    "parent_package": "A6-EO-06",
+    "child_package": "A6-EO-06-A",
+    "status": "started_formula_and_fixture_definition",
+    "brief": "docs/EO_06A_FORMULA_ENGINE_START_BRIEF.md",
+    "first_output": "Formula input, aggregation scope, output and missing-data examples grounded in canonical Dataset and golden fixture evidence.",
+    "acceptance_complete": false
+  },
   "eo05_daily_refresh_repository_closure_2026_11_21": {
     "status": "synthetic_refresh_repository_delivery_closed_parent_acceptance_separate",
     "actual_output": "Closed-day refresh contract and a single-shop multi-lane design with one owning lane per shop. The isolated shared queue processed Google Ads, Klaviyo and Meta through permission and quota checks, 1,000 Dataset rows and one verified receipt per provider, and job closure.",
@@ -1828,7 +1860,7 @@
       "id": "A6-EO-06",
       "title": "Formula, Query and same-origin BFF/API",
       "phase": "review_critical",
-      "status": "Not started",
+      "status": "In progress",
       "depends_on": [
         "A6-EO-05"
       ],

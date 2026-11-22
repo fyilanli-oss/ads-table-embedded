@@ -1448,7 +1448,7 @@
       "app/lib/providers/reference-prewrite.server.js": "c449e44090d787149c3c11a1586de514933072701818cfbbf2c3c770a65f2bab",
       "app/lib/providers/sales-role-prewrite.server.js": "5359c43623adeb8d53f432d5f7f003447e2817154e8f279f9ee5bff0a02d4e24",
       "app/lib/providers/stored-dataset-projection.server.js": "5973a1d145fcc499f7e84386e16c7d948d36c23c814a7295a75f5c1bcb7a3f3f",
-      "app/lib/providers/stored-klaviyo-dataset.server.js": "de3be7dd771b4d0362af299b87b70a0f8a206bc7a1635b1801c3cb41b2bd99bc",
+      "app/lib/providers/stored-klaviyo-dataset.server.js": "9966f1b329f9a73cc900fad92aa893cbd4b5e5af4d363564f2862cc520eee244",
       "app/lib/providers/stored-meta-dataset.server.js": "176c3fb5c10d884f40dc799cf26785470f6b8a178dfb67ac6a40992cadf75a46",
       "app/lib/refresh/admission-policy.server.js": "f3dc10208610c535b45a112dd85eb32259da32810682a9f4c0d653cddbe77825",
       "app/lib/refresh/chunk-worker.server.js": "8b8b39969e421743302b246a5a29a7a7f3ced62357510f60971a8d6f77d0cb2e",
@@ -1480,9 +1480,9 @@
       "app/lib/refresh/integrated-prewrite-review.server.js": "f528e47829307d3db235a3395f1cce8d72cba92ce507d7ab6d62fa94388a14f0",
       "app/lib/refresh/klaviyo-background-owner.server.js": "d6965d0331b0904aff7161b273db6ee4d1d956ddc56ae36300942b718e543756",
       "app/lib/refresh/klaviyo-private-request.server.js": "34240888886b864f79f862e5260ef3dc2dadfe2eb1207653dcf372162e39aedb",
-      "app/lib/refresh/klaviyo-raw-collection.server.js": "85f85cc1ef3b9824e3ac9e886e140cf6e7fd488af8f7eed182da90a193df1bd5",
+      "app/lib/refresh/klaviyo-raw-collection.server.js": "e68f8695c4bd7de1f05822f73d776a8c3141ad3b466228aa8688f60d0fce7da0",
       "app/lib/refresh/klaviyo-raw-dataset-plan.server.js": "d0336c61f9b2512a3a4db2f98b36e92141ea4e98bc07d35c659f077cd77f9012",
-      "app/lib/refresh/klaviyo-raw-datasets.server.js": "8488f5f39ec0c99a70d2521ebdc1ace6e435535d6caada5b423ac0ed825b2f5b",
+      "app/lib/refresh/klaviyo-raw-datasets.server.js": "966a922389ae357da53d322c5fdeba615a863afa02c1a940b47c88dc9f0025e2",
       "app/lib/refresh/klaviyo-raw-eligibility.server.js": "8514e9c26dbc4e6872d14e820c8e0d7d5084b20884438774448cabed130a1f56",
       "app/lib/refresh/klaviyo-raw-request.server.d.ts": "12e920d2c5403b280caa7ae3629d72409a48ea14ab6fb6137efc93f182fe1c98",
       "app/lib/refresh/klaviyo-raw-request.server.js": "c7f64c95300428a8dbaad35d9fe7bc787e5be26310d19b249d5a70a577447db3",
@@ -1710,6 +1710,7 @@
       "supabase/migrations/20261122095213_eo05_google_daily_query_plan.sql": "b7003f755b8fa292f8d696b133a2b51e3570702c464ce6dc4306b406e2704ef5",
       "supabase/migrations/20261122104235_eo05_google_daily_verified_product_links.sql": "0a27ac94c00e58e9282e2ead014f5ef7a818017db8ea116b565b5b89b0bc0d5a",
       "supabase/migrations/20261122111445_eo05_google_register_report_product_link.sql": "bf38547d3109221720f29a281935e11cdc65e1e6372cdbc20083f63f425aded4",
+      "supabase/migrations/20261122142447_eo05_klaviyo_daily_purchase_scope.sql": "d569d2797913113cf6d374c70e61e0bb3064adee1adc80ba06705418b019d28a",
       "tests/a6-docs-01-turkish-standardization.test.js": "90df09b309720d65e97d71c9c6bcfa75ddf43ff8935b9f060b32ae33cf664d46",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
@@ -1738,7 +1739,7 @@
       "tests/identity-oauth-atomic-stage.test.js": "ac475e7c1622e6502d2321bbd327348ab779c8914340b12a1ed0a3c46a2d181d",
       "tests/identity-oauth-start-binding.test.js": "53da46cab2b38e9f58650545d97ffdfa7cee5d7989a99479d1f5c3ef26306b3d",
       "tests/identity-permission-preflight.test.js": "5f74265fe234f4937e5cc7f01c9e11ce052daf3ddbd97ae97196b247685e2354",
-      "tests/klaviyo-raw-datasets-permission.test.js": "2aa188e93014a0a316ca5c70e95c8fe487ef27808dc1cc6d6a288718ab6f92a8",
+      "tests/klaviyo-raw-datasets-permission.test.js": "95eed52fa3dc2fba6a88e0be09cc2834c4a3d69eff23bf295921ed0d531c67fa",
       "tests/klaviyo-raw-request-permission.test.js": "fcab9af13b95da38f692e0e861036f6c25d66e0a58ec833a30b5d005c4949da9",
       "tests/klaviyo-scope-provenance.test.js": "73afdd2e1609eec5ab711c19ebee9d30504211ef6b9db329c312c290a971ea53",
       "tests/meta-first-day-permission.test.js": "904e0513a7651e9184eb6818a233e0b3c4a953e3b3e670f765e8f972a3d68faa",
@@ -1782,7 +1783,7 @@
       "tools/eo05-google-source-role-probe.mjs": "fba96de648dd50a099dae4cdfd1e17807e5eb250cbc139d967a3f6e96b8ad19a",
       "tools/eo05-identity-authority-snapshot-probe.mjs": "0136e8dc5a5720b78d1cb4dca081f19e8b473812b6d66129b94f64fd5edf672c",
       "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
-      "tools/eo05-klaviyo-daily-timing-probe.mjs": "3568c0465b7456f482cac419220a93582ddbc36127540bdd4ab01da8e31ac768",
+      "tools/eo05-klaviyo-daily-timing-probe.mjs": "6abc2707a2b362a9bfa1997946d72d36efba6ae120a71299f1433f919f7ae9c4",
       "tools/eo05-klaviyo-hosted-benchmark.mjs": "1a21a53113d2a87cebc4426d3d8ef5f99b9e746a399ab088dc48381766e77dd9",
       "tools/eo05-klaviyo-raw-datasets-probe.mjs": "e7d504cd848ad8380575fa8a9dd6755fc95354d9a208db4d7f1a40693cc50888",
       "tools/eo05-klaviyo-source-capture-probe.mjs": "c9b9f604a72611fb0f39a8e6a178dadd72fcc6ee2f340a4396d0d6058bbaf5ab",
@@ -5201,6 +5202,53 @@
         "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/get",
         "https://shopify.dev/docs/api/usage/gids",
         "https://supabase.com/changelog.md",
+        "https://www.postgresql.org/docs/17/sql-createfunction.html"
+      ]
+    },
+    {
+      "id": "eo05-klaviyo-daily-purchase-scope-2026-11-22",
+      "date": "2026-11-22",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Fırat: Hem fikiriz Codex onaylıyorum. Approved one Placed Order report each for Campaign and Flow in the daily Klaviyo refresh while preserving Ordered Product sales, amounts and existing message attribution."
+      },
+      "rationale": "For a closed native business day, read purchase report coverage for Campaign and Flow only. Keep prior six-family reads, open first-day evidence, out-of-scope metric nulls, provider pacing, ownership, quota, encryption, receipt and Ordered Product provenance behavior. Exercise the matching synthetic shared refresh with eleven Klaviyo calls and real pacing enabled. OAuth credentials, grants, callback and authorization behavior are untouched.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "changed_paths": [
+        "app/lib/providers/stored-klaviyo-dataset.server.js",
+        "app/lib/refresh/klaviyo-raw-collection.server.js",
+        "app/lib/refresh/klaviyo-raw-datasets.server.js",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "supabase/migrations/20261122142447_eo05_klaviyo_daily_purchase_scope.sql",
+        "tests/klaviyo-raw-datasets-permission.test.js",
+        "tools/eo05-klaviyo-daily-timing-probe.mjs"
+      ],
+      "tests": [
+        "tests/klaviyo-raw-datasets-permission.test.js",
+        "tests/dataset-source-binding.test.js",
+        "tools/eo05-klaviyo-daily-timing-probe.mjs",
+        "tools/check-migration-lineage.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-22",
+      "official_sources": [
+        "https://developers.klaviyo.com/en/reference/query_campaign_values",
+        "https://developers.klaviyo.com/en/reference/query_flow_values",
+        "https://developers.klaviyo.com/en/reference/get_events",
+        "https://supabase.com/changelog.md",
+        "https://supabase.com/docs/guides/deployment/database-migrations",
         "https://www.postgresql.org/docs/17/sql-createfunction.html"
       ]
     }

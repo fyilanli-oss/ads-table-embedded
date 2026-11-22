@@ -315,6 +315,17 @@
     "official_checked_at": "2026-11-21",
     "official_sources": ["https://www.postgresql.org/docs/17/sql-savepoint.html", "https://supabase.com/changelog.md", "https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/breakdowns", "https://developers.google.com/google-ads/api/docs/reporting/overview", "https://developers.klaviyo.com/en/reference/get_events", "https://shopify.dev/docs/api/usage/gids"]
   },
+  "klaviyo_daily_purchase_scope_2026_11_22": {
+    "document": "docs/EO_05A_REFRESH_CONTRACT.md",
+    "account_performance": ["campaign:Placed Order", "flow:Placed Order"],
+    "excluded_daily_metrics": ["Added to Cart", "Checkout Started"],
+    "product_performance": "Retain Ordered Product event paging, identities, quantities, values, evidence and native attribution.",
+    "expected_one_thousand_event_probe_calls": {"accounts": 3, "metrics": 1, "campaign": 1, "flow": 1, "events": 5, "total": 11},
+    "historical_coverage": "Existing six-family sources remain readable. The two-family write scope requires a closed business day. Required purchase coverage and ordered-product evidence remain independently verified.",
+    "live_provider_authorized": false,
+    "live_database_authorized": false,
+    "official_checked_at": "2026-11-22"
+  },
   "verification_limit": "Repository admission, work tracking and stop guards have synthetic and isolated SQL evidence; not executable scheduling, production race safety, DB capacity or live provider behavior. Contract assertions alone remain design evidence.",
   "sources_checked_at": "2026-10-20",
   "sources": ["https://www.postgresql.org/docs/current/sql-select.html", "https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request", "https://nodejs.org/docs/latest-v24.x/api/crypto.html", "https://nodejs.org/docs/latest-v24.x/api/test.html"],

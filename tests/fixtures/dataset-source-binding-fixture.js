@@ -57,7 +57,7 @@ export function googleDatasetNativeRows(family,account,{nonempty=true,googlePurc
 
 /** All native responses/credentials/owners are synthetic. Real capture projection,
  * AEAD and decrypt paths are used; this fake DB is not SQL/native acceptance. */
-export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", googleProducts=1, googleSalesProducts=googleProducts, googlePageSize=25, googleStorageMaxBytes=1048576, googleDailyReport=false, shopifyMapping=false, owner: givenOwner = null, cipher: givenCipher = null} = {}) {
+export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", googleProducts=1, googleSalesProducts=googleProducts, googlePageSize=25, googleStorageMaxBytes=1048576, googleDailyReport=false, klaviyoDailyPurchaseOnly=false, shopifyMapping=false, owner: givenOwner = null, cipher: givenCipher = null} = {}) {
   const owner = givenOwner ? structuredClone(givenOwner) : datasetStorageFixture().owner;
   if (!givenOwner) {owner.installationId = "1"; owner.provider = provider; owner.accountId = provider === "meta" ? "act_123" : provider === "klaviyo" ? "account-1" : "123";}
   if (provider === "klaviyo") owner.selectionEpoch = null;
@@ -96,7 +96,8 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
       {type: "metric", id: "other-purchase", attributes: {name: "Placed Order", integration: {name: "Other"}}});
     const account = await nativeKlaviyoPage("/api/accounts/", {data: [{type: "account", id: owner.accountId, attributes: {timezone: "UTC", preferred_currency: "USD"}}]});
     const m = await nativeKlaviyoPage("/api/metrics", {data: metrics, links: {next: null}}), proof = [account, m], reports = [], coverage = [];
-    for (const [name, id] of [["Placed Order", "order"], ["Added to Cart", "cart"], ["Checkout Started", "checkout"]]) for (const kind of ["campaign", "flow"]) {
+    const reportMetrics = klaviyoDailyPurchaseOnly ? [["Placed Order", "order"]] : [["Placed Order", "order"], ["Added to Cart", "cart"], ["Checkout Started", "checkout"]];
+    for (const [name, id] of reportMetrics) for (const kind of ["campaign", "flow"]) {
       if (missingMetric && id === "checkout") {coverage.push({family: kind + ":" + name, metricId: null, state: "account_configuration_missing", pageCount: 0, recordCount: 0}); continue;}
       const input = {accessToken: "synthetic", businessDate: day, timeZone: "UTC", conversionMetricId: id};
       const request = name === "Placed Order" ? (kind === "campaign" ? buildKlaviyoCampaignValuesRequest : buildKlaviyoFlowValuesRequest)(input)
@@ -113,7 +114,7 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
     const events = await nativeKlaviyoPage("/api/events", {data: nonempty ? [event] : [], included: nonempty ? [{type: "attribution", id: "attribution-1", relationships: {
       campaign: {data: {type: "campaign", id: "campaign-1"}}, "campaign-message": {data: {type: "campaign-message", id: "message-1"}}, event: {data: {type: "event", id: "event-1"}}}}] : [], links: {next: null}});
     native.push({dataset: "configuration", pages: proof, coverage: [{family: "accounts", state: "present"}, {family: "metrics", state: "present"}]},
-      {dataset: "account_performance", pages: [...proof, ...reports], partial: missingMetric, coverage},
+      {dataset: "account_performance", pages: [...proof, ...reports], partial: missingMetric && !klaviyoDailyPurchaseOnly, coverage},
       {dataset: "product_performance", pages: [...proof, events], coverage: [{family: "ordered_product_events", metricId: "product", state: "present", pageCount: 1, recordCount: nonempty ? 1 : 0}]});
   }
   const seed = sourceStoreFixture({owner, ...givenCipher ? {cipher: givenCipher} : {}}), cipher = seed.input.cipher, batches = [], envelopes = new Map(); let nextId = 100;

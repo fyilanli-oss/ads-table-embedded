@@ -1709,7 +1709,8 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
           }):fixtureFetch;
           await collectKlaviyoRawDatasets({
             accessToken:current?.tokenSet.access_token??"synthetic-only",accountId:owner.accountId,source:{timezone:"UTC",currency:"USD"},
-            window,limits:{...limits,maxPages:10,maxBytes:1048576},signal,now,guard,transport,pacerFactory:()=>async()=>{},
+            window,limits:{...limits,maxPages:10,maxBytes:1048576},signal,now,guard,transport,dailyReport:Boolean(sharedRefresh),
+            ...!sharedRefresh?{pacerFactory:()=>async()=>{}}:{},
             async onDataset({dataset,pages,complete,coverage}) {
               timingStep="rawStore";
               assert.equal(complete,true);
@@ -1787,7 +1788,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     assert.equal(reportReceipt?.revision,repeat?2:1);
     if(repeat) assert.notEqual(reportReceipt.operationId,repeat.previous.operationId);
     assert.deepEqual(reportReceipt.packages.map(part=>part.rowCount),[200,200,200,200,200]);
-    assert.equal(requests,15);
+    assert.equal(requests,sharedRefresh?11:15);
     const status=(await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",
       [owner.workspaceId,claimId])).rows[0]?.status;
     assert.equal(status,"completed");

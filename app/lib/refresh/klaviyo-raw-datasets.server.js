@@ -45,7 +45,7 @@ export function createKlaviyoRawDatasetReader({environment,verified,tokenVault,e
    const owner={workspaceId:verified.installationAuthority.workspaceId,installationId:current.installationId,generation:String(verified.installationAuthority.installGeneration),
     shopId:verified.identity.shop.shopId,shopDomain:verified.identity.shop.myshopifyDomain,provider:"klaviyo",connectionId:current.connectionId,
     connectionVersion:String(current.connectionVersion),credentialId:current.credentialId,accountId:current.account.id,selectionEpoch:current.selectionEpoch};
-   await collectKlaviyoRawDatasets({accessToken:current.tokenSet.access_token,accountId:current.account.id,source,window:scope.window,limits:l,transport,guard,signal:child,now,delay,pacerFactory,
+   await collectKlaviyoRawDatasets({accessToken:current.tokenSet.access_token,accountId:current.account.id,source,window:scope.window,limits:l,transport,guard,signal:child,now,delay,dailyReport:true,pacerFactory,
     onStartDataset:dataset=>{active=dataset;writeSent=false;writeKnown=false;},
     onDataset:async({dataset,pages,complete,coverage,recordCount})=>{
      active=dataset;writeSent=false;writeKnown=false;await guard();writeSent=true;

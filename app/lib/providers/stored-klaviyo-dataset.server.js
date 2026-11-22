@@ -51,6 +51,8 @@ export function projectStoredKlaviyoDataset(bundle) {
   const named = new Map(Object.entries(selected).filter(([, v]) => v.state === "present").map(([name, v]) => [v.metric_id, name]));
   const coverage = pd.read.coverage;
   if (!Array.isArray(coverage)) fail("COVERAGE_MISSING");
+  const reportMetrics = Object.keys(pdSources).filter(name =>
+    coverage.some(entry => entry.family === "campaign:" + name || entry.family === "flow:" + name));
   for (const page of pd.pages) {
     if (["klaviyo_account", "klaviyo_metrics"].includes(page.family)) continue;
     const kind = page.family === "klaviyo_campaign_report" ? "campaign" : page.family === "klaviyo_flow_report" ? "flow" : null;
@@ -83,7 +85,7 @@ export function projectStoredKlaviyoDataset(bundle) {
       group.row.provenance.sources = mergeRefs([...group.row.provenance.sources, page.ref]);
     }
   }
-  for (const [name, state] of Object.entries(selected)) if (state.state !== "present") holds.push({reason: "klaviyo_metric_unavailable", metric: name});
+  for (const name of reportMetrics) if (selected[name].state !== "present") holds.push({reason: "klaviyo_metric_unavailable", metric: name});
   for (const group of groups.values()) rows.push({table: "pd_facts", row: group.row});
   const ordered = [...metricMap.values()].filter(m => m.attributes.name === "Ordered Product" && m.attributes.integration?.name === "Shopify");
   if (ordered.length > 1) fail("METRIC_CONTEXT_INVALID");

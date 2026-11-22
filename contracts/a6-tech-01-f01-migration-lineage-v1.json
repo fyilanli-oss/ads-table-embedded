@@ -1126,6 +1126,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261122142447",
+      "name": "eo05_klaviyo_daily_purchase_scope",
+      "file": "supabase/migrations/20261122142447_eo05_klaviyo_daily_purchase_scope.sql",
+      "created_with": "supabase@3.2.0 migration new eo05_klaviyo_daily_purchase_scope",
+      "repository_sql_sha256": "503aae20de3650128de5a212ce67567417abea2faa437496534cb5a7c7631ac7",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

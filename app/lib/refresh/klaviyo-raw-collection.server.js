@@ -25,7 +25,7 @@ function cursorOf(body,path,parameter){
  return cursor;
 }
 // Only fixed approved builders; no composition, identity mapping or Profile API.
-export async function collectKlaviyoRawDatasets({accessToken,accountId,source,window,limits,transport,guard,signal,now,delay,pacerFactory=createKlaviyoRawPacer,onStartDataset=()=>{},onDataset}){
+export async function collectKlaviyoRawDatasets({accessToken,accountId,source,window,limits,transport,guard,signal,now,delay,dailyReport=false,pacerFactory=createKlaviyoRawPacer,onStartDataset=()=>{},onDataset}){
  const capture=createKlaviyoSourceCapture({maxBytes:limits.maxBytes,check:()=>{if(signal.aborted)fail("read_aborted");},signal});
  const pace=pacerFactory({now,signal,delay}),accountPages=[];let account=null,total=0;
  const headers={authorization:"Bearer "+accessToken,accept:"application/vnd.api+json",revision:KLAVIYO_API_REVISION};
@@ -70,7 +70,8 @@ export async function collectKlaviyoRawDatasets({accessToken,accountId,source,wi
  const proof=[...accountPages,...metrics.pages],entry=(family,metricId,pages,state="present")=>({family,metricId,state,pageCount:pages.length,recordCount:pages.reduce((n,p)=>n+p.records.length,0)});
  await onDataset({dataset:"configuration",pages:proof,complete:true,coverage:[entry("accounts",null,accountPages),entry("metrics",null,metrics.pages)],recordCount:metrics.items.length});
  onStartDataset("account_performance");const reportPages=[],coverage=[];
- for(const name of KLAVIYO_PD_CONVERSION_METRICS)for(const kind of ["campaign","flow"]){
+ const reportMetrics=dailyReport&&now()>=Date.parse(timeframe.end)+1000?["Placed Order"]:KLAVIYO_PD_CONVERSION_METRICS;
+ for(const name of reportMetrics)for(const kind of ["campaign","flow"]){
   const m=selected[name],family=kind+":"+name;
   if(m.state!=="present"){coverage.push(entry(family,null,[],"account_configuration_missing"));continue;}
   const result=await collect(pageCursor=>{const input={accessToken,businessDate:window.from,timeZone:account.timezone,conversionMetricId:m.metric_id,pageCursor};

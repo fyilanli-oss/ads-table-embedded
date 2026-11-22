@@ -2,7 +2,7 @@ import {emptyDatasetStorageRow, datasetMetricNames, DATASET_EXTENSION_VERSION, d
 import {isStoredDatasetSource} from "../database/dataset-source-reader.server.js";
 import {canonicalSourceJson} from "../database/source-evidence-store.server.js";
 import {sourceText, sourceDecimal, addSourceDecimals, positiveSourceDecimal, sourceScalar} from "../database/dataset-source-values.server.js";
-import {classifyGoogleCartDataRole, buildGoogleReportingQueries, GOOGLE_REPORTING_QUERY_FAMILIES} from "./google-reporting.server.js";
+import {classifyGoogleCartDataRole, buildGoogleReportingQueries, GOOGLE_REPORTING_QUERY_FAMILIES, GOOGLE_DAILY_PRODUCT_QUERY_FAMILIES, GOOGLE_DAILY_PRODUCT_REPORT_PLAN} from "./google-reporting.server.js";
 import {klaviyoBusinessDayTimeframe} from "./klaviyo-reporting.server.js";
 
 export const STORED_DATASET_PROJECTION_VERSION = "eo05b-stored-native-v1";
@@ -73,7 +73,10 @@ function googleSource(bundle) {
   const account = bundle.datasets.find(d => d.dataset === "account_performance"), products = bundle.datasets.find(d => d.dataset === "product_performance");
   if (!account || !products) fail("DATASET_MISSING");
   const day = bundle.scope.window.from, accountRows = googleRecords(account, GOOGLE_REPORTING_QUERY_FAMILIES.slice(0, 9), day, bundle.owner.accountId);
-  const productRows = googleRecords(products, GOOGLE_REPORTING_QUERY_FAMILIES.slice(9), day, bundle.owner.accountId);
+  const reportPlan = products.read?.reportPlan;
+  if (reportPlan !== undefined && reportPlan !== GOOGLE_DAILY_PRODUCT_REPORT_PLAN) fail("GOOGLE_REPORT_PLAN_INVALID");
+  const productFamilies = reportPlan === GOOGLE_DAILY_PRODUCT_REPORT_PLAN ? GOOGLE_DAILY_PRODUCT_QUERY_FAMILIES : GOOGLE_REPORTING_QUERY_FAMILIES.slice(9);
+  const productRows = googleRecords(products, productFamilies, day, bundle.owner.accountId);
   const identity = accountRows.filter(r => r.family === "account_identity");
   if (identity.length !== 1 || get(identity[0].f, "customer.currency_code") !== account.source.currency
     || get(identity[0].f, "customer.time_zone") !== account.source.timezone) fail("ACCOUNT_CONTEXT_INVALID");

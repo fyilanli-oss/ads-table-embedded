@@ -242,9 +242,11 @@ export function createSourceEvidenceRepository(database) {
       }
       if(read!==null&&kind==="google_dataset"){
         const multipart=Object.hasOwn(read,"packageCount");
+        const hasReportPlan=Object.hasOwn(read,"reportPlan");
         exact(read,["jobId","fence","window","observedAt","operationId","quotaContext","completedAt","deadlineAt","dataset",
-          ...multipart?["packageCount","pageCount","recordCount","families"]:[]]);
+          ...multipart?["packageCount","pageCount","recordCount","families"]:[],...hasReportPlan?["reportPlan"]:[]]);
         if(write.owner.provider!=="google_ads"||(!multipart&&write.ordinal!==0)
+          ||(hasReportPlan&&(read.dataset!=="product_performance"||read.reportPlan!=="google-daily-product-v1"))
           ||(multipart&&(!Number.isInteger(read.packageCount)||read.packageCount<2||read.packageCount>20||write.ordinal>=read.packageCount
             ||!Number.isInteger(read.pageCount)||read.pageCount<1||read.pageCount>300||!Number.isInteger(read.recordCount)||read.recordCount<0||read.recordCount>20000
             ||!Array.isArray(read.families)||read.dataset==="merchant_identity"||write.body.sourceState!=="partial"))

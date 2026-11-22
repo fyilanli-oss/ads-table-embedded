@@ -4,7 +4,7 @@ import {sourceStoreFixture} from "./source-store-fixture.js";
 import {datasetStorageFixture} from "./dataset-storage-fixture.js";
 import {sourcePayloadHash} from "../../app/lib/database/source-evidence-store.server.js";
 import {reportRetentionPolicy} from "../../app/lib/database/report-retention-policy.server.js";
-import {buildGoogleReportingQueries, GOOGLE_REPORTING_QUERY_FAMILIES} from "../../app/lib/providers/google-reporting.server.js";
+import {buildGoogleReportingQueries, GOOGLE_REPORTING_QUERY_FAMILIES, GOOGLE_DAILY_PRODUCT_QUERY_FAMILIES, GOOGLE_DAILY_PRODUCT_REPORT_PLAN} from "../../app/lib/providers/google-reporting.server.js";
 import {parseGoogleRawJson, projectGoogleRawPage} from "../../app/lib/providers/google-raw-projection.server.js";
 import {parseMetaRawJson, projectMetaRawPage} from "../../app/lib/providers/meta-raw-projection.server.js";
 import {createKlaviyoSourceCapture} from "../../app/lib/providers/klaviyo-source-capture.server.js";
@@ -57,7 +57,7 @@ export function googleDatasetNativeRows(family,account,{nonempty=true,googlePurc
 
 /** All native responses/credentials/owners are synthetic. Real capture projection,
  * AEAD and decrypt paths are used; this fake DB is not SQL/native acceptance. */
-export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", googleProducts=1, googleSalesProducts=googleProducts, googlePageSize=25, googleStorageMaxBytes=1048576, shopifyMapping=false, owner: givenOwner = null, cipher: givenCipher = null} = {}) {
+export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", googleProducts=1, googleSalesProducts=googleProducts, googlePageSize=25, googleStorageMaxBytes=1048576, googleDailyReport=false, shopifyMapping=false, owner: givenOwner = null, cipher: givenCipher = null} = {}) {
   const owner = givenOwner ? structuredClone(givenOwner) : datasetStorageFixture().owner;
   if (!givenOwner) {owner.installationId = "1"; owner.provider = provider; owner.accountId = provider === "meta" ? "act_123" : provider === "klaviyo" ? "account-1" : "123";}
   if (provider === "klaviyo") owner.selectionEpoch = null;
@@ -71,7 +71,8 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
   if (provider === "google_ads") {
     if(!Number.isInteger(googlePageSize)||googlePageSize<1||googlePageSize>10000)throw Error("SYNTHETIC_GOOGLE_PAGE_SIZE_INVALID");
     const queries = buildGoogleReportingQueries({dateWindow: {start: day, end: day}});
-    for (const [dataset, families] of [["account_performance", GOOGLE_REPORTING_QUERY_FAMILIES.slice(0, 9)], ["product_performance", GOOGLE_REPORTING_QUERY_FAMILIES.slice(9)]]) {
+    const productFamilies = googleDailyReport ? GOOGLE_DAILY_PRODUCT_QUERY_FAMILIES : GOOGLE_REPORTING_QUERY_FAMILIES.slice(9);
+    for (const [dataset, families] of [["account_performance", GOOGLE_REPORTING_QUERY_FAMILIES.slice(0, 9)], ["product_performance", productFamilies]]) {
       native.push({dataset, pages: families.flatMap(family => {
        const rows=googleDatasetNativeRows(family,owner.accountId,{nonempty,googlePurchase,googleProducts,googleSalesProducts,shopifyMapping});
        return Array.from({length:Math.max(1,Math.ceil(rows.length/googlePageSize))},(_,ordinal)=>projectGoogleRawPage(
@@ -117,10 +118,11 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
   }
   const seed = sourceStoreFixture({owner, ...givenCipher ? {cipher: givenCipher} : {}}), cipher = seed.input.cipher, batches = [], envelopes = new Map(); let nextId = 100;
   for (const item of native) {
+    const reportPlan = provider === "google_ads" && googleDailyReport && item.dataset === "product_performance" ? {reportPlan: GOOGLE_DAILY_PRODUCT_REPORT_PLAN} : {};
     if(provider==="google_ads"&&googleProducts>1){
       const attemptId=randomUUID(),writes=prepareGoogleRawDatasetPackages({owner,attemptId,dataset:item.dataset,pages:item.pages,complete:true,
         cipher,policy:seed.input.policy,limits:{maxRows:1000,maxBytes:googleStorageMaxBytes},now:new Date().toISOString()});
-      const read={jobId,fence,window,operationId,dataset:item.dataset,...writes.length>1?{packageCount:writes.length,pageCount:item.pages.length,
+      const read={jobId,fence,window,operationId,dataset:item.dataset,...reportPlan,...writes.length>1?{packageCount:writes.length,pageCount:item.pages.length,
         recordCount:item.pages.reduce((n,p)=>n+p.records.length,0),families:[...new Set(item.pages.map(p=>p.family))].sort()}: {}};
       // prepareSourceWrite already emitted canonical JSON. Hash those exact
       // bytes, as the source client does; don't feed ciphertext back through
@@ -138,7 +140,7 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
     const records = Object.fromEntries(["references", "rules", "mappings", "orders", "lines", "journeys", "claims", "links"].map(k => [k, []]));
     const f = sourceStoreFixture({owner, cipher, attemptId, sourceState: item.partial ? "partial" : "complete", pages, records,
       ...provider==="google_ads"&&googleProducts>1?{limits:{maxRows:1000,maxBytes:1048576}}:{}});
-    const write = f.prepare(), batchId = String(++nextId), read = {jobId, fence, window, operationId, dataset: item.dataset, ...(item.coverage ? {coverage: item.coverage} : {})};
+    const write = f.prepare(), batchId = String(++nextId), read = {jobId, fence, window, operationId, dataset: item.dataset, ...reportPlan, ...(item.coverage ? {coverage: item.coverage} : {})};
     const receipt = {status: "committed", batchId, commitId: randomUUID(), digest: sourcePayloadHash(write.body), sourceState: write.body.sourceState,
       manifest: {counts: {pages: pages.length}, [spec.read]: read, [spec.digest]: sourcePayloadHash(write.body)}};
     const storedPages = write.body.pages.map(p => ({...p, id: String(++nextId), available: true, expired: false, retentionPruned: false}));

@@ -1303,7 +1303,7 @@
       "app/lib/database/dataset-storage.server.js": "fabae3d81b7c056249ff12c3978af0ebcf3caf77145c7fa84e2b7d819de6dbbf",
       "app/lib/database/google-acceptance-coordinator-postgres.server.js": "fac80e170cbff24d73c1c40201dee3371d6f4f6c549634e14b7d230cd94a038d",
       "app/lib/database/google-account-selection-repository.server.js": "1155c186cb7a4ac712798033e80c1b5b3214e41e2b91c05de047a85ce378df3e",
-      "app/lib/database/google-dataset-source-store.server.js": "15be34a1a651b4e773cf50212bacd9ac303338247303649aa1f12001f09214fb",
+      "app/lib/database/google-dataset-source-store.server.js": "255d13f9e40197a80cc9b8341283e6cc17c1e9e528d25697f6c55e460debacb6",
       "app/lib/database/google-pmax-history.server.js": "d880bab9f8bf60ffec3e8e5e9a4546bb78cfbf1ed43a66611dc2d1994a7aba7c",
       "app/lib/database/google-source-postgres.server.js": "2fcc8493452ab5641594e0d9e282b739f8fa1100dc53284b8d5dc2c7aa7cbe37",
       "app/lib/database/identity-authority-repository.server.js": "a4d157e77dde93c26e2fb28c915f1c5a92fc3ebf11ccc59ca649dca2df032f0c",
@@ -1333,7 +1333,7 @@
       "app/lib/database/shopify-runtime-repositories.server.js": "2bbf7ccb879854c6b9f9665a85da640e3d7ae174eeaedee513aefb29f32001c4",
       "app/lib/database/shopify-session-repository.server.js": "040e991c8cfa9262a256ad47606c808b5ca089b489b4191803ef215f440b7741",
       "app/lib/database/source-evidence-config.server.js": "bd54f2db85b1882835b2f4caa4b095376290022ce3a1231030ebfcb047edc2bd",
-      "app/lib/database/source-evidence-store.server.js": "02b96d695c6337c676cbb85ba60094f7c90f326a0f532aff2e0f0fceb051e79a",
+      "app/lib/database/source-evidence-store.server.js": "6b62934a91ee13da6232b0f2f88af285d50f5ea1a4c95b24736d3e940e49345e",
       "app/lib/database/source-retention-policy.server.js": "2c996253a6a519934a11aaa559429ac468a97e6a93e02fa7cc3880c6e0cd44b5",
       "app/lib/database/source-retention.server.js": "93946205de16d88c9908c922c3d0b7df60aeae4b02fac71a7f4470da55d60e11",
       "app/lib/database/source-rule-store.server.js": "0e4ea85dd648d05d8f09025395a04a2d58583070cc4611770921b0e3c2588a3d",
@@ -1384,8 +1384,8 @@
       "app/lib/providers/google-raw-projection.server.js": "1c7f06a2eaa7e603fd90a1404a97e262ed70821af125a607442947aa435fb643",
       "app/lib/providers/google-reporting-authority.server.d.ts": "70107ae21296bcdb87561efadf2ea79316eacfb4e5a3d60275836cb18cc8a828",
       "app/lib/providers/google-reporting-authority.server.js": "580024dd12f72c21291c7483810cd564d524e1c2b69edc6f60582b9038e9492d",
-      "app/lib/providers/google-reporting.server.d.ts": "df376bc7e210315d6eba7ece87a0169fea96dc86d0c53c3ef628dda0a762994a",
-      "app/lib/providers/google-reporting.server.js": "69113d04a24e230938eaf123857bcde5d988d5f0c032f35e196e4365d6270547",
+      "app/lib/providers/google-reporting.server.d.ts": "4ed6ee0c73ccf4560579089e864ff750b2b2a10a58054a2e0a1df27664bb0b90",
+      "app/lib/providers/google-reporting.server.js": "b9daa2d598392d1229924f53233d9c224695b13c9647f1b8baec55bf5df8dbd1",
       "app/lib/providers/google-source-candidates.server.js": "6335720b3e58274e833b343a6d3c4c3a8a51c41b473507632647fa652ff4dba3",
       "app/lib/providers/google-source-links.server.d.ts": "f28b0ee64d246d5eee51ed0f00fd884d1d5e5c45834cb466a01982b3db5d4d33",
       "app/lib/providers/google-source-links.server.js": "aa6fda1a1259d9576faa6977360ccdf88282a09effdc1364bbec8e992c828ad1",
@@ -1445,7 +1445,7 @@
       "app/lib/providers/quota-managed-clients.server.js": "10ce33751ec6dc1689c9cd7a8ae8515cc42521ba2e44baaac9cf8c08588f6cc6",
       "app/lib/providers/reference-prewrite.server.js": "c449e44090d787149c3c11a1586de514933072701818cfbbf2c3c770a65f2bab",
       "app/lib/providers/sales-role-prewrite.server.js": "5359c43623adeb8d53f432d5f7f003447e2817154e8f279f9ee5bff0a02d4e24",
-      "app/lib/providers/stored-dataset-projection.server.js": "f76b6bdc4014b4369f71e47e3b9fac7920edb5f59a844e38c6d281495aa5b97a",
+      "app/lib/providers/stored-dataset-projection.server.js": "5973a1d145fcc499f7e84386e16c7d948d36c23c814a7295a75f5c1bcb7a3f3f",
       "app/lib/providers/stored-klaviyo-dataset.server.js": "de3be7dd771b4d0362af299b87b70a0f8a206bc7a1635b1801c3cb41b2bd99bc",
       "app/lib/providers/stored-meta-dataset.server.js": "176c3fb5c10d884f40dc799cf26785470f6b8a178dfb67ac6a40992cadf75a46",
       "app/lib/refresh/admission-policy.server.js": "f3dc10208610c535b45a112dd85eb32259da32810682a9f4c0d653cddbe77825",
@@ -1465,7 +1465,7 @@
       "app/lib/refresh/google-private-request.server.js": "7b0478039ba92f5edf5c885ff73f7d8c47b68372114f1b095b4454cc11bf4dfd",
       "app/lib/refresh/google-quota-observation.server.js": "9eb32e1a3139ee0308e3cf5f47978f680bda37685321f6bdd81b26975e424f2a",
       "app/lib/refresh/google-raw-dataset-plan.server.js": "a29082b72a0879d46a46406c00802b920a22c12b7925ff2156ebcb0d924a20f5",
-      "app/lib/refresh/google-raw-datasets.server.js": "9e296cf9fc9a903a8b952f39feed1db1dd406492dc7494809f1eebb908f146f0",
+      "app/lib/refresh/google-raw-datasets.server.js": "47aee7fee412d5e81455c2b97e24a58fc351343381666981fcd5111674d24725",
       "app/lib/refresh/google-raw-reader.server.js": "6c9a848346cd759cda862f74f2894c95671f1544d02fcf33e67b5856b96d8578",
       "app/lib/refresh/google-raw-request.server.d.ts": "40a61ee0a5d38fe8f35b942073215641702826d76ba7fac375bd014445e80f7f",
       "app/lib/refresh/google-raw-request.server.js": "cf4d8ec140f409815c16d46580c59474629edeba54344c662ca1b12134bc95f1",
@@ -1705,6 +1705,7 @@
       "supabase/migrations/20261117174509_eo05_klaviyo_daily_raw_packages.sql": "e89ac6971d103e739b6ddf78df960b08d96951147c4da80f1040c1f3868263e4",
       "supabase/migrations/20261117183725_eo05_klaviyo_report_package_staging.sql": "1daf432e1232088ba74c86b2036c184b55aa36c00203160cfb413570d205ee6d",
       "supabase/migrations/20261119112554_eo05_google_daily_packages.sql": "4926f56467c5c0d5d0c212074c9d9f5bb25ad3cdeb837c07df19377ddfbd612b",
+      "supabase/migrations/20261122095213_eo05_google_daily_query_plan.sql": "b7003f755b8fa292f8d696b133a2b51e3570702c464ce6dc4306b406e2704ef5",
       "tests/a6-docs-01-turkish-standardization.test.js": "90df09b309720d65e97d71c9c6bcfa75ddf43ff8935b9f060b32ae33cf664d46",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
@@ -1766,7 +1767,7 @@
       "tools/eo05-four-phase-diagnostics.mjs": "c95afca832e974a24f69f819813a4eb003dd2cded579856f6a0923f7de6b29b9",
       "tools/eo05-google-acceptance-probe.mjs": "6895c9f7f2180de717b27e2c86572cfcd79967bb7b84c0b0f1c450ffcf372797",
       "tools/eo05-google-daily-packages-probe.mjs": "06303e6a0e0bdef025d847c1e78b928e122a70e76c1340b756e3e90e59a1b5f0",
-      "tools/eo05-google-daily-timing-probe.mjs": "b6479a57938b69700b38721fb693f7ea23f3a1fb8e53fcd088549f6e909dd097",
+      "tools/eo05-google-daily-timing-probe.mjs": "475537d8739540d4fd68ec0de7a8f4390946d530b3019e50b62fa39439abc5b6",
       "tools/eo05-google-hosted-benchmark.mjs": "2724b75f248a74a447108afb0a35b804be8c13bee98f1da3ba43b8bd26fbd77e",
       "tools/eo05-google-identity-renewal-probe.mjs": "2f429c983600225ccdc9cadeede2611de9d48522dc575d5cb583b324b6f07fd1",
       "tools/eo05-google-mapping-flow-probe.mjs": "4cbdd4f19fb6db6ae199daa1ffcc5921ec885e467d45a1ec4abf2e6e14650d2d",
@@ -5054,6 +5055,54 @@
         "exact_remote_content_verification",
         "native_desktop_mobile_owner_review",
         "separate_merge_approval"
+      ]
+    },
+    {
+      "id": "eo05-google-daily-overlapping-cart-query-2026-11-22",
+      "date": "2026-11-22",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Fırat: Tamam onaylıyorum Codex. Onaylanan teklif: 12 numaralı genel satış sorgusunu günlük Google planından çıkar, 13–15'i koru, ham kayıt ve paket tamlığını güncelle ve aynı Dataset'i doğrula."
+      },
+      "rationale": "Remove the redundant general Cart Data request only from the closed-day Google report plan. Require the exact reduced family set under an explicit receipt marker. Preserve the full historical plan and all authorization, credential and other provider behavior.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "changed_paths": [
+        "app/lib/database/google-dataset-source-store.server.js",
+        "app/lib/database/source-evidence-store.server.js",
+        "app/lib/providers/google-reporting.server.d.ts",
+        "app/lib/providers/google-reporting.server.js",
+        "app/lib/providers/stored-dataset-projection.server.js",
+        "app/lib/refresh/google-raw-datasets.server.js",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "supabase/migrations/20261122095213_eo05_google_daily_query_plan.sql",
+        "tools/eo05-google-daily-timing-probe.mjs"
+      ],
+      "tests": [
+        "tests/google-daily-packages.test.js",
+        "tests/google-raw-datasets-permission.test.js",
+        "tests/google-daily-timing-probe.test.js",
+        "tools/eo05-shared-refresh-probe.mjs",
+        "tools/check-migration-lineage.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-22",
+      "official_sources": [
+        "https://developers.google.com/google-ads/api/docs/shopping-ads/reporting",
+        "https://supabase.com/docs/guides/deployment/database-migrations",
+        "https://supabase.com/changelog.md",
+        "https://www.postgresql.org/docs/17/sql-createfunction.html"
       ]
     }
   ],

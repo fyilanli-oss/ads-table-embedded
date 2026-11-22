@@ -1306,6 +1306,7 @@
       "app/lib/database/google-daily-product-mapping.server.js": "f9acd82a476f93107c4866288d6cca0e20a9d918358e67ee4fcc0b050fbfcf19",
       "app/lib/database/google-dataset-source-store.server.js": "255d13f9e40197a80cc9b8341283e6cc17c1e9e528d25697f6c55e460debacb6",
       "app/lib/database/google-pmax-history.server.js": "d880bab9f8bf60ffec3e8e5e9a4546bb78cfbf1ed43a66611dc2d1994a7aba7c",
+      "app/lib/database/google-report-product-registration.server.js": "920a270a3dd4a4ec159356fa14b7f8c4d5b0c630c6566d1109297b997cad80a9",
       "app/lib/database/google-source-postgres.server.js": "2fcc8493452ab5641594e0d9e282b739f8fa1100dc53284b8d5dc2c7aa7cbe37",
       "app/lib/database/identity-authority-repository.server.js": "a4d157e77dde93c26e2fb28c915f1c5a92fc3ebf11ccc59ca649dca2df032f0c",
       "app/lib/database/klaviyo-dataset-source-store.server.js": "05f2c72c37822ddcf8b91223f43b5e5e875b7b45985cb3a694a1ee5c0516b83c",
@@ -1340,7 +1341,7 @@
       "app/lib/database/source-rule-store.server.js": "0e4ea85dd648d05d8f09025395a04a2d58583070cc4611770921b0e3c2588a3d",
       "app/lib/database/supabase-root-ca-2021.server.js": "49a95de46f1b5272a7d5ed5a4cfc1bdb12f00945c51956430e356bbca652bdda",
       "app/lib/database/token-vault-repository.server.js": "788eb58b01c8d0189f293f87e94264340f7a22d8dd32a932c7cfb9c258f4af2d",
-      "app/lib/database/verified-mapping-store.server.js": "d1a3771ff1837eb3e1904768a12f5b650314163e2318c9e08573a8e15358ae6f",
+      "app/lib/database/verified-mapping-store.server.js": "42281462347fce17ff1969e749725d56ff05324ab7238013cc4638c2e16c3760",
       "app/lib/oauth/combined-setup-accounts.server.js": "0bc1db2994c74e514d08831a99b2552e4930d7e489911641a7e25d6779622adc",
       "app/lib/oauth/combined-setup-assets.server.js": "2d7caad6805d6ed6a535efeade78f3eab06737632114aee8d2d38dace69573e1",
       "app/lib/oauth/google-identity-credential.server.js": "c52d8717b9354c062bc46a27cf61d37fc5bc7a523cd068605c7f49c25cfb1341",
@@ -1708,6 +1709,7 @@
       "supabase/migrations/20261119112554_eo05_google_daily_packages.sql": "4926f56467c5c0d5d0c212074c9d9f5bb25ad3cdeb837c07df19377ddfbd612b",
       "supabase/migrations/20261122095213_eo05_google_daily_query_plan.sql": "b7003f755b8fa292f8d696b133a2b51e3570702c464ce6dc4306b406e2704ef5",
       "supabase/migrations/20261122104235_eo05_google_daily_verified_product_links.sql": "0a27ac94c00e58e9282e2ead014f5ef7a818017db8ea116b565b5b89b0bc0d5a",
+      "supabase/migrations/20261122111445_eo05_google_register_report_product_link.sql": "bf38547d3109221720f29a281935e11cdc65e1e6372cdbc20083f63f425aded4",
       "tests/a6-docs-01-turkish-standardization.test.js": "90df09b309720d65e97d71c9c6bcfa75ddf43ff8935b9f060b32ae33cf664d46",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
@@ -1769,7 +1771,7 @@
       "tools/eo05-four-phase-diagnostics.mjs": "c95afca832e974a24f69f819813a4eb003dd2cded579856f6a0923f7de6b29b9",
       "tools/eo05-google-acceptance-probe.mjs": "6895c9f7f2180de717b27e2c86572cfcd79967bb7b84c0b0f1c450ffcf372797",
       "tools/eo05-google-daily-packages-probe.mjs": "06303e6a0e0bdef025d847c1e78b928e122a70e76c1340b756e3e90e59a1b5f0",
-      "tools/eo05-google-daily-timing-probe.mjs": "b28428c038ef0fac60e29dd762ece1aa28655a8f28fd8c94201799494098da3b",
+      "tools/eo05-google-daily-timing-probe.mjs": "2d88d83e783665c4f9ca76bc4ada360e623fc5000c8566a4dacc167507b4add7",
       "tools/eo05-google-hosted-benchmark.mjs": "2724b75f248a74a447108afb0a35b804be8c13bee98f1da3ba43b8bd26fbd77e",
       "tools/eo05-google-identity-renewal-probe.mjs": "2f429c983600225ccdc9cadeede2611de9d48522dc575d5cb583b324b6f07fd1",
       "tools/eo05-google-mapping-flow-probe.mjs": "4cbdd4f19fb6db6ae199daa1ffcc5921ec885e467d45a1ec4abf2e6e14650d2d",
@@ -1809,7 +1811,7 @@
       "tools/eo05-shared-quota-probe.mjs": "653dc43e21f5c7f1a9fdd9b7dac4ceea3f96ef4ecce0916438cc27db3fd97290",
       "tools/eo05-shared-refresh-probe.mjs": "00ef6ebd38186d5803c1e2658391e5970b8114e70f968742b34aac86aa048448",
       "tools/eo05-shopify-installation-owner-probe.mjs": "83455ad97e85cae388aeb92b72ab314cc582384233c40fdeb0ed569997ca1668",
-      "tools/eo05-shopify-mapping-timing-fixture.mjs": "0638aa6ac122619152f9494b96645026fbf32e7d9e8962e7a5ee5f0cca8d1db0",
+      "tools/eo05-shopify-mapping-timing-fixture.mjs": "873272e09b466142f30414306bb4282b5de573e43b48f1335f3e1e2427832b63",
       "tools/eo05-shopify-order-admin-probe.mjs": "f32b9cc99f3aab0e78c81bd1c481c2478534666ff00a5cbf51cebe0ae4b0d608",
       "tools/eo05-shopify-order-entitlement-probe.mjs": "02b9291e443cad2e90b98837dde3ed6a39afcb4c3ca01b2ea227177b1ae91ef9",
       "tools/eo05-shopify-order-fair-dispatch-probe.mjs": "8d9235325cf6ac6b6050beb9824b49672b1ee4aaecabacf42470d29581f83cfa",
@@ -5153,6 +5155,52 @@
         "https://shopify.dev/docs/api/usage/gids",
         "https://supabase.com/changelog.md",
         "https://www.postgresql.org/docs/17/ddl-rowsecurity.html",
+        "https://www.postgresql.org/docs/17/sql-createfunction.html"
+      ]
+    },
+    {
+      "id": "eo05-google-first-reviewed-report-product-link-2026-11-22",
+      "date": "2026-11-22",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Fırat: Tamam devam edelim Codex. Önceki somut kapsam: Yeni veya değişmiş ürün kodu için ilk eşlemeyi doğrulayıp kaydetme."
+      },
+      "rationale": "Allow controlled registration from an authenticated Google report page, a current Merchant-to-Shopify mapping and an explicit review bound to the exact input. Persist evidence and role, handle same-day replacement only when the explicit expected old mapping matches, and exclude invalidated report proof when reading. Exercise the registered link in the normal daily code within an isolated rollback. No native data claims, OAuth behavior, provider calls, live role grants or activation.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "changed_paths": [
+        "app/lib/database/google-report-product-registration.server.js",
+        "app/lib/database/verified-mapping-store.server.js",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "supabase/migrations/20261122111445_eo05_google_register_report_product_link.sql",
+        "tools/eo05-google-daily-timing-probe.mjs",
+        "tools/eo05-shopify-mapping-timing-fixture.mjs"
+      ],
+      "tests": [
+        "tests/google-daily-packages.test.js",
+        "tests/verified-mapping-store.test.js",
+        "tests/google-daily-timing-probe.test.js",
+        "tools/eo05-shopify-mapping-timing-fixture.mjs",
+        "tools/check-migration-lineage.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-22",
+      "official_sources": [
+        "https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view",
+        "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/get",
+        "https://shopify.dev/docs/api/usage/gids",
+        "https://supabase.com/changelog.md",
         "https://www.postgresql.org/docs/17/sql-createfunction.html"
       ]
     }

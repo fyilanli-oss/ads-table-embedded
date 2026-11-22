@@ -13,6 +13,37 @@ import {projectStoredGoogleDataset} from "../app/lib/providers/stored-dataset-pr
 import {GOOGLE_DAILY_PRODUCT_REPORT_PLAN} from "../app/lib/providers/google-reporting.server.js";
 import {bindGoogleDailyProductMappings} from "../app/lib/database/google-daily-product-mapping.server.js";
 import {verifiedMappingFixture} from "./fixtures/verified-mapping-fixture.js";
+import {REGISTER_GOOGLE_REPORT_PRODUCT_SQL,registerReviewedGoogleReportProduct} from "../app/lib/database/google-report-product-registration.server.js";
+import {randomUUID} from "node:crypto";
+
+test("Google report link registration requires authenticated report evidence and an exact approval", async () => {
+ const base=verifiedMappingFixture("google_ads");
+ const data=await datasetSourceBindingFixture("google_ads",{owner:base.owner,cipher:base.cipher,shopifyMapping:true,googleDailyReport:true});
+ const source=await readStoredDatasetSources(data);
+ const sale=source.datasets.find(d=>d.dataset==="product_performance").pages.find(p=>p.family==="pmax_cart_data_product_sales_daily");
+ const snapshot=base.snapshot();
+ Object.assign(snapshot.mapping,{state:"verified",productId:"gid://shopify/Product/123",variantId:"gid://shopify/ProductVariant/456"});
+ const identity=JSON.parse(snapshot.mapping.identityKey),decisionId=randomUUID();
+ const target={identity,pageId:sale.ref.page_id,role:"sold",replacesMappingId:null};
+ let writes=0;
+ const database={async query(sql,args){
+  assert.deepEqual(JSON.parse(args[0]),source.owner);
+  if(sql.includes("lookup_verified_mapping"))return {rows:[{result:snapshot}]};
+  assert.equal(sql,REGISTER_GOOGLE_REPORT_PRODUCT_SQL);writes++;
+  const body=JSON.parse(args[1]);
+  assert.equal(body.sourceDigest,sale.ref.payload_hash);assert.equal(body.sourcePageId,sale.ref.page_id);
+  assert.equal(body.decisionId,decisionId);assert.equal(body.role,"sold");
+  return {rows:[{result:{status:"registered",mappingId:"1",businessDate:source.scope.window.from,role:"sold",decisionId}}]};
+ }};
+ const input={source,database,cipher:base.cipher,deadlineAt:Date.now()+60000,target,
+  reviewAuthority:({proposalHash,expiresAt})=>({status:"approved",proposalHash,validUntil:expiresAt,decisionId})};
+ await assert.rejects(registerReviewedGoogleReportProduct({...input,source:structuredClone(source)}),/INPUT_INVALID/);
+ await assert.rejects(registerReviewedGoogleReportProduct({...input,target:{...target,identity:{...identity,nativeId:"unrelated"}}}),/REPORT_EVIDENCE_REQUIRED/);
+ await assert.rejects(registerReviewedGoogleReportProduct({...input,reviewAuthority:()=>({status:"approved",proposalHash:"wrong"})}),/EXPLICIT_REVIEW_REQUIRED/);
+ assert.equal(writes,0);
+ assert.equal((await registerReviewedGoogleReportProduct(input)).mappingId,"1");
+ assert.equal(writes,1);
+});
 
 test("Google daily mapping verifies exact reviewed roles and shares a single evidence read across repeated rows", async () => {
  const f=verifiedMappingFixture("google_ads");

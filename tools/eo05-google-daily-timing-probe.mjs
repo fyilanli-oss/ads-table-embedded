@@ -805,7 +805,6 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   const verified=await loadGoogleBackgroundOwner({database:runtime,owner:{workspaceId:owner.workspaceId,installGeneration:Number(owner.generation),shopId:owner.shopId,shopDomain:owner.shopDomain}});
   const tokenVault=createTokenVault({database:runtime,environment}),cipher=createConfiguredSourceEvidenceCipher(environment);
   const mapping=shopifyMapping?await seedShopifyMappingTimingFixture(client,{owner,cipher,window}):null;
-  if(sharedRefresh&&mapping)await mapping.seedGoogleDailyReportLinks();
   if(sharedRefresh){sharedRefresh.setCoordinator(coordinator);store=await sharedRefresh.beforeWork({owner,cost,store});}
   const limits={deadlineAt:now()+120000,requestTimeoutMs:100000,finishReserveMs:2000,maxRows:2000,maxBytes:cost.bytes};
   const appId="gid://shopify/App/456",entitlementVerifier=sharedRefresh?.partnerVerifier({store,owner,now,limits})??createRefreshEntitlementVerifier({store,appId,now,limits,authorizeRead:async()=>true,
@@ -842,8 +841,10 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
     for(const kind of ["account_performance","product_performance"]){const d=capture.datasets[kind];for(const p of d.packageReceipts??[d])batches.push({attemptId:p.attemptId,ordinal:p.ordinal});}
     ledger.phaseAt("handoff");return {kind:"complete",payload:{batchCount:batches.length}};
    },validatePage:({payload})=>({complete:payload.batchCount>=2,rows:[]}),
-   async loadDatasetInputs(){ledger.phaseAt("reportPreparation");return {owner,batches,cipher,expectedRevision:0,googleDailyPackages:true,
-    ...(mapping&&!sharedRefresh?{bindSyntheticMappings:mapping.bindSyntheticMappings}:{})};}
+   async loadDatasetInputs({deadlineAt}){ledger.phaseAt("reportPreparation");
+    if(sharedRefresh&&mapping)await mapping.seedGoogleDailyReportLinks({batches,deadlineAt});
+    return {owner,batches,cipher,expectedRevision:0,googleDailyPackages:true,
+      ...(mapping&&!sharedRefresh?{bindSyntheticMappings:mapping.bindSyntheticMappings}:{})};}
   }});
   const measured=ledger.stop();if(failed)throw Object.assign(Error(failed.message),failed);
   if(sharedRefresh)await sharedRefresh.afterClose(owner,run);

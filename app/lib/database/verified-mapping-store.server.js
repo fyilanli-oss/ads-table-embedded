@@ -135,7 +135,7 @@ export function createVerifiedMappingRepository({database,cipher,now=Date.now}={
     return freeze({...receipt,historical:true,authorizesActivation:false,DatasetWritePerformed:false});
    }catch{fail("WRITE_UNCONFIRMED");}
   },
-  async readCurrent(input){const s=await load(input,false);if(s.snapshot.mapping.state!=="verified")fail("NOT_VERIFIED");return freeze({status:"verified",mappingId:s.snapshot.mapping.id,ruleId:s.snapshot.rule.id,revision:s.snapshot.mapping.revision,...s.accepted,context:s.snapshot.mapping.context,owner:s.owner,reportNamespaceVerified:false,authorizesActivation:false,DatasetWritePerformed:false});},
+  async readCurrent(input){const s=await load(input,false);if(s.snapshot.mapping.state!=="verified")fail("NOT_VERIFIED");return freeze({status:"verified",mappingId:s.snapshot.mapping.id,ruleId:s.snapshot.rule.id,revision:s.snapshot.mapping.revision,...s.accepted,expiresAt:new Date(s.expiresAt).toISOString(),context:s.snapshot.mapping.context,owner:s.owner,reportNamespaceVerified:false,authorizesActivation:false,DatasetWritePerformed:false});},
   async inspect({owner,operationId}){try {owner=sourceStoreOwner(owner);if(!uuid(operationId))fail("INPUT_INVALID");const r=single(await database.query("select evidence.read_source_receipt($1::jsonb,$2::uuid,0) as result",[JSON.stringify(owner),operationId]));
    if(r.status==="not_observed")return freeze({status:"not_observed",rollbackProven:false});
    if(!["committed","invalidated"].includes(r.status)||r.manifest?.kind!=="mapping_verification_v1")fail("RECEIPT_INVALID");return freeze({...r,historical:true,currentMappingVerified:false});}catch(error){if(/^MAPPING_STORE_[A-Z_]+$/.test(error?.message??""))throw error;fail("READ_FAILED");}}

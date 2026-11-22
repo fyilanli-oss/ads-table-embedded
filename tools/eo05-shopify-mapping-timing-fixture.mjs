@@ -5,6 +5,8 @@ import {verifyShopifyProductCandidate,shopifyProductVerificationEvidence} from "
 import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
 import {verifiedMappingFixture} from "../tests/fixtures/verified-mapping-fixture.js";
 import {createSyntheticReportMapping} from "../tests/fixtures/refresh-shopify-mapping-probe.js";
+import {readStoredDatasetSources} from "../app/lib/database/dataset-source-reader.server.js";
+import {registerReviewedGoogleReportProduct} from "../app/lib/database/google-report-product-registration.server.js";
 
 export async function seedShopifyMappingTimingFixture(client,{owner,cipher,window}) {
   assert.equal(client.connectionParameters.host,"127.0.0.1");
@@ -84,12 +86,23 @@ export async function seedShopifyMappingTimingFixture(client,{owner,cipher,windo
     }
   };
   const mappingId=receipt.manifest.ids["mapping:m"];
-  async function seedGoogleDailyReportLinks() {
+  async function seedGoogleDailyReportLinks({batches,deadlineAt}) {
     assert.equal(google,true);
-    await client.query(`insert into identity.google_report_product_links
-      (workspace_id,installation_id,installation_generation,mapping_id,business_date,product_role,valid_until)
-      select $1,$2,$3,$4,$5,roles.product_role,clock_timestamp()+interval '1 hour'
-      from unnest(array['performance','sold']) as roles(product_role)`,[owner.workspaceId,owner.installationId,owner.generation,mappingId,window.from]);
+    const source=await readStoredDatasetSources({database:client,cipher,owner,batches,
+      limits:{maxRows:2000,maxPages:100,maxBytes:16777216,deadlineAt}});
+    const pages=source.datasets.find(dataset=>dataset.dataset==="product_performance").pages;
+    for(const [role,family] of [["performance","pmax_product_daily"],["sold","pmax_cart_data_product_sales_daily"]]) {
+      const page=pages.find(item=>item.family===family);
+      const receipt=await registerReviewedGoogleReportProduct({source,database:client,cipher,deadlineAt,
+        target:{role,pageId:page.ref.page_id,identity,replacesMappingId:null},
+        reviewAuthority:({claim,proposalHash,expiresAt})=>{
+          assert.deepEqual(claim.identity,identity);
+          assert.equal(claim.productId,verified.candidate.product_id);
+          return {status:"approved",decisionId:randomUUID(),proposalHash,validUntil:expiresAt};
+        }});
+      assert.equal(receipt.mappingId,mappingId);
+    }
+    assert.equal((await client.query("select count(*)::int as total from identity.google_report_product_links where mapping_id=$1 and decision_id is not null and source_page_id is not null",[mappingId])).rows[0].total,2);
   }
   return {bindSyntheticMappings,seedGoogleDailyReportLinks,mappingId,
     productId:verified.candidate.product_id,nativeId:identity.nativeId,summary:()=>({reads,lookupMs})};

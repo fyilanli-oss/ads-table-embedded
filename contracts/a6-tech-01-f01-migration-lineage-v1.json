@@ -1116,6 +1116,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261122111445",
+      "name": "eo05_google_register_report_product_link",
+      "file": "supabase/migrations/20261122111445_eo05_google_register_report_product_link.sql",
+      "created_with": "supabase@2.121.0 migration new eo05_google_register_report_product_link",
+      "repository_sql_sha256": "88c003407b48e490572f7bf1629b21500e5b419fad0ac5ecb16403cd67d226f5",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

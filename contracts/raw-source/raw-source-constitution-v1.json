@@ -843,7 +843,7 @@
       "contracts/eo-05-step15-google-live-acceptance-v1.json": "1444654b503858b047b2bd1dc0a1c41d0e7bca2e192023a63c7ebb5c95e4dbd5",
       "contracts/eo-05-step15-google-source-role-v1.json": "00e7820d1b0537f42d6af09d593857169d6f1a7b8baf200953c86b8358977835",
       "contracts/eo-05-step15-storage-design-v1.json": "6aea99251e3b467c3ac2c48cec3d81a201c35527e135c0ebac2b957ddd7c8d2c",
-      "contracts/eo-05a-global-refresh-design-v1.json": "a2cb32b2185fc39a603765d098a7b6363894d4b8f5b57d672e9a09d600106416",
+      "contracts/eo-05a-global-refresh-design-v1.json": "b07903aa102036bd163cd1133259a485bf667012d3c1fa4c093129b0c6daa4a9",
       "contracts/eo-05a-quota-authority-binding-v1.json": "36513785f0c62a18f0a4d81169f77b534b7aaa85e80e9821becde522401eec0a",
       "contracts/eo-05a-quota-native-transport-v1.json": "867509849717c4500cf206e1a4f05c0487bddfea1fe9fdcf8130299ad5dae461",
       "contracts/eo-05a-quota-scope-resolver-v1.json": "9162628db08897eb901e65b6dde438edc4ca5cce42b8c138e942ee1e4536c881",
@@ -3214,6 +3214,47 @@
         "https://shopify.dev/docs/api/usage/gids",
         "https://supabase.com/changelog.md",
         "https://www.postgresql.org/docs/17/sql-createfunction.html"
+      ]
+    },
+    {
+      "id": "eo05-document-google-daily-query-list-2026-11-22",
+      "date": "2026-11-22",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Fırat: Tamam Codex onaylıyorum. Önceki kapsam: Meta öncesinde 17 günlük Google sorgusunu adı, amacı ve koşullu ek çağrılarıyla sözleşmeye ekle."
+      },
+      "rationale": "Document the existing daily Google Ads query order and the distinct conditional Merchant and paging calls. Preserve historical rehearsal evidence.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "changed_paths": [
+        "contracts/eo-05a-global-refresh-design-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json"
+      ],
+      "documentation_paths": [
+        "contracts/eo-05a-global-refresh-design-v1.json",
+        "docs/EO_05A_REFRESH_CONTRACT.md"
+      ],
+      "tests": [
+        "compare_exact_daily_query_names_order_and_baseline_with_runtime_exports",
+        "existing_raw_source_and_oauth_constitution_guards",
+        "existing_refresh_and_document_regressions"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-22",
+      "official_sources": [
+        "https://developers.google.com/google-ads/api/docs/shopping-ads/reporting",
+        "https://developers.google.com/google-ads/api/docs/reporting/paging",
+        "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list"
       ]
     }
   ],

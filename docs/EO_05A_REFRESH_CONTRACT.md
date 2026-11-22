@@ -48,11 +48,37 @@ Karar ve kanıt tarihi **21 Kasım 2026**. Bu belge, AdsTable’ın Google Ads, 
 
 | Sağlayıcı | Alt akış ve başarı kanıtı | Açık sınır |
 |---|---|---|
-| Google Ads | Yetkili reklam hesabı ve doğrulanmış kaynak sürümü. Mevcut dokuz hesap/kampanya ve sekiz ürün/performans sorgu ailesi. Bağlama göre Merchant ürün bağlantısı. Hesap gözlemleri, Shopping ve Performance Max kaynak ayrımı, kaynak sayfaları ve paket kapsaması. Satış rolleri için ayrı reklamı yapılan ürün ve satılan ürün native alanları. | Merchant bağlantısının eksikliği ürün adedini sıfırlamaz. Dönüşüm günü ve etkileşim günü birbirinin yerine kullanılmaz. Geçmiş Performance Max hiyerarşisi ve canlı eşleme, kendi kanıt şartlarına bağlıdır. |
+| Google Ads | Yetkili reklam hesabı ve doğrulanmış kaynak sürümü. Günlük planda dokuz hesap/kampanya ve yedi ürün/performans sorgusu ile bir Merchant bağlantı kontrolü çalışır. Satış rolleri için reklamı yapılan ürün ve satılan ürün alanları ayrı tutulur. | Merchant bağlantısının eksikliği ürün adedini sıfırlamaz. Dönüşüm günü ve etkileşim günü birbirinin yerine kullanılmaz. Geçmiş Performance Max hiyerarşisi ve canlı eşleme, kendi kanıt şartlarına bağlıdır. |
 | Klaviyo | Hesap ve yapılandırma, `Placed Order`, `Added to Cart`, `Checkout Started` ve Shopify entegrasyonlu `Ordered Product` metric keşfi. Campaign ve Flow raporları ile `Ordered Product` olay sayfaları. Hesap, metric, olay, mesaj ve gerektiğinde ilişkili kampanya/akış kanıtı kendi native hiyerarşisinde tutulur. | Shopify metric’i eksikse sonuç kullanılamaz sayılır. Campaign veya Flow toplamı ürün satışı olarak çoğaltılmaz. Olay ve Shopify siparişinin eşleşmesi ayrı kanıt ister. |
 | Meta | İzin doğrulaması, hesap/reklam Insights ve ayrı `product_id` kırılımı. İki ham veri seti ayrı alınır. Opaque cursor doğrulanır ve sorgu yeniden güvenli biçimde kurulur. Reklam, reklam seti, kampanya, gösterim, tıklama ve harcama kaynak alanlarında kalır. | Native rapor `product_id` alanının Shopify kataloğu ile gerçek bağı ve dönüşüm alanlarının satış rolleri **gerçek veri bekleniyor** durumundadır. Sentetik eşleme yalnız teknik bağı kanıtlar. |
 
 Mevcut native sorgu ve izinli alan listelerinin otoritesi, [ham kayıt anayasası](RAW_SOURCE_CONSTITUTION.md) ve [sorgu standardıdır](../contracts/pd-cpd-query-standard-v1.json). İzole provada API yanıtları sentetik, bağlantı ve kota kontrollerinin PostgreSQL işlemleri gerçektir.
+
+#### Google Ads günlük sorgu listesi
+
+Bir reklam hesabının kapanmış günü için günlük plan, **16 rapor ve kaynak sorgusu ile 1 Merchant bağlantı kontrolünü** aşağıdaki sırayla çalıştırır. Kapsam, 22 Kasım 2026 izole provasında Google Ads’e 17 istek olarak doğrulandı. [Prova kaydı](https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/45017013065/job/137191379744)
+
+| Sıra | Sorgu | Amaç |
+|---:|---|---|
+| 1 | Reklam hesabı · `account_identity` | Hesabın kimliğini, para birimini ve saat dilimini alır. |
+| 2 | Kampanya bilgileri · `campaign_context` | Kampanya türü, durumu ve alışveriş bağlamını alır. |
+| 3 | Shopping reklam grubu performansı · `ad_group_channel_daily` | Günün gösterim, tıklama ve harcamasını reklam grubu düzeyinde alır. |
+| 4 | Search reklam performansı · `search_ad_channel_daily` | Günün gösterim, tıklama ve harcamasını reklam düzeyinde alır. |
+| 5 | Perakende PMax öğe grubu performansı · `pmax_asset_group_channel_daily` | Günün gösterim, tıklama ve harcamasını öğe grubu düzeyinde alır. |
+| 6 | Search reklam dönüşümleri · `search_ad_conversion_action_daily` | Sepete ekleme, ödeme başlatma ve satın almayı reklam düzeyinde ayırır. |
+| 7 | Shopping reklam grubu dönüşümleri · `shopping_ad_group_conversion_action_daily` | Aynı üç dönüşümü reklam grubu düzeyinde ayırır. |
+| 8 | Perakende PMax öğe grubu dönüşümleri · `pmax_asset_group_conversion_action_daily` | Aynı üç dönüşümü öğe grubu düzeyinde ayırır. |
+| 9 | Kampanya dönüşümleri · `conversion_action_daily` | Dönüşüm işlemi bazında kampanya toplamlarını ve değerlerini alır. |
+| 10 | Shopping ürün performansı · `shopping_product_daily` | Reklamı yapılan ürünün günlük gösterim, tıklama ve maliyetini reklam grubu kırılımıyla alır. |
+| 11 | PMax ürün performansı · `pmax_product_daily` | Reklamı yapılan ürünün günlük gösterim, tıklama ve maliyetini kampanya düzeyinde alır. |
+| 12 | Shopping ürün satışları · `shopping_cart_data_product_sales_daily` | Reklamı yapılan ve satılan ürünleri, adet ve tutarları, doğrudan satış ve çapraz satış kırılımını alır. |
+| 13 | Search ürün satışları · `search_cart_data_product_sales_daily` | Reklam grubu düzeyinde satılan ürün kodunu, adedi ve tutarı alır. |
+| 14 | PMax ürün satışları · `pmax_cart_data_product_sales_daily` | Reklamı yapılan ve satılan ürünleri, adet ve tutarları, doğrudan satış ve çapraz satış kırılımını alır. |
+| 15 | PMax güncel listeleme ağacı · `pmax_listing_tree_current` | Ürün listeleme filtrelerini ve öğe grubu yapısını gözlemler. |
+| 16 | PMax ürün grubu toplamları · `pmax_product_group_aggregate_daily` | Günün gösterim, tıklama ve maliyet toplamlarını ürün grubu düzeyinde alır. |
+| 17 | Merchant Center bağlantısı · `google_merchant_link` | Google Ads hesabından bağlı Merchant Center hesabını sorgular. |
+
+Google Ads bir raporu birden çok sayfaya bölerse her ek sayfa ayrı HTTP isteğidir. Doğrulanmış Merchant hedefiyle ürün okuması çalıştırılırsa Merchant Center API’sinden ürün sayfaları alınır. Ardından bağlantı hâlâ aynı mı diye Google Ads’e bir kez daha sorulur. Bu durumda ek Google Ads rapor sayfası yoksa **18 Google Ads isteği ve Merchant Center ürün sayfası istekleri** oluşur. [Google Ads sayfalama](https://developers.google.com/google-ads/api/docs/reporting/paging) · [Merchant ürün listesi](https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list)
 
 ## 4. Ham kaydı depoya yazma ve doğrulama
 

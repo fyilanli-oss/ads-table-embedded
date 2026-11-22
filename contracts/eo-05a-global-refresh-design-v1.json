@@ -254,6 +254,46 @@
     "open_decisions": ["production_daily_schedule_and_cutoff_reserve", "provider_specific_historical_reconciliation", "live_Meta_product_identity_and_sales_evidence", "multi_lane_integration_and_capacity_acceptance", "EO07_or_EO08_capacity_acceptance"],
     "authorization": {"runtime": false, "live_provider": false, "live_database": false, "deployment": false, "merge": false}
   },
+  "google_daily_queries_2026_11_22": {
+    "document": "docs/EO_05A_REFRESH_CONTRACT.md#google-ads-günlük-sorgu-listesi",
+    "report_plan": "google-daily-product-v1",
+    "account_performance": [
+        "account_identity",
+        "campaign_context",
+        "ad_group_channel_daily",
+        "search_ad_channel_daily",
+        "pmax_asset_group_channel_daily",
+        "search_ad_conversion_action_daily",
+        "shopping_ad_group_conversion_action_daily",
+        "pmax_asset_group_conversion_action_daily",
+        "conversion_action_daily"
+    ],
+    "product_performance": [
+        "shopping_product_daily",
+        "pmax_product_daily",
+        "shopping_cart_data_product_sales_daily",
+        "search_cart_data_product_sales_daily",
+        "pmax_cart_data_product_sales_daily",
+        "pmax_listing_tree_current",
+        "pmax_product_group_aggregate_daily"
+    ],
+    "merchant_link_check": "google_merchant_link",
+    "observed_google_ads_requests": 17,
+    "observed_merchant_center_requests": 0,
+    "additional_requests": {
+      "google_ads_extra_report_page": "One Google Ads HTTP request per additional result page.",
+      "merchant_products": "When the verified Merchant product read is enabled, page requests go to Merchant API and one follow-up link check goes to Google Ads."
+    },
+    "evidence": {
+      "merged_pr": 383,
+      "record": "https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/45017013065/job/137191379744",
+      "google_dataset_rows": 1000,
+      "verified_google_receipts": 1,
+      "native_http": "synthetic"
+    },
+    "official_checked_at": "2026-11-22",
+    "official_sources": ["https://developers.google.com/google-ads/api/docs/shopping-ads/reporting", "https://developers.google.com/google-ads/api/docs/reporting/paging", "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list"]
+  },
   "multi_lane_refresh_design_2026_11_21": {
     "document": "docs/EO_05A_MULTI_LANE_REFRESH_DESIGN.md",
     "status": "owner_approved_single_shop_lane_design_integration_and_acceptance_pending",

@@ -66,6 +66,8 @@ Planlı devirde önce mağazanın gönderimi kapatılır, sonra açık işlemler
 
 **Meta Ads.** **3.000 × 12 = 36.000 istek**, 24 saate yayılırsa dakikada ortalama **25 istek** eder. Meta, aynı iş türü için reklam hesabının son **60 dakikadaki** kullanımına bakar. Insights raporlarında hesap kullanımının yanında AdsTable uygulamasının ortak kullanımını, sorgu işleme süresini ve yükünü de izler. Dolayısıyla mağazalar ayrı reklam hesapları kullansa bile uygulama kotası ortak kalır. Meta yanıttaki `app_id_util_pct` ile uygulamanın, `acc_id_util_pct` ile reklam hesabının tükettiği yüzdeyi bildirir. **25 istek/dakika** planlanan ortalamadır. Ağır ürün kırılımları ve ek sayfalar Meta’nın ölçtüğü yükü artırabilir. [Meta kota kuralları](https://developers.facebook.com/docs/graph-api/overview/rate-limiting/#ads-insights) · [Meta Insights kullanım göstergeleri](https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/best-practices)
 
+**3.000 mağaza için Meta kararı.** Mağazaların reklam hesapları ayrıysa her hesap günde yaklaşık **12 istek** alır ve hesap kotasına takılması beklenmez. Meta, AdsTable’ın ortak Insights kotasına ilişkin hesabı bitirecek sabit bir istek sınırı yayımlamadığı için **36.000 istek sayısından ortak kotanın dolup dolmayacağı çıkarılamaz**. 24 saate yayılmış iş yükü planlama açısından makul. Açık kalan kapasite ölçüsü, ağır ürün raporları çalışırken `app_id_util_pct` değerinin ne kadar yükseldiğidir. [Meta Insights kullanım göstergeleri](https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/best-practices)
+
 ## 5. Uygulama öncesi kabul senaryoları
 
 | Senaryo | Aranacak kanıt |

@@ -52,6 +52,26 @@ test("Klaviyo composes only matching native message/variation/medium fragments a
   assert.equal(f.writes[0].rows.some(x => x.table === "cpd_product_performance_facts"), false);
 });
 
+test("Klaviyo daily purchase reports preserve message metrics and Ordered Product sales", async () => {
+  const f = await datasetSourceBindingFixture("klaviyo", {klaviyoDailyPurchaseOnly: true, missingMetric: true});
+  const result = await bindStoredDatasetSources(f);
+  assert.equal(result.status, "stored");
+  assert.equal(result.rowsStored, 2);
+  const performance = f.writes[0].rows.find(row => row.table === "pd_facts").row;
+  const sale = f.writes[0].rows.find(row => row.table === "cpd_product_sales_facts").row;
+  assert.equal(performance.root_entity_id, "campaign-1");
+  assert.equal(performance.entity_id, "message-1");
+  assert.equal(performance.impression, "9007199254740993");
+  assert.equal(performance.ad_click, "4");
+  assert.equal(performance.purchase, "2.5");
+  assert.equal(performance.purchase_value, "12.500000000000000001");
+  for (const field of ["add_to_cart", "add_to_cart_value", "checkout", "checkout_value"]) assert.equal(performance[field], null);
+  assert.equal(sale.native_sold_product_id, "product-1");
+  assert.equal(sale.sales_quantity, "2.5");
+  assert.equal(sale.sales_value, "12.500000000000000001");
+  assert.equal(sale.channel_id, "message-1");
+});
+
 test("Klaviyo keeps unrelated native metrics as evidence without using them as Shopify sales", async () => {
   const f = await datasetSourceBindingFixture("klaviyo", {mixedMetrics: true}), r = await bindStoredDatasetSources(f);
   assert.equal(r.status, "stored"); assert.equal(r.rowsStored, 2);

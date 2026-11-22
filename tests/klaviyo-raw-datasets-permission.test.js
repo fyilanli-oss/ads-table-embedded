@@ -7,19 +7,24 @@ import {createConfiguredSourceEvidenceCipher} from "../app/lib/database/source-e
 import {prepareKlaviyoRawDatasetPackages} from "../app/lib/database/klaviyo-dataset-source-store.server.js";
 import {collectKlaviyoRawDatasets, createKlaviyoRawPacer} from "../app/lib/refresh/klaviyo-raw-collection.server.js";
 const metrics=names=>Response.json({data:names.map((name,i)=>({type:"metric",id:"m"+i,attributes:{name,integration:{name:"Shopify"}}})),links:{next:null}});
-test("Klaviyo all fixed queries succeed empty: three encrypted readback-verified envelopes",async()=>{
+test("Klaviyo closed day collects two purchase reports and verifies all three encrypted envelopes",async()=>{
  const x=klaviyoRawDatasetsFixture(),e=createKlaviyoRawCaptureExecution(x.options),r=await e.run();await e.close();
  assert.equal(r.status,"stored",JSON.stringify(r));assert.equal(r.jobPaused,true);assert.equal(r.contentVerified,true);assert.equal(r.empty,false);
  assert.equal(x.writes.length,3);assert.equal(r.datasets.account_performance.recordCount,0);assert.equal(r.datasets.product_performance.recordCount,0);
- assert.equal(x.f.http.filter(u=>u.pathname.includes("values-reports")).length,6);
+ assert.equal(x.f.http.filter(u=>u.hostname==="a.klaviyo.com").length,7);
+ assert.deepEqual(x.f.http.filter(u=>u.pathname.includes("values-reports")).map(u=>u.pathname),
+  ["/api/campaign-values-reports","/api/flow-values-reports"]);
+ assert.deepEqual(x.writes[1].read.coverage.map(row=>row.family),["campaign:Placed Order","flow:Placed Order"]);
  assert.ok(x.writes.every(w=>w.owner.selectionEpoch===null&&w.read.operationId===x.plan.target.operationId));
  assert.doesNotMatch(JSON.stringify(r),/SYNTHETIC|ciphertext|access_token/);await assert.rejects(e.run(),/EXECUTION_USED/);
 });
 for(const names of [[],["Placed Order"],["Ordered Product"]])test("missing Shopify metrics are unavailable, never synthetic zero: "+names,async()=>{
  const x=klaviyoRawDatasetsFixture();x.hooks.fetch=u=>u.pathname==="/api/metrics"?metrics(names):undefined;
  const r=await createKlaviyoRawCaptureExecution(x.options).run();assert.equal(r.status,"partial",JSON.stringify(r));assert.equal(r.jobPaused,true);assert.equal(r.sourceStored,true);
- assert.equal(r.datasets.account_performance.recordCount,null);assert.equal(r.datasets.account_performance.empty,null);assert.equal(r.recordCount,null);
- assert.equal(x.writes.length,3);assert.equal(x.writes[1].body.sourceState,"partial");
+ const purchaseAvailable=names.includes("Placed Order");
+ assert.equal(r.datasets.account_performance.recordCount,purchaseAvailable?0:null);
+ assert.equal(r.datasets.account_performance.empty,purchaseAvailable?true:null);assert.equal(r.recordCount,null);
+ assert.equal(x.writes.length,3);assert.equal(x.writes[1].body.sourceState,purchaseAvailable?"complete":"partial");
  if(!names.includes("Ordered Product")){assert.equal(r.datasets.product_performance.status,"unavailable");assert.equal(r.datasets.product_performance.empty,null);}
 });
 for(const mode of ["403","429","errors","duplicate_metrics","foreign_cursor","repeat_cursor","wrong_account","wrong_date","lost_write","tampered_page","lost_receipt","missing_page","extra_page","authority_drift"])

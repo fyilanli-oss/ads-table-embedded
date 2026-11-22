@@ -57,7 +57,7 @@ Bu ana tablo kabul edilmeden EO-01 kurulumuna başlanmaması ilk kuruluş kapıs
 | EO-03 | OAuth/bağlantı/token otoritesi | Review için kritik | EO-02 | 4 | Not started |
 | EO-04 | Üç sağlayıcı adaptörü | Review için kritik | EO-03 | 5 | Not started |
 | EO-05 | Zamanlayıcı/Dataset/kesinleşme | Review için kritik | EO-04 | 5 | Not started |
-| EO-06 | Formül/sorgu/BFF API | Review için kritik | EO-05 | 5 | In progress |
+| EO-06 | Formül/sorgu/BFF API | Review için kritik | EO-05 | 5 | Not started |
 | EO-07 | Üç yüzeyli Shopify UI | Review için kritik | EO-06 | 6 | Not started |
 | EO-08 | Taşıma/eşlik/kontrollü pilot/geri alma | Review için kritik | EO-07 | 4 | Not started |
 | EO-09 | Geçiş/kararlılık/eski tüketici sıfır | Review sonrası/geçiş | EO-08 + ayrı geçiş GO | 3 | Not started |
@@ -118,7 +118,7 @@ Referans: A6-RM-06/07, E9-T8, R3/R4/R7.
 
 ## EO-06 — Formül, sorgu ve aynı-origin BFF/API
 
-22 Kasım 2026'da [EO-06-A formül motoru başlangıç notuyla](EO_06A_FORMULA_ENGINE_START_BRIEF.md) açıldı.
+22 Kasım 2026'da [EO-06-A formül motoru başlangıç notu](EO_06A_FORMULA_ENGINE_START_BRIEF.md) hazırlandı. Paket uygulamasının açılışı ayrı izlenir.
 
 - **EO-06-A — Formül motoru:** Önce toplulaştırılan KPI, Klaviyo maliyet dağıtımı, CPC/ROAS/CPS/revenue/revenue margin ve para birimi güvenli hesaplamalar uygulanacak.
 - **EO-06-B — Sorgu, filtre ve karşılaştırma anlamları:** Tarih, varlık, veri seviyesi, filtre ve dönem karşılaştırma kuralları tek sorgu sözleşmesinde kurulacak.

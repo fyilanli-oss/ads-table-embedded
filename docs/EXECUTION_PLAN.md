@@ -6,7 +6,7 @@ Kapasite ve çoklu hat uygulaması ürün sahibi kararıyla **EO-08 sonrasında*
 
 **OpenAI Ads araştırması şimdilik kapatıldı.** 22 Kasım 2026'da incelenen herkese açık OpenAPI 2.3.0 şemasında, reklam veya kampanyaya atfedilen satışın ürün kimliğini döndüren bir alan ya da doğrulanabilir bir bağlantı bulunmadı. Yeniden değerlendirme eşiği, reklam veya kampanyaya bağlı satılan ürün kimliğinin belgelenmesidir. [OpenAPI şeması](https://developers.openai.com/ads/openapi.json) · [Dönüşüm raporu](https://developers.openai.com/ads/api-reference/insights#conversion-insights)
 
-**EO-06 başladı.** İlk dilim, [EO-06-A formül motoru başlangıç notunda](EO_06A_FORMULA_ENGINE_START_BRIEF.md) kayıtlıdır. [Ana sözleşme](../contracts/a6-eo-implementation-master-v1.json#eo05_refresh_closure_update_2026_11_22)
+**EO-06 başlangıç hazırlığı tamamlandı.** İlk dilim ve kabul örneği [EO-06-A formül motoru başlangıç notunda](EO_06A_FORMULA_ENGINE_START_BRIEF.md) kayıtlıdır. Paket uygulaması ve kabulü ana sözleşmede ayrı izlenir. [Ana sözleşme](../contracts/a6-eo-implementation-master-v1.json#eo05_refresh_closure_update_2026_11_22)
 
 ## EO-05 — Günlük refresh teknik kapanış kaydı, 21 Kasım 2026
 

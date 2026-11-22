@@ -26,7 +26,7 @@
   "eo06a_start_2026_11_22": {
     "parent_package": "A6-EO-06",
     "child_package": "A6-EO-06-A",
-    "status": "started_formula_and_fixture_definition",
+    "status": "formula_start_brief_prepared",
     "brief": "docs/EO_06A_FORMULA_ENGINE_START_BRIEF.md",
     "first_output": "Formula input, aggregation scope, output and missing-data examples grounded in canonical Dataset and golden fixture evidence.",
     "acceptance_complete": false
@@ -1860,7 +1860,7 @@
       "id": "A6-EO-06",
       "title": "Formula, Query and same-origin BFF/API",
       "phase": "review_critical",
-      "status": "In progress",
+      "status": "Not started",
       "depends_on": [
         "A6-EO-05"
       ],

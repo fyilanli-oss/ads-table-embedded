@@ -83,6 +83,14 @@ export async function seedShopifyMappingTimingFixture(client,{owner,cipher,windo
       throw error;
     }
   };
-  return {bindSyntheticMappings,mappingId:receipt.manifest.ids["mapping:m"],
+  const mappingId=receipt.manifest.ids["mapping:m"];
+  async function seedGoogleDailyReportLinks() {
+    assert.equal(google,true);
+    await client.query(`insert into identity.google_report_product_links
+      (workspace_id,installation_id,installation_generation,mapping_id,business_date,product_role,valid_until)
+      select $1,$2,$3,$4,$5,roles.product_role,clock_timestamp()+interval '1 hour'
+      from unnest(array['performance','sold']) as roles(product_role)`,[owner.workspaceId,owner.installationId,owner.generation,mappingId,window.from]);
+  }
+  return {bindSyntheticMappings,seedGoogleDailyReportLinks,mappingId,
     productId:verified.candidate.product_id,nativeId:identity.nativeId,summary:()=>({reads,lookupMs})};
 }

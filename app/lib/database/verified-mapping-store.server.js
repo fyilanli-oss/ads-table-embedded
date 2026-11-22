@@ -101,6 +101,11 @@ export function validateRuleSourceObservation(snapshot,owner,cipher,now){
  if(snapshot.mapping?.state!=="unresolved"||snapshot.references?.some(x=>x.target!=="mapping"))fail("RULE_SOURCE_INVALID");
  return validate(snapshot,owner,cipher,now,false);
 }
+export function validateCurrentMappingEvidence(snapshot,owner,cipher,now){
+ const {accepted}=validate(snapshot,owner,cipher,now);
+ if(snapshot.mapping.state!=="verified")fail("NOT_VERIFIED");
+ return {...accepted,mappingId:snapshot.mapping.id};
+}
 export function createVerifiedMappingRepository({database,cipher,now=Date.now}={}){
  if(typeof database?.query!=="function"||typeof cipher?.open!=="function"||typeof now!=="function")fail("CONFIG_INVALID");
  const reviews=new WeakMap(),writes=new WeakMap();

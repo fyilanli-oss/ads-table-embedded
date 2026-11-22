@@ -21,7 +21,7 @@ import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
 import {quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {googleSourceRoleInstallationBodyForRehearsal} from "./eo05-google-source-role-plan.mjs";
 import {GOOGLE_ACCEPTANCE_COORDINATOR_ROLE_CHECK_SQL,GOOGLE_ACCEPTANCE_COORDINATOR_RPC} from "../app/lib/database/google-acceptance-coordinator-postgres.server.js";
-import {GOOGLE_DAILY_STAGE_SQL,GOOGLE_DAILY_PUBLISH_SQL,GOOGLE_DAILY_INSPECT_SQL,GOOGLE_DAILY_FINISH_SQL} from "../app/lib/database/dataset-rpc.server.js";
+import {GOOGLE_DAILY_STAGE_SQL,GOOGLE_DAILY_PUBLISH_SQL,GOOGLE_DAILY_INSPECT_SQL,GOOGLE_DAILY_FINISH_SQL,GOOGLE_DAILY_PRODUCT_MAPPING_SQL} from "../app/lib/database/dataset-rpc.server.js";
 
 export const GOOGLE_TIMING_ROLES=Object.freeze(["adstable_owner","adstable_runtime","adstable_refresh_coordinator","adstable_refresh_queue_runner","adstable_google_source_runner","adstable_refresh_dataset_runner"]);
 export const GOOGLE_TIMING_STEPS=Object.freeze(["queueEnqueue","queueAndAdmission","providerCollection","rawStore","handoff","reportSourceRead","reportPreparation","reportWrite","receiptReadback","jobClose"]);
@@ -675,7 +675,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
  assert.ok(!singleReportClose||(target==="local"&&packageReuseCandidate&&!writerPreparationCandidate&&!publishTrace&&!collectionDiagnostics&&!comparableReport&&!fourPhaseDiagnostics));
  assert.ok(!finalSynthetic||(singleReportClose&&combinedCandidate));
  assert.ok(!shopifyMapping||finalSynthetic);
- const runScheduled=singleReportClose?(await loadSingleReportCloseCandidate(client,"google",{shopifyMapping})).runScheduledRefreshWithDataset:runScheduledRefreshWithDataset;
+ const runScheduled=singleReportClose?(await loadSingleReportCloseCandidate(client,"google",{shopifyMapping:shopifyMapping&&!sharedRefresh})).runScheduledRefreshWithDataset:runScheduledRefreshWithDataset;
  const ledger=createGoogleTimingLedger(),createReader=await loadObservedGoogleReader(ledger,combinedCandidate,finalSynthetic);
  let ordinal=0,failed,reader,roleChecks=0,comparable,fourPhase,closeArgs,reportPublished=false,profileReuses=0;
  const publishNotices=[];
@@ -684,6 +684,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   if(message?.startsWith(writerTracePrefix)||message?.startsWith(publisherTracePrefix))publishNotices.push(message);
  };
  const collectionCalls=[];
+ const sharedMappingMeasurement={reads:0,lookupMs:0};
  const q=async(sql,args=[],kind=null,observedSql=sql,sqlMeasured=false)=>ledger.sql(async()=>{
   if(!collectionDiagnostics||ledger.phase!=="providerCollection")return client.query(sql,args);
   const start=performance.now();
@@ -738,7 +739,9 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
     ledger.phaseAt("receiptReadback",connected);
    }
    if(sql===GOOGLE_DAILY_FINISH_SQL&&ledger.phase==="receiptReadback")ledger.phaseAt("jobClose",connected);
+   const mappingStarted=sql===GOOGLE_DAILY_PRODUCT_MAPPING_SQL?performance.now():null;
    const result=await roleQuery(role,sql,args);
+   if(mappingStarted!==null){sharedMappingMeasurement.reads++;sharedMappingMeasurement.lookupMs+=performance.now()-mappingStarted;}
    if(sql===GOOGLE_DAILY_PUBLISH_SQL&&singleReportClose)reportPublished=true;
    return result;
   }};
@@ -802,6 +805,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   const verified=await loadGoogleBackgroundOwner({database:runtime,owner:{workspaceId:owner.workspaceId,installGeneration:Number(owner.generation),shopId:owner.shopId,shopDomain:owner.shopDomain}});
   const tokenVault=createTokenVault({database:runtime,environment}),cipher=createConfiguredSourceEvidenceCipher(environment);
   const mapping=shopifyMapping?await seedShopifyMappingTimingFixture(client,{owner,cipher,window}):null;
+  if(sharedRefresh&&mapping)await mapping.seedGoogleDailyReportLinks();
   if(sharedRefresh){sharedRefresh.setCoordinator(coordinator);store=await sharedRefresh.beforeWork({owner,cost,store});}
   const limits={deadlineAt:now()+120000,requestTimeoutMs:100000,finishReserveMs:2000,maxRows:2000,maxBytes:cost.bytes};
   const appId="gid://shopify/App/456",entitlementVerifier=sharedRefresh?.partnerVerifier({store,owner,now,limits})??createRefreshEntitlementVerifier({store,appId,now,limits,authorizeRead:async()=>true,
@@ -839,7 +843,7 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
     ledger.phaseAt("handoff");return {kind:"complete",payload:{batchCount:batches.length}};
    },validatePage:({payload})=>({complete:payload.batchCount>=2,rows:[]}),
    async loadDatasetInputs(){ledger.phaseAt("reportPreparation");return {owner,batches,cipher,expectedRevision:0,googleDailyPackages:true,
-    ...(mapping?{bindSyntheticMappings:mapping.bindSyntheticMappings}:{})};}
+    ...(mapping&&!sharedRefresh?{bindSyntheticMappings:mapping.bindSyntheticMappings}:{})};}
   }});
   const measured=ledger.stop();if(failed)throw Object.assign(Error(failed.message),failed);
   if(sharedRefresh)await sharedRefresh.afterClose(owner,run);
@@ -853,10 +857,12 @@ export async function googleDailyTimingProbe(client,{ownerFixture,collectionDiag
   if(mapping){
    const {rows:[linked]}=await client.query(`select
       (select count(*)::int from analytics.cpd_product_performance_facts where installation_id=$1 and product_mapping_id=$2) performance,
-      (select count(*)::int from analytics.cpd_product_sales_facts where installation_id=$1 and sold_product_mapping_id=$2 and advertised_product_mapping_id=$2) sales,
-      (select shopify_product_id from identity.product_identity_mappings where installation_id=$1 and id=$2) product`,[owner.installationId,mapping.mappingId]);
+      (select count(*)::int from analytics.cpd_product_sales_facts where installation_id=$1 and sold_product_mapping_id=$2
+        and case when $3::boolean then advertised_product_mapping_id is null else advertised_product_mapping_id=$2 end) sales,
+      (select shopify_product_id from identity.product_identity_mappings where installation_id=$1 and id=$2) product`,[owner.installationId,mapping.mappingId,!!sharedRefresh]);
    assert.deepEqual(linked,{performance:1,sales:1,product:mapping.productId});
-   shopifyMappingMeasurement={...mapping.summary(),mappedRows:2};
+   const checked = sharedRefresh ? sharedMappingMeasurement : mapping.summary();
+   shopifyMappingMeasurement={...checked,mappedRows:2};
    assert.equal(shopifyMappingMeasurement.reads,1);
   }
   const receipts=(await client.query("select manifest->'googleDailyReceipt' receipt from evidence.source_batches where authority=$1::jsonb and manifest ? 'googleDailyReceipt'",[JSON.stringify(owner)])).rows;

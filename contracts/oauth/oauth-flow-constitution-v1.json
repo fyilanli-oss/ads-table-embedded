@@ -1594,7 +1594,7 @@
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "d812642bd88f15fa47e03a572aaa868287bc529050079a8df4935c34917f13c9",
+      "contracts/a6-eo-implementation-master-v1.json": "fa884f2f64d21955937831400d5ce630f01b9a38355fdef02f09d91f83a210fe",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
@@ -5566,6 +5566,41 @@
         "contracts/a6-eo-implementation-master-v1.json",
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "tools/eo06b-report-sales-compare-probe.mjs"
+      ]
+    },
+    {
+      "id": "eo06d-compare-data-states-2026-11-25",
+      "date": "2026-11-25",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Fırat: 'Bak faydasını nasıl görüyoruz. Şimdi atıf penceresi işinde de açık bıraktığımız nokta için refresh kayıtlarına bakalımm onaylıyorum'. Reply to recording the EO-06-D data-state table and a read-only review of the existing verified refresh evidence."
+      },
+      "rationale": "Record proven existing Compare metric and availability states. Identify the verified daily report receipt and completed job as candidate freshness evidence, and retain daily refresh vs historical attribution-correction decisions as separate open topics.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "15 existing maturity-policy tests passed.",
+        "OAuth and raw source constitution checks; static Compare/source record and scope consistency checks."
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-25",
+      "official_sources": [
+        "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
+      ],
+      "changed_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json"
       ]
     }
   ],

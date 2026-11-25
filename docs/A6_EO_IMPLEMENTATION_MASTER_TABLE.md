@@ -175,6 +175,26 @@ EO-06-B’nin bu adımının çıktısı, sorgunun kullanacağı günler ve eşl
 
 Bu kanıt API işleyicisinden izole veritabanına kadar olan zinciri kapsar. Gerçek Shopify Admin oturumu, canlı mağaza verisi ve yayın kabulü açık kalır. [Prova kodu](../tools/eo06b-report-sales-compare-probe.mjs) · [Makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo06c_compare_api_sql_rehearsal_2026_11_25)
 
+### EO-06-D veri durumları ve refresh kanıtı
+
+**25 Kasım 2026.** Compare V1, Dataset’teki metrik desteğini, gözlem durumunu ve kaynak kapsamını mevcut alanlarında taşır. Takvim günü ve veri durumları aşağıdaki anlamları korur.
+
+| Durum | Compare V1 karşılığı |
+|---|---|
+| Gerçek sıfır | Desteklenen ve gözlenen metrikte kaynakta kaydedilmiş `"0"` değerini koru. |
+| Eksik metrik | Desteklenen metrikte gözlem `missing` ve değer `null`. |
+| Bilinmeyen | Destek veya gözlem `unknown` ise değer için tahmin yapma. Durumu ilgili alanda koru. |
+| Desteklenmeyen | Metrikte `unsupported` bilgisini ve `null` değeri koru. |
+| Kısmi | `sourceCompleteness: partial` olan satırda gelen değerler ile eksik alanlar birlikte korunur. |
+| Gün veya dönem için satır yok | Boşluğu koru. Yalnız boş sonuçtan bir günün hiç okunmadığı, başarısız olduğu ya da sıfır satış yaptığı söylenemez. |
+| Güncellik | Compare V1 yanıtında ayrı güncellik alanı henüz yok. Rapor tarihi, tablo yazım tarihi ve kaynak olgunluğu üzerinden gecikme durumu türetilmez. |
+
+**Güncellik için kullanılabilecek mevcut kanıt.** Sağlayıcı hesabı ve gün için yayımlanan rapor makbuzu; gün, iş, revizyon, satır sayısı ve checkpoint’i birbirine bağlar. Fiziksel rapor ve makbuz geri okunup doğrulandıktan sonra iş `completed` olarak kapanır ve `operations.refresh_runs.finished_at` yazılır. Gelecekteki okuma, aynı mağaza/kurulum nesli, sağlayıcı hesabı ve günün **hâlâ geçerli yayın makbuzuyla eşleşen kapanışı** esas alabilir. Kuyruk taraması, ham kayıt makbuzu veya tek başına kapanış zamanı yeterli kanıt değildir. Son yenileme başarısızsa son geçerli rapor kalır. `stale` kararı için beklenen gün ve canlı çalışma takvimi ayrıca netleşmelidir. [Makbuz ve kapanış sözleşmesi](EO_05A_REFRESH_CONTRACT.md#9-rapor-makbuzunu-geri-okuyup-doğrulama) · [Kapanış SQL’i](../supabase/migrations/20261111131821_eo05_refresh_fenced_dataset_commit.sql)
+
+**Atıf penceresinde açık kalan karar.** Normal günlük refresh, kapanmış günü işler. Geç gelen satış veya sağlayıcı düzeltmesi için geçmiş günlerin okunması ayrı akıştır. İşin ne zaman başarılı kapandığı, satışın sağlayıcı raporunda hangi güne yazıldığı ve o günün kesinleşmesi ayrı bilgiler olarak tutulur. EO-05-C’deki `unknown`, `provisional` ve `final` kuralları mevcut. Canlı geçmiş düzeltme için sağlayıcı ve rapor bazında **tarih temeli, minimum geriye okuma, sıklık ve yayın revizyonu** açık. Önce günün satışları için gereken tarih temeli doğrulanır. Ardından düzeltilebilen geçmiş günler ve yeniden okuma sıklığı için karar verilir. Ortak sabit gün sayısı uygulanmaz. [Kesinleşme kaydı](EO_05C_MATURITY_FINALITY.md) · [Refresh açık kararları](EO_05A_REFRESH_CONTRACT.md#13-uygulama-ve-kapasite-kararları)
+
+[EO-06-D makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo06d_compare_data_states_2026_11_25). Bu kayıt mevcut davranışın ve açık kararların depo incelemesidir. Yeni API alanı veya canlı uygulama için teknik kapsam ayrı belirlenir.
+
 ## EO-07 — Shopify'a özgü üç yüzeyli arayüz
 
 **26 adımlık çalışmadan kabul referansları.** EO-07-A’da 07 ve 15’in ayar/teslim kapsamı, EO-07-C’de 08–10, 16–19 ve 21’in ürün seviyesi kanıtı gözden geçirilir. [Açık kabul tablosu](plans/EO_05_06_REVISED_PLAN_2026_10_27.md#eo-05-26-adımlık-çalışma-ve-açık-kabul-maddeleri)

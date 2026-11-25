@@ -116,7 +116,13 @@ Referans: R6/R7/R7-B5 ve en alt analiz seviyesi keşif girdileri.
 Çıktı: AdsTable yönetimli, saatlik ve düzeltilebilir kanonik veri katmanı.
 Referans: A6-RM-06/07, E9-T8, R3/R4/R7.
 
+### 26 adımlık çalışma ve açık kabul maddeleri
+
+EO-05 başında başlayan çalışma tek kayıt olarak EO-05 altında izlenir. [26 adımın teslim, açık kanıt ve kapanış tablosu](plans/EO_05_06_REVISED_PLAN_2026_10_27.md#eo-05-26-adımlık-çalışma-ve-açık-kabul-maddeleri) · [Makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo05_ordered_remediation_acceptance_2026_11_25)
+
 ## EO-06 — Formül, sorgu ve aynı-origin BFF/API
+
+**26 adımlık çalışmadan kabul referansları.** EO-06-A kapsam kararında 24–25, EO-06-E teknik kabulünde 20 ve 26 gözden geçirilir. [Açık kabul tablosu](plans/EO_05_06_REVISED_PLAN_2026_10_27.md#eo-05-26-adımlık-çalışma-ve-açık-kabul-maddeleri)
 
 22 Kasım 2026'da [EO-06-A formül motoru başlangıç notu](EO_06A_FORMULA_ENGINE_START_BRIEF.md) hazırlandı. Paket uygulamasının açılışı ayrı izlenir.
 
@@ -159,6 +165,8 @@ EO-06-B’nin bu adımının çıktısı, sorgunun kullanacağı günler ve eşl
 
 ## EO-07 — Shopify'a özgü üç yüzeyli arayüz
 
+**26 adımlık çalışmadan kabul referansları.** EO-07-A’da 07 ve 15’in ayar/teslim kapsamı, EO-07-C’de 08–10, 16–19 ve 21’in ürün seviyesi kanıtı gözden geçirilir. [Açık kabul tablosu](plans/EO_05_06_REVISED_PLAN_2026_10_27.md#eo-05-26-adımlık-çalışma-ve-açık-kabul-maddeleri)
+
 - **EO-07-A — Settings yüzeyi:** Eski çalışan Settings kullanıcı akışı referans alınarak Reporting Currency, sağlayıcı bağlantıları/hesap seçimleri, salt okunur kurulu Shopify mağazası bağlamı, Klaviyo Email Monthly Plan Cost, Shopify aboneliği ve iki aşamalı Delete my data Shopify'a özgü Settings içinde kurulacak; mağaza seçicisi ve grafik olmayacak, eski UI kodu aynen taşınmayacak.
 - **EO-07-B — Funnel App Home:** Bağımsız Funnel/Table ve Summary/Daily boyutları, sağlayıcıya özgü hiyerarşi ve kontrollü karşılaştırma uygulanacak; bağlamsal dashboard yalnız ürün sahibinin beklenen ilişkilendirilmiş grafik paketi kabul edildikten sonra tasarlanacak.
 - **EO-07-C — Sağlayıcılar arasında en alt analiz seviyesi keşfi:** Meta, Google Ads ve Klaviyo için gerçek en alt analiz seviyeleri ile tıklanan ürünün satın alınmadığı/alındığı iki birebir küpe/Cross-sell test verisi sonucu Ad Analysis tasarlanmadan önce dondurulacak.
@@ -172,6 +180,8 @@ Referans: A6-RM-09, E10-T5, E12 ve UI anayasası.
 Bağlayıcı ürün davranışı ve bekleme kapıları `docs/A6_EO_07_THREE_SURFACE_UI_PRODUCT_FREEZE.md` ile `contracts/shopify/a6-eo-07-three-surface-ui-product-freeze-v1.json` içinde dondurulmuştur. Bu ön tasarım dondurması EO-07 uygulamasını veya kabulünü erkene çekmez.
 
 ## EO-08 — Taşıma provası, eşlik, kontrollü pilot ve geri alma
+
+**26 adımlık çalışmadan kabul referansları.** EO-08-B’de 03–06, 13, 23–24 ve 26’nın kaynak eşliği, EO-08-C’de 15’in geri yükleme kanıtı, EO-08-D’de 15 ve 26’nın gerçek teslim/pilot kanıtı gözden geçirilir. 24’teki kesin Overlap araştırmasının hedef paketi açık kalır. [Açık kabul tablosu](plans/EO_05_06_REVISED_PLAN_2026_10_27.md#eo-05-26-adımlık-çalışma-ve-açık-kabul-maddeleri)
 
 - **EO-08-A — Sınırlı veri ve kapalı token taşıma provası:** Yalnız izin listesindeki veri ve kapalı token'lar geçici/Preview sınırında gerçek Production'a dokunmadan taşıma provasından geçirilecek.
 - **EO-08-B — Sağlayıcı, Dataset, API ve arayüz eşliği:** Sağlayıcı ham gerçeği, Dataset V2, API ve UI sonuçları sahte sıfır üretmeden uçtan uca karşılaştırılacak.

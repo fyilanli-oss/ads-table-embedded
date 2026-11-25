@@ -1,4 +1,40 @@
 {
+  "eo05_ordered_remediation_acceptance_2026_11_25": {
+    "owner_package": "A6-EO-05",
+    "kind": "single_ordered_work_and_acceptance_record",
+    "ordered_plan": "docs/plans/eo-05-06-revised-26-step-plan-2026-10-27.json",
+    "acceptance_table": "docs/plans/EO_05_06_REVISED_PLAN_2026_10_27.md#eo-05-26-adımlık-çalışma-ve-açık-kabul-maddeleri",
+    "human_package_index": "docs/A6_EO_IMPLEMENTATION_MASTER_TABLE.md",
+    "step_count": 26,
+    "downstream_references_are_acceptance_reviews": true,
+    "closure": {
+      "record_each_relevant_step_status_and_evidence": true,
+      "track_repository_delivery_synthetic_integration_and_native_acceptance_separately": true,
+      "missing_real_evidence_keeps_acceptance_open": true,
+      "explicit_owner_deferral_records_reason_and_target_when_known": true,
+      "live_execution_or_release_authorized": false
+    },
+    "deferred_without_confirmed_target": [
+      {
+        "step": 24,
+        "scope": "Overlap source-access research and implementation decision",
+        "historic_order": "after Step 22",
+        "target_package": null
+      },
+      {
+        "step": 25,
+        "scope": "Klaviyo Spend calculation after V1",
+        "target_package": null
+      }
+    ],
+    "v1_formula_scope": {
+      "step_refs": [
+        24,
+        25
+      ],
+      "kpis_metrics_and_cost_allocation_deferred": true
+    }
+  },
   "eo05_refresh_closure_update_2026_11_22": {
     "owner_decision": "Fırat: OpenAI is deferred because the sold product is not available by attributed ad or campaign. Update refresh closure and start EO-06. Revisit capacity and multiple lanes after EO-08.",
     "status": "synthetic_slice_closed_live_acceptance_open",
@@ -1699,6 +1735,7 @@
     },
     {
       "id": "A6-EO-05",
+      "ordered_remediation_acceptance": "contracts/a6-eo-implementation-master-v1.json#eo05_ordered_remediation_acceptance_2026_11_25",
       "title": "Scheduler, Dataset V2, FX, maturity and reconciliation",
       "phase": "review_critical",
       "status": "In progress",
@@ -1858,6 +1895,19 @@
     },
     {
       "id": "A6-EO-06",
+      "ordered_remediation_acceptance_refs": {
+        "record": "contracts/a6-eo-implementation-master-v1.json#eo05_ordered_remediation_acceptance_2026_11_25",
+        "steps_by_checkpoint": {
+          "A6-EO-06-A": [
+            24,
+            25
+          ],
+          "A6-EO-06-E": [
+            20,
+            26
+          ]
+        }
+      },
       "title": "Formula, Query and same-origin BFF/API",
       "phase": "review_critical",
       "status": "Not started",
@@ -1906,6 +1956,25 @@
     },
     {
       "id": "A6-EO-07",
+      "ordered_remediation_acceptance_refs": {
+        "record": "contracts/a6-eo-implementation-master-v1.json#eo05_ordered_remediation_acceptance_2026_11_25",
+        "steps_by_checkpoint": {
+          "A6-EO-07-A": [
+            7,
+            15
+          ],
+          "A6-EO-07-C": [
+            8,
+            9,
+            10,
+            16,
+            17,
+            18,
+            19,
+            21
+          ]
+        }
+      },
       "title": "Shopify-native three-surface UI",
       "phase": "review_critical",
       "status": "Not started",
@@ -1961,6 +2030,28 @@
     },
     {
       "id": "A6-EO-08",
+      "ordered_remediation_acceptance_refs": {
+        "record": "contracts/a6-eo-implementation-master-v1.json#eo05_ordered_remediation_acceptance_2026_11_25",
+        "steps_by_checkpoint": {
+          "A6-EO-08-B": [
+            3,
+            4,
+            5,
+            6,
+            13,
+            23,
+            24,
+            26
+          ],
+          "A6-EO-08-C": [
+            15
+          ],
+          "A6-EO-08-D": [
+            15,
+            26
+          ]
+        }
+      },
       "title": "Carry rehearsal, parity, canary and rollback",
       "phase": "review_critical",
       "status": "Not started",

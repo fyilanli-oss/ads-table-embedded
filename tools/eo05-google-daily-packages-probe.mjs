@@ -5,6 +5,8 @@ import {readStoredDatasetSources} from "../app/lib/database/dataset-source-reade
 import {projectStoredGoogleDataset} from "../app/lib/providers/stored-dataset-projection.server.js";
 import {prepareDailyDatasetPackages} from "../app/lib/database/dataset-reconciliation.server.js";
 import {resolveReportRetentionPolicy} from "../app/lib/database/report-retention-policy.server.js";
+import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
+import {dispatchRefreshPreflight} from "../app/lib/refresh/preflight-bridge.server.js";
 import {GOOGLE_DAILY_STAGE_SQL,GOOGLE_DAILY_PUBLISH_SQL,GOOGLE_DAILY_CORRECT_SQL,GOOGLE_DAILY_INSPECT_SQL,GOOGLE_DAILY_FINISH_SQL} from "../app/lib/database/dataset-rpc.server.js";
 
 async function verifyGoogleDailyReplacement(client,{owner,first,rpc,reject,day}) {
@@ -68,6 +70,70 @@ async function verifyGoogleDailyReplacement(client,{owner,first,rpc,reject,day})
  assert.equal(sourceCheck.permits,0);
  assert.equal((await rpc(GOOGLE_DAILY_FINISH_SQL,[ownerJson,job,fence,operationId,revised.digest])).rows[0].result,true);
  return {revision:2,rows:1000,packages:5,incompletePreservedPrevious:true,receipt:true,closed:true};
+}
+
+async function verifyHistoricalQueue(client,{scope,day,reject}) {
+ const [workspace,generation,provider,account,job,fence]=scope;
+ const {rows:[schedule]}=await client.query(`select h.business_date::text as day,h.admitted_at,h.due_at::text,
+  h.due_at=r.finished_at+interval '7 days' as on_time,w.source
+  from operations.refresh_historical_rereads h join operations.refresh_runs r
+    on r.workspace_id=h.workspace_id and r.install_generation=h.install_generation and r.provider=h.provider
+      and r.account_id=h.account_id and r.job_id=h.first_job_id and r.fence=h.first_fence
+  join operations.refresh_work_bindings w on w.workspace_id=r.workspace_id and w.install_generation=r.install_generation
+    and w.provider=r.provider and w.account_id=r.account_id and w.job_id=r.job_id and w.fence=r.fence
+  where h.workspace_id=$1 and h.install_generation=$2 and h.provider=$3 and h.account_id=$4 and r.job_id=$5 and r.fence=$6`,scope);
+ assert.equal(schedule.day,day);
+ assert.equal(schedule.on_time,true);
+ assert.equal(schedule.admitted_at,null);
+ const source=JSON.stringify(schedule.source);
+ const due=async(timestamp,scopeJson=source)=>(await client.query(
+  "select operations.next_refresh_historical_reread($1::jsonb,$2::timestamptz)::text as day",[scopeJson,timestamp])).rows[0].day;
+ assert.equal(await due(new Date().toISOString()),null);
+ assert.equal(await due(schedule.due_at),day);
+ assert.equal(await due(schedule.due_at,JSON.stringify({...schedule.source,connectionVersion:schedule.source.connectionVersion+1})),null);
+ const admit=(jobId,claimFence)=>client.query(`insert into operations.refresh_work_bindings(
+   workspace_id,install_generation,provider,account_id,job_id,fence,source,from_date,to_date,partition_id)
+   values($1,$2,$3,$4,$5,$6,$7::jsonb,$8::date,$8::date,'v1-reread:'||($8::date)::text)`,
+   [workspace,generation,provider,account,jobId,claimFence,source,day]);
+ await reject(()=>admit("historical-first",Number(fence)+1),/REFRESH_HISTORICAL_REREAD_NOT_DUE/);
+ // Move the isolated due marker past the SQL clock, preserving the exact receipt binding.
+ await client.query(`update operations.refresh_historical_rereads set due_at=clock_timestamp()-interval '1 second'
+  where workspace_id=$1 and install_generation=$2 and provider=$3 and account_id=$4`,scope.slice(0,4));
+ const vector={requests:20,dbWrites:20,connections:8,rows:2000,bytes:16000000};
+ const budget={global:vector,interactiveReserve:{requests:0,dbWrites:0,connections:0,rows:0,bytes:0},
+   providers:[{provider,limit:vector}],workspaces:[{workspaceId:workspace,limit:vector}],accounts:[{provider,accountId:account,limit:vector}]};
+ await client.query(`update operations.refresh_control set budget=$1::jsonb,bounds=$2::jsonb,
+   next_fence=(select max(fence)+1 from operations.refresh_runs) where singleton`,[
+   JSON.stringify(budget),JSON.stringify({maxCandidates:8,maxClaims:8,maxAdmissions:8,maxWorkspaces:8})]);
+ const now=Date.now(),hour=Math.floor((now-3600000)/3600000)*3600000;
+ await client.query("update operations.refresh_queue_control set last_success_at_ms=$1,max_snapshot_age_ms=300000 where singleton",[now]);
+ await client.query(`insert into operations.refresh_queue_accounts(workspace_id,install_generation,provider,account_id,
+  connection_id,connection_version,eligible_from_ms,connection_open,state,first_due_hour_ms,latest_due_hour_ms,first_queued_at_ms,checked_at_ms)
+  values($1,$2,$3,$4,$5,$6,$7,true,'pending',$8,$8,$9,$9)
+  on conflict (workspace_id,install_generation,provider,account_id) do update set state='pending',connection_open=true,
+    first_due_hour_ms=excluded.first_due_hour_ms,latest_due_hour_ms=excluded.latest_due_hour_ms,
+    first_queued_at_ms=excluded.first_queued_at_ms,checked_at_ms=excluded.checked_at_ms`,
+  [...scope.slice(0,4),schedule.source.connectionId,schedule.source.connectionVersion,schedule.source.eligibleFromMs,hour,now]);
+ const store=createRefreshWorkRepository(client);
+ const snapshot=await store.readRereadPreflightSnapshot();
+ assert.equal(snapshot.candidates.find(s=>s.workspaceId===workspace).historicalDate,day);
+ let workerScope;
+ const run=await dispatchRefreshPreflight({store,now:Date.now,buildWorkPlan:async()=>null,
+   buildHistoricalWorkPlan:async s=>s.workspaceId===workspace?{
+     cost:{requests:2,dbWrites:2,connections:1,rows:10,bytes:10000},
+     limits:{deadlineAt:Date.now()+30000,requestTimeoutMs:1000,finishReserveMs:100,maxRows:10,maxBytes:10000}}:null,
+   entitlementVerifier:{verify:async()=>({status:"verified",receipt:{}}),isCurrent:async()=>true},
+   readPage:async()=>({kind:"complete",payload:{}}),validatePage:()=>({complete:true,rows:[]}),
+   loadDatasetInputs:async scope=>{workerScope=scope;throw Error("fixture stops before second publication");}});
+ assert.equal(run.status,"needs_attention");
+ assert.deepEqual(workerScope?.window,{from:day,to:day});
+ assert.equal(workerScope.historicalReread,true);
+ await reject(()=>admit("historical-second",Number(fence)+2),/REFRESH_HISTORICAL_REREAD_NOT_DUE/);
+ const {rows:[admitted]}=await client.query(`select count(*)::int as n,min(admitted_job_id) as id
+   from operations.refresh_historical_rereads where workspace_id=$1 and install_generation=$2 and provider=$3
+   and account_id=$4 and admitted_at is not null`,scope.slice(0,4));
+ assert.deepEqual(admitted,{n:1,id:workerScope.claim.id});
+ return {verifiedClose:true,sevenDays:true,earlyRefused:true,changedConnectionRefused:true,admittedOnce:true};
 }
 
 // Synthetic source fixtures, real AEAD/readback, physical facts and daily RPCs.
@@ -176,7 +242,10 @@ export async function googleDailyPackagesProbe(client,{ownerFixture,verifyWriter
    assert.equal((await client.query("select status from operations.refresh_runs where workspace_id=$1 and fence=$2",[owner.workspaceId,fence])).rows[0].status,"completed");
    const replacement=scenario.rows===1000 && !verifyWriterPreparation && !verifyPackageReuse
     ? await verifyGoogleDailyReplacement(client,{owner,first:result,rpc,reject,day}) : null;
-   cases.push({rows:rows.length,packages:writes.length,receipt:true,closed:true,...replacement?{replacement}:{}});
+   const historicalQueue=scenario.rows===0 && !verifyWriterPreparation && !verifyPackageReuse
+    ? await verifyHistoricalQueue(client,{scope,day,reject}) : null;
+   cases.push({rows:rows.length,packages:writes.length,receipt:true,closed:true,...replacement?{replacement}:{},
+    ...historicalQueue?{historicalQueue}:{}});
   } finally {await client.query("rollback to savepoint google_daily_case");await client.query("release savepoint google_daily_case");}
  }
  return {synthetic:true,rollbackOnly:true,cases};

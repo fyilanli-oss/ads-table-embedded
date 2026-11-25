@@ -1278,6 +1278,7 @@
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json"
     ],
     "sha256": {
+      "supabase/migrations/20261125170837_eo06d_verified_reread_queue.sql": "660c1e26e252fc7b0b88783aeda4837495eb4ce439486e9ae1a863bda73dc1a0",
       "supabase/migrations/20261125153035_eo06d_google_daily_report_replacement.sql": "3b662a06f96f7045643b520756bab0a99e9e66782123a983b8e765174d8bb2ca",
       ".github/workflows/database-integrity.yml": "7b41c78eef7940aef01da4ff9ff858b1b046b1bbd647a7a98e76c203d7a8a2d5",
       ".github/workflows/repository-governance.yml": "d0c6feecc08f145588c72fac541040ca2e14949af7785961e5df27c01628b852",
@@ -1326,7 +1327,7 @@
       "app/lib/database/provider-account-authority-repository.server.js": "f08167c2cbc131b64cde7e58695a363cb02d7a864cd312f7e398b39b75dc9b7f",
       "app/lib/database/provider-connection-lifecycle-repository.server.js": "edcc6eb4a3fb0d9329b55ec9122a5ff1838103f8ec8e341fc2cef4951a382310",
       "app/lib/database/refresh-queue-postgres.server.js": "bbdd98410a5af2bcbded4eb5f396f01574d5609a03d82e39571561f1f9a7e0be",
-      "app/lib/database/refresh-work-repository.server.js": "c598d2031cb100c6373fc0ffe1ade1ef79d7b958060c46d717238ac3796c214f",
+      "app/lib/database/refresh-work-repository.server.js": "5910f20197bed9e77ac322e441d774b66cf2fee4aefe1938bdb389ee7ab6bc56",
       "app/lib/database/report-retention-policy.server.js": "50700992adaaa1529e9b074744babcd507abc9fdb2deadf3613be7b5631b153d",
       "app/lib/database/reporting-currency.server.js": "7595178b57397bab9e187341421489e84555e80af196d635992b9e7a3fabe640",
       "app/lib/database/runtime-postgres.server.js": "9c24879fd0d2f42c3f04bd2e1b60fabad40b24eb8b44d5cccce39217b76f3df1",
@@ -1501,7 +1502,7 @@
       "app/lib/refresh/observability.server.js": "30843c9fbe753b2d689756c63482035ba29d500381d9596a59892067ec155246",
       "app/lib/refresh/pd-prewrite-chunk.server.js": "29b295aa601c9e687dd95636a4023a8613a5e34179189635c057b9e5df77a201",
       "app/lib/refresh/pd-source-reader.server.js": "4e041c3521f858b3b7df6830ee781ddd9ea25290eaf7ace1173c05e59581c471",
-      "app/lib/refresh/preflight-bridge.server.js": "26280a4a7146ca40ac761e7c38ce99cefbd66cd13f9a3402b2ffe825a5365734",
+      "app/lib/refresh/preflight-bridge.server.js": "51543bd3dbe5e964851c85bddc61529dc60dad165e5f44d7c6dbc6f7016e3c05",
       "app/lib/refresh/queue-check.server.js": "4795afa7149373d342860a4428b6028252ff475a77716dc2bcba363a2b9105e6",
       "app/lib/refresh/queue-cron-entry.server.d.ts": "7f78161c378a99cf8c52a905a4a23ebc026fe81fba929d74d2a5104b491efe7b",
       "app/lib/refresh/queue-cron-entry.server.js": "1667e1f0c3f38394ca52f49e6f018579be7942496102cd98ec65c4fe2e0d72b2",
@@ -1510,7 +1511,7 @@
       "app/lib/refresh/quota-response-feedback.server.js": "5929583f6b1c1eb0d4e0d99c7060d635861a9a60d28468485c7a389853d5e3a8",
       "app/lib/refresh/quota-scope-resolver.server.js": "ff38b878371213d4ba5047b8bcd0005f75342e9c178281df72f85505fd13507f",
       "app/lib/refresh/quota-work-wait.server.js": "241ae261ce805bf76fe4c2f027969bbc67be6cf774f511201fb2381308f2cfcd",
-      "app/lib/refresh/scheduled-queue-check.server.js": "902b4db79699a038c08052564c77b5470ec0c021b9c2822beb17f20ae59c1ae6",
+      "app/lib/refresh/scheduled-queue-check.server.js": "8eb55c330b57a754efe89ec1d0b79d80c5d7cd35dfabee783ff219838a74396c",
       "app/lib/refresh/setup-proof-review.server.js": "4f2c59b4b72c791b944c3bb040fa1531eae96b91ba78b49e92aef2c952aeae91",
       "app/lib/refresh/shared-quota.server.js": "105a4f5ed3413395701e7f0246557b53de984be0cd68ba43f2225eaf3389852d",
       "app/lib/refresh/shopify-admin-identity-quota.server.js": "84e33743b3f8b9a8fc7514ab418b3283746470ebb935ef1d566abad4d1655537",
@@ -1772,9 +1773,9 @@
       "tools/eo05-admin-quota-context-probe.mjs": "e67525499cd3d2042298076e17ea2d84618c74781d78bd93fbbe44cfa827e0f9",
       "tools/eo05-customer-source-privacy-probe.mjs": "df854e763301a99f8ae21212bb84d5dca379647f735c51db4910bf1fc517e20d",
       "tools/eo05-final-synthetic-candidate.mjs": "f39563923c239b9d47f6ccba810ffddd544d434b8f416373cb94e92a7dd8343c",
-      "tools/eo05-four-phase-diagnostics.mjs": "c95afca832e974a24f69f819813a4eb003dd2cded579856f6a0923f7de6b29b9",
+      "tools/eo05-four-phase-diagnostics.mjs": "24acabcb3522760059189f769f33172ae598940d1a8dbc77aa46d951af3604d8",
       "tools/eo05-google-acceptance-probe.mjs": "6895c9f7f2180de717b27e2c86572cfcd79967bb7b84c0b0f1c450ffcf372797",
-      "tools/eo05-google-daily-packages-probe.mjs": "20a0f26f7010c2592d464ea3e527aa44b85cfee4d815a3c07c5d205c0b3c6de8",
+      "tools/eo05-google-daily-packages-probe.mjs": "056f0ff764445590387556e6b2c60b6bad1463b53da1ff0c279ae0eff889cee7",
       "tools/eo05-google-daily-timing-probe.mjs": "2d88d83e783665c4f9ca76bc4ada360e623fc5000c8566a4dacc167507b4add7",
       "tools/eo05-google-hosted-benchmark.mjs": "2724b75f248a74a447108afb0a35b804be8c13bee98f1da3ba43b8bd26fbd77e",
       "tools/eo05-google-identity-renewal-probe.mjs": "2f429c983600225ccdc9cadeede2611de9d48522dc575d5cb583b324b6f07fd1",
@@ -5684,6 +5685,51 @@
         "supabase/migrations/20261125153035_eo06d_google_daily_report_replacement.sql",
         "tools/eo05-google-daily-packages-probe.mjs",
         "tools/eo05b-source-dataset-binding-probe.mjs"
+      ]
+    },
+    {
+      "id": "eo06d-verified-reread-private-queue-2026-11-25",
+      "date": "2026-11-25",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat: Firat replied 'Onayliyorum Codex' to the scoped implementation and isolated test of one seven-day reread work order tied to the first verified closed report receipt and connected to the private worker."
+      },
+      "rationale": "Record one pending historical reread from the verified daily close, reserve it under current queue authority and quota preflight, and pass only the verified report date and first revision to the existing worker. Keep the HTTP scheduler queue-only and preserve source collection, credentials, existing report absence and failure semantics.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "tests/eo-05a-refresh-preflight-bridge.test.js",
+        "tests/eo-05a-refresh-scheduled-queue-check.test.js",
+        "tools/eo05-google-daily-packages-probe.mjs: F01 real PostgreSQL verified close, exactly seven days, authority change, early rejection and duplicate admission rejection",
+        "OAuth and raw source constitution guards; migration lineage"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-25",
+      "official_sources": [
+        "https://www.postgresql.org/docs/17/functions-datetime.html",
+        "https://www.postgresql.org/docs/17/explicit-locking.html",
+        "https://www.postgresql.org/docs/17/indexes-partial.html",
+        "https://supabase.com/docs/guides/database/functions"
+      ],
+      "changed_paths": [
+        "app/lib/database/refresh-work-repository.server.js",
+        "app/lib/refresh/preflight-bridge.server.js",
+        "app/lib/refresh/scheduled-queue-check.server.js",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "supabase/migrations/20261125170837_eo06d_verified_reread_queue.sql",
+        "tools/eo05-four-phase-diagnostics.mjs",
+        "tools/eo05-google-daily-packages-probe.mjs"
       ]
     }
   ],

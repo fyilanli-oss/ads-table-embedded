@@ -195,6 +195,7 @@ Bu kanıt API işleyicisinden izole veritabanına kadar olan zinciri kapsar. Ger
 
 - [ ] **EO-06-D · V1 geçmiş gün düzeltmesi.** Planlı okumayı kuyruğa bağla ve EO-05-C/D ile tarih temelini ve yetkili revizyonu doğrula. Aynı günün bir kez planlandığını, başarısız koşuda eski yayının korunduğunu ve doğrulanmış yeni yayının rapora yansıdığını test et. Uygulama ve kabul açık.
   - **Google Ads paketli yayın hazırlığı.** Önceki doğrulanmış makbuz ve sürüme bağlı düzeltme, normal 200 satırlık paket sınırlarıyla tek işlemde çalışır. İlk yayın ve düzeltme aynı mevcut yetki ve kaynak doğrulamalarına tabidir. İzole provada 1.000 satır, eksik beşinci paketle eski yayının korunması ve doğrulanmış ikinci yayın sınanır. Kuyruk, canlı uygulama ve canlı kabul ayrı adımlardır.
+  - **Özel kuyruk hazırlığı.** İlk doğrulanmış makbuzla kapanan gün için sağlayıcının saat diliminde yedi takvim günü sonrası kaydedilir. İlk okuma işi önceliklidir. Bir hesap aynı gün için en çok bir tarihsel iş emri alır ve takvim günü başına en çok bir eski rapor günü seçilir. İş emri özgün rapor günü ve ilk yayın sürümüne bağlıdır. Canlı cron ve sağlayıcı kabulü ayrı aşamalardadır.
 
 [EO-06-D makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo06d_compare_data_states_2026_11_25). Bu kayıt mevcut davranışın ve açık kararların depo incelemesidir. Yeni API alanı veya canlı uygulama için teknik kapsam ayrı belirlenir.
 

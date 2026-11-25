@@ -29,7 +29,8 @@ export async function createFourPhaseDiagnostics(client,provider) {
   const edit=async(signature,points)=>{
     const {rows:[{definition}]}=await client.query("select pg_get_functiondef($1::regprocedure) definition",[signature]);
     let sql=definition;
-    for(const [from,to] of points){
+    for(const [original,replacement,alternate] of points){
+      const [from,to]=alternate&&!sql.includes(original)?alternate:[original,replacement];
       assert.equal(sql.split(from).length,2,`four phase SQL anchor: ${signature}: ${from}`);
       sql=sql.replace(from,()=>to);
     }
@@ -52,7 +53,9 @@ export async function createFourPhaseDiagnostics(client,provider) {
     ["  r jsonb;","  r jsonb;\n  phase_trace_started timestamptz;\n  phase_trace_finished boolean;"],
     [lock,`  ${start}\n${lock}\n  ${emit("lockAcquisition")}`],
     [inspect,`  ${start}\n${inspect}\n  ${emit("repeatedInspection")}`],
-    [`  return ${finish};`,`  ${start}\n  phase_trace_finished:=${finish};\n  ${emit("finalUpdate")}\n  return phase_trace_finished;`],
+    [`  return ${finish};`,`  ${start}\n  phase_trace_finished:=${finish};\n  ${emit("finalUpdate")}\n  return phase_trace_finished;`,
+      [`  if not ${finish} then return false; end if;`,
+        `  ${start}\n  phase_trace_finished:=${finish};\n  ${emit("finalUpdate")}\n  if not phase_trace_finished then return false; end if;`]],
   ]);
 
   let activePhase=null;

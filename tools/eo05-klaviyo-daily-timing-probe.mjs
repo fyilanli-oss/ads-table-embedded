@@ -1335,7 +1335,7 @@ export async function klaviyoHistoricalRereadProbe(client,{ownerFixture}) {
       [owner.installationId])).rows;
     const before=await readFacts();
     assert.equal(before.length,1000);
-    const {rows:[schedule]}=await client.query(`select r.business_date::text day,r.first_digest,r.admitted_at,
+    const {rows:[schedule]}=await client.query(`select r.business_date::text as day,r.first_digest,r.admitted_at,
       r.due_at=w.finished_at+interval '7 days' as on_time
       from operations.refresh_historical_rereads r join operations.refresh_runs w
         on w.workspace_id=r.workspace_id and w.install_generation=r.install_generation and w.provider=r.provider

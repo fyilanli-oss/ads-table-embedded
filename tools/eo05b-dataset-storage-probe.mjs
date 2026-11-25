@@ -11,7 +11,7 @@ import {fxReportingCurrencyProbe} from "./eo05b-fx-reporting-currency-probe.mjs"
 import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
 import {maturityProbe} from "./eo05c-maturity-probe.mjs";
 import {reconciliationProbe} from "./eo05d-reconciliation-probe.mjs";
-import {klaviyoDailyTimingProbe} from "./eo05-klaviyo-daily-timing-probe.mjs";
+import {klaviyoDailyTimingProbe,klaviyoHistoricalRereadProbe} from "./eo05-klaviyo-daily-timing-probe.mjs";
 import {observabilityProbe} from "./eo05e-observability-probe.mjs";
 import {googleDailyPackagesProbe} from "./eo05-google-daily-packages-probe.mjs";
 import {googleDailyTimingProbe,prepareGoogleTimingLocalRoles,installGoogleCombinedCandidate,installGoogleWriterPreparationCandidate,installGooglePackageReuseCandidate,proveGoogleReportCanonicalParity} from "./eo05-google-daily-timing-probe.mjs";
@@ -313,6 +313,7 @@ export async function datasetStorageProbe(client, connection, environment = proc
     await reconciliationProbe(client, {ownerFixture});
     console.log("EO05_GOOGLE_DAILY_PACKAGES_PASS",JSON.stringify(await googleDailyPackagesProbe(client,{ownerFixture})));
     console.log("EO06D_META_PACKAGED_CORRECTION_PASS",JSON.stringify(await metaPackagedCorrectionProbe(client,{ownerFixture})));
+    if(finalSynthetic) console.log("EO06D_KLAVIYO_HISTORICAL_REREAD_PASS",JSON.stringify(await klaviyoHistoricalRereadProbe(client,{ownerFixture})));
     await observabilityProbe(client, {ownerFixture});
     for (const provider of ["google_ads", "meta", "klaviyo"]) {
       const owner = await ownerFixture(client, provider), source = await sourceFixture(client, owner);

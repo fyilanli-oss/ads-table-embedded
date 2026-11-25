@@ -11,6 +11,7 @@ import {readDatasetWritePlan} from "../app/lib/refresh/dataset-server.server.js"
 import {runScheduledRefreshWithDataset} from "../app/lib/refresh/scheduled-queue-check.server.js";
 import {createScheduledDatasetPostgresClient} from "../app/lib/database/dataset-postgres.server.js";
 import {GOOGLE_DAILY_STAGE_SQL,GOOGLE_DAILY_PUBLISH_SQL,GOOGLE_DAILY_INSPECT_SQL,GOOGLE_DAILY_FINISH_SQL} from "../app/lib/database/dataset-rpc.server.js";
+import {KLAVIYO_DAILY_STAGE_SQL,KLAVIYO_DAILY_PUBLISH_SQL,KLAVIYO_DAILY_INSPECT_SQL,KLAVIYO_DAILY_FINISH_SQL} from "../app/lib/database/dataset-rpc.server.js";
 import {verifyShopifyProductCandidate,shopifyProductVerificationEvidence} from "../app/lib/shopify/product-identity-verification.server.js";
 import {verifiedMappingFixture} from "./fixtures/verified-mapping-fixture.js";
 import {createSyntheticReportMapping,loadSyntheticMappingReconciliation} from "./fixtures/refresh-shopify-mapping-probe.js";
@@ -92,6 +93,48 @@ for (const provider of ["google_ads", "meta", "klaviyo"]) test("reconciliation p
 });
 
 const sharedShopifyInstallation=datasetStorageFixture().owner;
+test("scheduled Klaviyo revision reaches the packaged writer after the source shrinks to one part", async () => {
+  const f=await fixture("klaviyo");
+  const {jobId,fence,window}=f.envelopes.values().next().value.receipt.manifest.klaviyoDatasetRead;
+  const calls=[];
+  let part,receipt;
+  f.database.transaction=run=>run(f.database);
+  const read=f.hooks.query;
+  f.hooks.query=(sql,args)=>{
+    if(sql===KLAVIYO_DAILY_STAGE_SQL) {
+      calls.push("stage");
+      const write=JSON.parse(args[1]),context=JSON.parse(args[2]);
+      assert.equal(context.expectedRevision,1);
+      assert.equal(args[5],1);
+      part={ordinal:0,rowCount:2,digest:sourcePayloadHash({write,context})};
+      return {rows:[{result:{status:"staged",operationId:write.operationId,packageCount:1,...part}}]};
+    }
+    if(sql===KLAVIYO_DAILY_PUBLISH_SQL) {
+      calls.push("publish");
+      const context=JSON.parse(args[1]);
+      receipt={version:"klaviyo-daily-receipt-v1",operationId:args[3],status:"consumed",comparison:"matched",
+        consumerReceipt:true,checkpointAdvanced:true,rowCount:2,revision:2,jobId,fence,
+        businessDate:context.businessDate,timeZone:context.timeZone,packages:[part],batchIds:context.batchIds};
+      receipt.digest=sourcePayloadHash(receipt);
+      return {rows:[{result:receipt}]};
+    }
+    if(sql===KLAVIYO_DAILY_INSPECT_SQL) {
+      calls.push("inspect");
+      return {rows:[{result:receipt}]};
+    }
+    if(sql===KLAVIYO_DAILY_FINISH_SQL) {
+      calls.push("finish");
+      assert.equal(args[4],receipt.digest);
+      return {rows:[{result:true}]};
+    }
+    return read(sql,args);
+  };
+  const result=await reconcileStoredDatasetSources({...f,scheduled:true,expectedRevision:1,admittedScope:{jobId,fence,...window}});
+  assert.equal(result.jobCompleted,true);
+  assert.equal(f.request(),undefined);
+  assert.deepEqual(calls,["stage","publish","inspect","finish"]);
+});
+
 for (const provider of ["google_ads", "klaviyo"]) test(`${provider} synthetic report binds a verified Shopify mapping at the Dataset write seam`, async () => {
   const reconcile=await loadSyntheticMappingReconciliation();
   const owner={...sharedShopifyInstallation,provider,connectionId:randomUUID(),credentialId:randomUUID(),

@@ -1278,6 +1278,7 @@
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json"
     ],
     "sha256": {
+      "supabase/migrations/20261125185757_eo06d_klaviyo_multipart_revision.sql": "9fdff139710505b6de7d29a1854f8bad9258652eb9c44c6693cc406f94d91e7b",
       "supabase/migrations/20261125180106_eo06d_meta_packaged_report_reconciliation.sql": "a6c6d52d2a608285cdb36fd072ccf6eaef4e9b76142bd602bfaf2ec1013b8af2",
       "supabase/migrations/20261125170837_eo06d_verified_reread_queue.sql": "660c1e26e252fc7b0b88783aeda4837495eb4ce439486e9ae1a863bda73dc1a0",
       "supabase/migrations/20261125153035_eo06d_google_daily_report_replacement.sql": "3b662a06f96f7045643b520756bab0a99e9e66782123a983b8e765174d8bb2ca",
@@ -1297,7 +1298,7 @@
       "app/lib/database/dataset-fx-policy.server.js": "bf1bc27e567b192d3aee2ccfd9bbe3ecab01fd6b972a177339b154a996eb3a4c",
       "app/lib/database/dataset-fx-resolver.server.js": "cf69147f9ab92250a581dd877a73749fcbab03e539ab1616861dc083b5293556",
       "app/lib/database/dataset-postgres.server.js": "2b5adabb3c0ab3adb2d981d48ed2f50810991ee16181eb31e949f6d7f815d056",
-      "app/lib/database/dataset-reconciliation.server.js": "d0189b77240aa6e654787190a71a9516da0e908696264aabb60a4d995fcdf65f",
+      "app/lib/database/dataset-reconciliation.server.js": "c5aeb5372837089c3bfa3ecdc47c7a520c2d9d4bfd05540999b8094325a140bc",
       "app/lib/database/dataset-retention.server.js": "16ac5cef4b05ba9ee2f1fb8b961fcca04361f5070a308331d8e57c443e265584",
       "app/lib/database/dataset-rpc.server.js": "a2ac3b46dc6e0d11fc8bef53a98e809df17b89f58d61a47b48a681e556a29055",
       "app/lib/database/dataset-source-binding.server.js": "755b72bb1204467530b49a6ba604157bf3fb33053b12a1cd55ecbcba3f8ee3e9",
@@ -1512,7 +1513,7 @@
       "app/lib/refresh/quota-response-feedback.server.js": "5929583f6b1c1eb0d4e0d99c7060d635861a9a60d28468485c7a389853d5e3a8",
       "app/lib/refresh/quota-scope-resolver.server.js": "ff38b878371213d4ba5047b8bcd0005f75342e9c178281df72f85505fd13507f",
       "app/lib/refresh/quota-work-wait.server.js": "241ae261ce805bf76fe4c2f027969bbc67be6cf774f511201fb2381308f2cfcd",
-      "app/lib/refresh/scheduled-queue-check.server.js": "8eb55c330b57a754efe89ec1d0b79d80c5d7cd35dfabee783ff219838a74396c",
+      "app/lib/refresh/scheduled-queue-check.server.js": "707db17a7cff9a76a80a921924dfbb873b09c8c1af0ed0b8826d13eec8d7e0cb",
       "app/lib/refresh/setup-proof-review.server.js": "4f2c59b4b72c791b944c3bb040fa1531eae96b91ba78b49e92aef2c952aeae91",
       "app/lib/refresh/shared-quota.server.js": "105a4f5ed3413395701e7f0246557b53de984be0cd68ba43f2225eaf3389852d",
       "app/lib/refresh/shopify-admin-identity-quota.server.js": "84e33743b3f8b9a8fc7514ab418b3283746470ebb935ef1d566abad4d1655537",
@@ -1788,7 +1789,7 @@
       "tools/eo05-google-source-role-probe.mjs": "fba96de648dd50a099dae4cdfd1e17807e5eb250cbc139d967a3f6e96b8ad19a",
       "tools/eo05-identity-authority-snapshot-probe.mjs": "0136e8dc5a5720b78d1cb4dca081f19e8b473812b6d66129b94f64fd5edf672c",
       "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
-      "tools/eo05-klaviyo-daily-timing-probe.mjs": "6abc2707a2b362a9bfa1997946d72d36efba6ae120a71299f1433f919f7ae9c4",
+      "tools/eo05-klaviyo-daily-timing-probe.mjs": "cc187edf9313aa26433c0bf403f7a6c06994dee587b43a1331cc8c989a3304a8",
       "tools/eo05-klaviyo-hosted-benchmark.mjs": "1a21a53113d2a87cebc4426d3d8ef5f99b9e746a399ab088dc48381766e77dd9",
       "tools/eo05-klaviyo-raw-datasets-probe.mjs": "e7d504cd848ad8380575fa8a9dd6755fc95354d9a208db4d7f1a40693cc50888",
       "tools/eo05-klaviyo-source-capture-probe.mjs": "c9b9f604a72611fb0f39a8e6a178dadd72fcc6ee2f340a4396d0d6058bbaf5ab",
@@ -1832,7 +1833,7 @@
       "tools/eo05-source-rule-probe.mjs": "bdba143e69a0ac680687dfbfce815bf8c97c7fa2228179e22cc5d5d4626477ab",
       "tools/eo05-verified-mapping-probe.mjs": "875aadd0c47e64d66f5fef187b2a803cd9716ff04b0ac0871f17cc97f84f88eb",
       "tools/eo05b-dataset-server-probe.mjs": "d6177954ab377f697209d5753651f7403e82b1c1349e0425405187ce33c3b02c",
-      "tools/eo05b-dataset-storage-probe.mjs": "51813a67a022a158b540e2f574b935e75542078804151a698bac3e92546b15ab",
+      "tools/eo05b-dataset-storage-probe.mjs": "9ff65bbcae00645e8797862fd1ccbd93f99d546409b9f8aee2b44c91fc997840",
       "tools/eo05b-demo-fixture.mjs": "c91cf0e2b82ae6bb4db46d4dfa4ffbc0e1415877075995a5bf5cbc1f30afdd73",
       "tools/eo05b-fx-reporting-currency-probe.mjs": "c5decd13fad2a1aebccacbdf6229bcfec590c429db8ab3380008c318c479a9d5",
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
@@ -5778,6 +5779,52 @@
         "tools/eo05-meta-daily-report-probe.mjs",
         "tools/eo05-meta-shopify-refresh-probe.mjs",
         "tools/eo05-single-report-close-probe.mjs",
+        "tools/eo05b-dataset-storage-probe.mjs"
+      ]
+    },
+    {
+      "id": "eo06d-klaviyo-multipart-revision-2026-11-25",
+      "date": "2026-11-25",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat: Firat replied 'Onaylıyorum Codex' to the scoped inspection, implementation and isolated test of Klaviyo's seven-day second publication for 1,000 rows in five packages, preserving the first report on missing packages."
+      },
+      "rationale": "Allow only a verified Klaviyo staged day to replace rows sourced from partial physical product packages, within the existing row revision guard. Route a nonempty scheduled Klaviyo revision to the staged publisher even when the new day fits a single physical source part. Preserve prior report on incomplete packages and use the existing queue admission, readback and close.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "tests/dataset-reconciliation.test.js: nonempty Klaviyo revision with one source part keeps the staged publisher and exact receipt close",
+        "tests/eo-05a-refresh-preflight-bridge.test.js",
+        "tools/eo05-klaviyo-daily-timing-probe.mjs: rollback-only seven-day queue to close, first and second publication with 1,000 rows, five packages, missing fifth package, prior receipt, revised facts and permit cleanup",
+        "OAuth and raw source constitution guards; migration lineage"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-25",
+      "official_sources": [
+        "https://www.postgresql.org/docs/17/tutorial-transactions.html",
+        "https://www.postgresql.org/docs/17/explicit-locking.html",
+        "https://supabase.com/docs/guides/database/functions",
+        "https://developers.klaviyo.com/en/reference/query_campaign_values",
+        "https://developers.klaviyo.com/en/reference/query_flow_values",
+        "https://developers.klaviyo.com/en/reference/get_events"
+      ],
+      "changed_paths": [
+        "app/lib/database/dataset-reconciliation.server.js",
+        "app/lib/refresh/scheduled-queue-check.server.js",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "supabase/migrations/20261125185757_eo06d_klaviyo_multipart_revision.sql",
+        "tools/eo05-klaviyo-daily-timing-probe.mjs",
         "tools/eo05b-dataset-storage-probe.mjs"
       ]
     }

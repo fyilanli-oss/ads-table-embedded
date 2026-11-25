@@ -91,16 +91,17 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
   const googleDaily=googleDailyPackages;
   const dailyPackages = source.datasets.some(d => d.packageReceipts !== undefined);
   if(bound.provider==="google_ads"&&dailyPackages&&!googleDaily) return freezeMaturity({status:"held",holds:[{reason:"google_daily_handoff_required"}],sourceVerified:true,rowsStored:0,consumerReceipt:false,checkpointAdvanced:false,reportValuesChanged:false,publishable:false,authorizesActivation:false});
-  if (dailyPackages && (!scheduled || typeof database.transaction !== "function")) return freezeMaturity({
+  const projection = projectors[bound.provider](source);
+  const klaviyoRevision = scheduled && bound.provider === "klaviyo" && expectedRevision > 0 && projection.rows.length > 0;
+  if ((dailyPackages || klaviyoRevision) && (!scheduled || typeof database.transaction !== "function")) return freezeMaturity({
     status: "held", holds: [{reason: "daily_package_handoff_required"}], sourceVerified: true, rowsStored: 0,
     consumerReceipt: false, checkpointAdvanced: false, reportValuesChanged: false, publishable: false, authorizesActivation: false,
   });
-  const projection = projectors[bound.provider](source);
   for (const {row} of projection.rows) if (row.occurred_at !== null && row.occurred_at !== undefined) row.occurred_at = canonicalDatasetEventTime(row.occurred_at);
   const configuration = source.datasets.filter(d => d.dataset === "configuration").flatMap(d => d.pages.map(p => p.ref));
   if (configuration.length) for (const {row} of projection.rows) row.provenance.sources = [...new Map([...row.provenance.sources, ...configuration].map(r => [r.page_id, r])).values()];
   const metaPackaged=scheduled && bound.provider==="meta" && (expectedRevision>0 || projection.rows.length>200);
-  if (!metaPackaged && !dailyPackages && !googleDaily && projection.rows.length > 200) fail("ROW_LIMIT");
+  if (!metaPackaged && !dailyPackages && !googleDaily && !klaviyoRevision && projection.rows.length > 200) fail("ROW_LIMIT");
   if (projection.rows.length && fxResolver !== undefined) {
     const fx = await applyStoredDatasetFx({resolver: fxResolver, database, source, rows: projection.rows, deadlineAt: limits.deadlineAt, signal});
     projection.holds.push(...fx.holds);
@@ -117,7 +118,7 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
     batchIds: source.datasets.flatMap(d => (d.packageReceipts ?? [d.receipt]).map(receipt=>receipt.batchId)),
     startedAt: clocks.map(c => c.started).sort()[0], completedAt: clocks.map(c => c.completed).sort().at(-1)};
   const policy=projection.rows.length ? reportRetentionPolicy() : resolveReportRetentionPolicy({businessDate,timeZone});
-  if (dailyPackages || googleDaily) {
+  if (dailyPackages || googleDaily || klaviyoRevision) {
     const prepareWrites=()=>prepareDailyDatasetPackages({owner:bound,rows:projection.rows,policy,operationId,
       now:new Date(now()).toISOString(),context,maxPackages:20});
     const commit={database,owner:bound,context,operationId,deadlineAt:limits.deadlineAt,admittedScope,stop};

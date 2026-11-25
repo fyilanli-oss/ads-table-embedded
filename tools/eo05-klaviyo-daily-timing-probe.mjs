@@ -1625,7 +1625,16 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
   const hostedReportMs=[];
   const durations={queueEnqueue:0,queueAndAdmission:0,providerCollection:0,providerFixture:0,rawStore:0,handoff:0,reportFlow:0};
   async function timedQuery(bucket,sql,args,diagnosticPhase=null) {
-    if (!endToEnd&&!detailed&&(!reportOnly||!["reportStage","reportPublish"].includes(bucket))) return client.query(sql,args);
+    if (!endToEnd&&!detailed&&(!reportOnly||!["reportStage","reportPublish"].includes(bucket))) {
+      if(!historicalProof) return client.query(sql,args);
+      try {return await client.query(sql,args);}
+      catch(error) {
+        failed??=error;
+        console.error("EO06D_KLAVIYO_SQL_STOP",JSON.stringify({bucket,code:error.code,
+          operation:sql.match(/(?:analytics|evidence|operations)\.[a-z_]+/)?.[0]??"transaction",message:error.message}));
+        throw error;
+      }
+    }
     const start=performance.now();
     try {return await measureFourPhase(diagnosticPhase,sql,args,()=>executeMeasured(sql,args,bucket));}
     catch(error) {failed??=error;throw error;}

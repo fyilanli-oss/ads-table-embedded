@@ -77,6 +77,7 @@ export async function datasetStorageProbe(client, connection, environment = proc
       }
     }
     await client.query("set local role adstable_owner");
+    if(finalSynthetic) console.log("EO06D_KLAVIYO_HISTORICAL_REREAD_PASS",JSON.stringify(await klaviyoHistoricalRereadProbe(client,{ownerFixture})));
     // Keep complete-flow inventory independent of later fixture owners.
     await client.query("savepoint google_complete_flow");
     try{
@@ -313,7 +314,6 @@ export async function datasetStorageProbe(client, connection, environment = proc
     await reconciliationProbe(client, {ownerFixture});
     console.log("EO05_GOOGLE_DAILY_PACKAGES_PASS",JSON.stringify(await googleDailyPackagesProbe(client,{ownerFixture})));
     console.log("EO06D_META_PACKAGED_CORRECTION_PASS",JSON.stringify(await metaPackagedCorrectionProbe(client,{ownerFixture})));
-    if(finalSynthetic) console.log("EO06D_KLAVIYO_HISTORICAL_REREAD_PASS",JSON.stringify(await klaviyoHistoricalRereadProbe(client,{ownerFixture})));
     await observabilityProbe(client, {ownerFixture});
     for (const provider of ["google_ads", "meta", "klaviyo"]) {
       const owner = await ownerFixture(client, provider), source = await sourceFixture(client, owner);

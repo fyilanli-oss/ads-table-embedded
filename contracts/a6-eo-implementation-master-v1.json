@@ -1,4 +1,24 @@
 {
+  "eo06c_compare_api_sql_rehearsal_2026_11_25": {
+    "package": "A6-EO-06-C",
+    "status": "isolated_api_handler_and_postgresql_rehearsal_pass",
+    "document": "docs/A6_EO_IMPLEMENTATION_MASTER_TABLE.md#eo-06-c-compare-api-ve-postgresql-provası",
+    "probe": "tools/eo06b-report-sales-compare-probe.mjs",
+    "base_main": "ae6ba0cba6cc49548c5bb9d633b27c8e5edfe521",
+    "environment": "PostgreSQL 17.5 via PGlite 0.3.14, in memory",
+    "shopify_session_and_admin_identity_reply": "synthetic",
+    "database": "Actual installation authority migrations and Compare read migration with synthetic Dataset facts",
+    "verified": [
+      "equal calendar periods and a single filter set",
+      "product IDs, sales amounts, partial nulls, absent days and recorded zeros",
+      "disjoint rows for two installed shops with shared filter IDs",
+      "client-supplied workspace rejected"
+    ],
+    "passed_probe_configurations": ["with_refresh_dataset_runner", "without_refresh_dataset_runner"],
+    "existing_calendar_and_api_tests_passed": 12,
+    "open": ["real_shopify_admin_session", "live_shop_data", "app_deployment"],
+    "live_changes_authorized": false
+  },
   "eo05_ordered_remediation_acceptance_2026_11_25": {
     "owner_package": "A6-EO-05",
     "kind": "single_ordered_work_and_acceptance_record",

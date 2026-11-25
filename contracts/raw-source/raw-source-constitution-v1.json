@@ -791,7 +791,7 @@
       "contracts/a6-eo-f5-product-route-map-v1.json": "cfae8b77fa44f27978db120865852ece9d3ea03cfc83600f7576e71f9d34067b",
       "contracts/a6-eo-f6-effort-risk-comparison-v1.json": "94ead4504333f50bd1379e3f13e4fa68c5f19bf256c5e4006033fa73dc3e9f3e",
       "contracts/a6-eo-f7-go-decision-v1.json": "c3ed10cfca08ebeab27ebd63c17be60e912b36904accce0e2e38ae174f0d4aa9",
-      "contracts/a6-eo-implementation-master-v1.json": "737925513b682eff74432e3229e6967c77cb31b9fdd9c5527a779b342929d947",
+      "contracts/a6-eo-implementation-master-v1.json": "d812642bd88f15fa47e03a572aaa868287bc529050079a8df4935c34917f13c9",
       "contracts/a6-eo-secret-inventory-recovery-v1.json": "e8a3e0cc74b446507a3e8f79a9338eee28b3cea7e2ccfd5737d77be182ce7299",
       "contracts/a6-ops-local-01-safe-cleanup-v1.json": "30a77abdc5a4ed9bc92bfac8d4c14ac3e96ed2432eecf2110dc227747ea43e83",
       "contracts/a6-ops-shopify-01-isolated-preproduction-v1.json": "a6f76b340227c6bbce22e4c59959e8e8247e99204e8da773f2a55c3282f42e06",
@@ -870,7 +870,7 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "325da96ae5f4f320f06a0abd5545fd2032297cafc57c844d0cf5864cae661752",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "e2ef3aa218602b016084a4c5dbc6af7d940f57f0580a8cc1e77fb2b583e32b9f",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "41327c53a6157fea7cb4d873b9f51847b21dea94376afec6121b1ffc2749d6fc",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -1315,7 +1315,7 @@
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
       "tools/eo05d-reconciliation-probe.mjs": "cfa524d612e31a13ec495f884c65110df1386cc068c9d5101e2ffcb8038d6476",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
-      "tools/eo06b-report-sales-compare-probe.mjs": "6439c82de3a6bffcc0099f03bffaa1a1076143d48fd69995df15ba5e78b2bbfb",
+      "tools/eo06b-report-sales-compare-probe.mjs": "b2d9a9162bb383c6eddebc949bfb85e09f8e6af9fe585ac4d65b60b1f5e740d1",
       "tools/f01-database-replay.mjs": "b23e14a8236a2ea276b15b2a016996082a4078ef401d9ed92139f5055cd36a2a",
       "tools/f01-identity-oauth-rollout.mjs": "5894b9ae54363fcf31372ed0a1abf39d3c0e1dfea428190232a0420b0b11f787",
       "tools/f01-live-readiness-plan.mjs": "d4eb8e8ca9d80d6e99cea8c9cf475b388db46a756e2e7a631c5c245e8e7bb25b",
@@ -3636,6 +3636,46 @@
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "contracts/raw-source/raw-source-constitution-v1.json",
         "docs/EXECUTION_PLAN.md"
+      ]
+    },
+    {
+      "id": "eo06c-compare-api-sql-rehearsal-2026-11-25",
+      "date": "2026-11-25",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Fırat: Onaylıyorum Codex. Explicit reply to the isolated Compare API rehearsal with a synthetic Shopify shop session, the existing API handler and PostgreSQL, checking equal periods, missing-day vs zero and separation of two stores."
+      },
+      "rationale": "Reuse the existing Compare SQL fixture and combine it with the existing API handler, real installation lookups and synthetic Shopify authentication response. Record the integrated test evidence. No runtime, OAuth behavior, SQL migration, provider, or release changes.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "Compare API and SQL probe passed on PostgreSQL 17.5 / PGlite 0.3.14 with and without the refresh dataset runner.",
+        "12 calendar and API tests passed.",
+        "tools/check-oauth-constitution.mjs and tools/check-raw-source-constitution.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-25",
+      "official_sources": [
+        "https://shopify.dev/docs/api/shopify-app-react-router/latest/authenticate/admin",
+        "https://www.postgresql.org/docs/17/sql-createfunction.html",
+        "https://pglite.dev/docs/"
+      ],
+      "changed_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "tools/eo06b-report-sales-compare-probe.mjs"
       ]
     }
   ],

@@ -7,8 +7,16 @@ Karar ve kanıt tarihi **21 Kasım 2026**. Bu belge, AdsTable’ın Google Ads, 
 - **Normal okuma günde bir kez, kapanmış gün içindir.** Mağazanın seçili raporlama hesabı ve doğrulanmış IANA saat dilimi üzerinden son kapanmış iş günü belirlenir. Başlangıç yerel gece yarısı, bitiş bir sonraki yerel gece yarısıdır. Saat değişimi olan günlerde takvim sınırları esas alınır. Provanın ortak gününde üç hesap UTC kullandı.
 - **Kuyruk kontrolü ile veri okuma ayrı takvimlerdir.** Mevcut kuyruk kontrolü, vadesi gelen işi keşfetmek için dakikalık kontrol modelini tanımlar. Günlük iş yükü günde bir kapanmış günü hedefler. Eski tasarımın `workspace_refresh_interval_seconds: 3600` ve `hourly_hot_window` kayıtları tarihsel kapsamdır. Geçerli normal ürün kararı günlük refresh’tir. Canlı ve düşük ticaret hacimli çalışma saatinin seçimi açık karardır.
 - **Tarih kaynağı** yetkili raporlama hesabı, sağlayıcının iş günü, bağlantının ve seçim döneminin başlangıcı, mevcut veri boşlukları ve çalıştırma zamanıdır. Gelecek gün, açılmış gün, bağlantı ya da seçim başlangıcını kesen gün, bilinçli disconnect boşluğu ve geçersiz saat dilimi normal yayın hattına alınmaz. Sağlayıcıya özgü ilk gün ham gözlemi varsa, yalnız ilgili ham kanıt kuralıyla saklanır. Rapor uygunluğu ayrıca kanıtlanır.
-- **Normal yayın ile geçmiş düzeltme ayrı işlerdir.** Geç dönüşüm veya sağlayıcı revizyonu için herkese uygulanan sabit bir atıf penceresi varsayılmaz. Okuma tarihi, rapor iş günü, native atıf zaman temeli ve gözlem zamanı ayrı tutulur. Geçmiş yeniden okuma için sağlayıcı bazında pencere, sıklık, gerekçe, maliyet ve olgunluk kararı gerekir. Normal günlük akış bu işleri otomatik açmaz.
+- **Normal yayın ile geçmiş düzeltme ayrı işlerdir.** Okuma tarihi, rapor iş günü, native atıf zaman temeli ve gözlem zamanı ayrı tutulur. V1 tekrar okuma kararı aşağıdadır.
 - **Günün kapanışı sağlayıcı hesabı başınadır.** Google Ads, Klaviyo ve Meta ayrı yetkiye, iş emrine, ham zarflara, yayın makbuzuna ve ilerleme kaydına sahiptir. Mağaza düzeyinde bütün bağlı ve beklenen işler doğrulanınca ortak koşu tamamlandı denir. Tek sağlayıcı kapanması diğer sağlayıcının durumunu ilerletmez.
+
+### V1 geçmiş günü tekrar okuma
+
+**25 Kasım 2026 ürün kararı.** Kapanan gün ertesi sabah okunur ve mevcut yayın doğrulamaları tamamlanınca rapora açılır. İlk başarılı okumadan **7 gün sonra** aynı rapor günü, mevcut günlük refresh kapsamıyla **bir kez daha tam okunur**. Örneğin pazartesinin verisi salı sabahı ilk kez başarılı okunursa tekrar okuma bir sonraki salı yapılır. Düzen oturduğunda günlük plan dünün ilk okumasını ve geçmişten tek bir günün tekrar okumasını içerir.
+
+Tekrar okuma başarısız olursa son geçerli ve doğrulanmış rapor gösterilmeye devam eder. Yeni veri, mevcut yetkili rapor revizyonu ve yayın doğrulamaları tamamlanınca görünür. Yedi gün, V1'in planlı tekrar okuma vadesidir. Sağlayıcının kendi atıf ve kesinleşme kuralları geçerlidir.
+
+Uygulama durumu **bekliyor**. Kuyruğa bağlama, tarih ve kapsam doğrulaması, yetkili yayın revizyonu ve ilgili kabul testleri ayrı uygulama adımındadır. [EO-06-D iş kaydı](A6_EO_IMPLEMENTATION_MASTER_TABLE.md#eo-06-d-veri-durumları-ve-refresh-kanıtı)
 
 ## 1. Kuyruğa alma
 
@@ -217,7 +225,7 @@ Günlük Google planı, yayın işlemi içinde kayıtlı ürün eşlemesini arar
 | Başlık | Durum ve karar için gereken kanıt |
 |---|---|
 | Canlı günlük zamanlama | Düşük ticaret hacimli saat, her mağazanın doğrulanmış saat dilimi, başlangıç vadesi, kaçırılmış gün ve uygun kapatma rezervi için karar bekliyor. |
-| Geçmiş düzeltme ve atıf | Sağlayıcı bazında tarih temeli, minimum gerekli geriye okuma, sıklık ve yayın revizyonu ayrı karar bekliyor. |
+| Geçmiş düzeltme ve atıf | V1'de bir kez, ilk başarılı okumadan 7 gün sonra. Sağlayıcı ve rapor bazında tarih temelinin doğrulanması, zamanlama uygulaması, yayın revizyonu ve kabul açık. |
 | Gerçek Meta verisi | Aynı gerçek mağazanın rapor `product_id`, katalog kimliği, Shopify Product ID ve satış rolü kanıtları bekleniyor. |
 | Canlı kabul | Gerçek mağaza ve hesap erişimi, gerçek sağlayıcı ağ ve yanıt davranışı ile eksiksiz canlı iş kanıtı ayrı doğrulanacak. |
 | Birden fazla refresh hattı | Bir mağazaya tek hat, isteğe çıkmadan önce sahiplik kontrolü ve güvenli devir kuralları tasarıma işlendi. Uygulama ve kabul ölçümü EO-08 sonrasında yeniden değerlendirilecek. [Çoklu hat tasarımı](EO_05A_MULTI_LANE_REFRESH_DESIGN.md) |

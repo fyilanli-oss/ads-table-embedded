@@ -1,5 +1,7 @@
 # EO-06-A formül motoru başlangıç notu
 
+**V1 kapsam kararı ve EO-06-A kapanışı · 24 Kasım 2026.** Fırat ile alınan karara göre KPI’lar, metrik hesaplamaları ve maliyetlendirme V1’de yer almayacaktır. EO-06-A, V1 kapsamından ertelenerek kapatıldı. Aşağıdaki başlangıç notu önceki kapsamı belgeler.
+
 **Başlangıç 22 Kasım 2026.** İlk iş, kanonik Dataset'ten gelen girdilerle formüllerin hangi toplamlar üzerinden hesaplanacağını ve sentetik örneklerde beklenen sonuçları belirlemek. [Ana sözleşme](../contracts/a6-eo-implementation-master-v1.json#eo06a_start_2026_11_22) · [Paket sırası](A6_EO_IMPLEMENTATION_MASTER_TABLE.md#eo-06--formül-sorgu-ve-aynı-origin-bffapi)
 
 | İş | Başlangıç kapsamı |

@@ -120,7 +120,7 @@ Referans: A6-RM-06/07, E9-T8, R3/R4/R7.
 
 22 Kasım 2026'da [EO-06-A formül motoru başlangıç notu](EO_06A_FORMULA_ENGINE_START_BRIEF.md) hazırlandı. Paket uygulamasının açılışı ayrı izlenir.
 
-- **EO-06-A — Formül motoru:** Önce toplulaştırılan KPI, Klaviyo maliyet dağıtımı, CPC/ROAS/CPS/revenue/revenue margin ve para birimi güvenli hesaplamalar uygulanacak.
+- **EO-06-A — Formül motoru:** Fırat ile alınan kararla KPI’lar, metrik hesaplamaları ve maliyetlendirme V1 kapsamından ertelendi. [EO-06-A kapanış kaydı](EO_06A_FORMULA_ENGINE_START_BRIEF.md)
 - **EO-06-B — Sorgu, filtre ve karşılaştırma anlamları:** Tarih, varlık, veri seviyesi, filtre ve dönem karşılaştırma kuralları tek sorgu sözleşmesinde kurulacak.
 - **EO-06-C — BFF yolları ve DTO yanıt yapısı:** Çalışma alanını oturumdan türeten aynı-origin BFF yolları ve üç yüzey için kararlı DTO yanıt yapıları hazırlanacak.
 - **EO-06-D — Destek, null ve güncellik anlamları:** Unknown, unsupported, stale, partial ve gerçek zero durumları API boyunca birbirinden ayrı tutulacak.

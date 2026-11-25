@@ -39,6 +39,8 @@ async function verifyGoogleDailyReplacement(client,{owner,first,rpc,reject,day})
    where workspace_id=$1 and installation_id=$2 and business_date=$3 order by native_key_hash`,[owner.workspaceId,owner.installationId,day])).rows;
  const originalFacts=await facts();
  assert.equal(originalFacts.length,499);
+ await reject(()=>client.query("update analytics.cpd_product_sales_facts set sales_value=0 where id=$1",[originalFacts[0].id]),
+  /DATASET_REVISION_PROTOCOL_REQUIRED/);
  const publish=()=>rpc(GOOGLE_DAILY_CORRECT_SQL,[ownerJson,contextJson,deadline,operationId,JSON.stringify(policy),JSON.stringify(digests)]);
  const inspect=id=>rpc(GOOGLE_DAILY_INSPECT_SQL,[ownerJson,id]);
  for(let i=0;i<writes.length;i++){
@@ -59,6 +61,11 @@ async function verifyGoogleDailyReplacement(client,{owner,first,rpc,reject,day})
  const updatedFacts=await facts();
  assert.deepEqual(updatedFacts.map(r=>r.id),originalFacts.map(r=>r.id));
  assert.ok(updatedFacts.some((row,i)=>row.sales_value!==originalFacts[i].sales_value));
+ const {rows:[sourceCheck]}=await client.query(`select count(*) filter(where source_state='partial')::int as partial,
+   count(*) filter(where manifest ? 'datasetRevisionPermit')::int as permits
+   from evidence.source_batches where authority=$1::jsonb and id=any($2::bigint[])`,[ownerJson,revised.batchIds]);
+ assert.ok(sourceCheck.partial>0);
+ assert.equal(sourceCheck.permits,0);
  assert.equal((await rpc(GOOGLE_DAILY_FINISH_SQL,[ownerJson,job,fence,operationId,revised.digest])).rows[0].result,true);
  return {revision:2,rows:1000,packages:5,incompletePreservedPrevious:true,receipt:true,closed:true};
 }

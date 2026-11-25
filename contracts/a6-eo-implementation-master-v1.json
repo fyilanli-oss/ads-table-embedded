@@ -1,4 +1,31 @@
 {
+  "eo06d_compare_data_states_2026_11_25": {
+    "package": "A6-EO-06-D",
+    "status": "existing_states_documented_freshness_and_historical_reread_open",
+    "document": "docs/A6_EO_IMPLEMENTATION_MASTER_TABLE.md#eo-06-d-veri-durumları-ve-refresh-kanıtı",
+    "compare_v1": {
+      "metric_support": ["supported", "unsupported", "unknown"],
+      "metric_observation": ["present", "missing", "unknown", "unsupported"],
+      "source_completeness": ["complete", "partial"],
+      "zero_requires_recorded_supported_present_value": true,
+      "empty_report_does_not_create_zero_rows": true,
+      "freshness_exposed": false
+    },
+    "freshness_review": {
+      "candidate_evidence": "Current valid daily report receipt and matching completed refresh run with finished_at for the same shop generation, provider account, day and publication revision.",
+      "evidence_scope": "Daily report close and readback, excluding queue scans, raw receipts and unverified or superseded publications.",
+      "open": ["authenticated read contract", "expected covered day and live schedule for stale determination"]
+    },
+    "historical_attribution_review": {
+      "maturity_owner": "A6-EO-05-C",
+      "reconciliation_checkpoint": "A6-EO-05-D",
+      "policy": "Normal daily closed-day refresh and historical correction remain separate. Maturity unknown/provisional/final does not determine freshness.",
+      "open": ["date basis per provider and report", "minimum lookback", "reread cadence", "publication revision"],
+      "universal_fixed_lookback": false,
+      "record": "docs/EO_05A_REFRESH_CONTRACT.md#13-uygulama-ve-kapasite-kararları"
+    },
+    "runtime_or_live_change_authorized": false
+  },
   "eo06c_compare_api_sql_rehearsal_2026_11_25": {
     "package": "A6-EO-06-C",
     "status": "isolated_api_handler_and_postgresql_rehearsal_pass",

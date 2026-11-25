@@ -31,8 +31,9 @@ export async function runScheduledRefreshCheck({store,generation,work}) {
   if(interruptions.status!=="reviewed") return {status:"queue_checked",queue,interruptions,work:{status:"not_configured"}};
   // Explicitly pick inputs. A work object cannot replace the store or inject a dispatch callback.
   try {
-    const {buildWorkPlan,entitlementVerifier,readPage,validatePage,now,loadDatasetInputs}=work;
-    return {status:"queue_checked",queue,interruptions,work:await dispatchRefreshPreflight({store,buildWorkPlan,entitlementVerifier,readPage,validatePage,now,loadDatasetInputs})};
+    const {buildWorkPlan,buildHistoricalWorkPlan,entitlementVerifier,readPage,validatePage,now,loadDatasetInputs}=work;
+    return {status:"queue_checked",queue,interruptions,work:await dispatchRefreshPreflight({
+      store,buildWorkPlan,buildHistoricalWorkPlan,entitlementVerifier,readPage,validatePage,now,loadDatasetInputs})};
   } catch {
     return {status:"queue_checked",queue,work:{status:"needs_attention",reason:"work_policy_invalid"}};
   }
@@ -48,11 +49,11 @@ export async function runScheduledRefreshWithDataset({store, generation, work, e
       const inputs = await work.loadDatasetInputs(scope);
       if (inputs.fxResolver !== undefined) throw Error("REFRESH_DATASET_FX_POLICY_REQUIRED");
       const klaviyoDailyPackages=inputs.owner?.provider==="klaviyo" && Array.isArray(inputs.batches) && inputs.batches.length>3;
+      const googleDailyPackages=inputs.owner?.provider==="google_ads" && (scope.historicalReread===true || inputs.googleDailyPackages===true);
       database = createScheduledDatasetPostgresClient({environment, deadlineAt: scope.deadlineAt, now: work.now, poolFactory, klaviyoDailyPackages,
-        googleDailyPackages:inputs.owner?.provider==="google_ads" && inputs.googleDailyPackages===true});
+        googleDailyPackages});
       return {owner: inputs.owner, cipher: inputs.cipher, batches: inputs.batches, expectedRevision: inputs.expectedRevision,
-        googleDailyPackages:inputs.owner?.provider==="google_ads" && inputs.googleDailyPackages===true,
-        database};
+        googleDailyPackages,database};
     }}});
   } finally {
     if (database) {

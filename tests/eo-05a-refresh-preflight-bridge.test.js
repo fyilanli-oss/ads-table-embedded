@@ -74,3 +74,37 @@ test("database bridge uses parameterized narrow functions; generic native bypass
   const c=JSON.parse(readFileSync(new URL("../contracts/eo-05a-refresh-preflight-bridge-v1.json",import.meta.url),"utf8"));
   assert.equal(c.live_activation,false);assert.equal(c.Dataset_write,false);assert.equal(c.native_provider_calls,false);
 });
+
+test("private worker admits one database-selected historical day only after normal work", async()=>{
+  const f=fixture(),day="2026-10-12";
+  f.snapshot.candidates=[{...f.source,historicalDate:day}];
+  f.args.store.readRereadPreflightSnapshot=async()=>f.snapshot;
+  const claims=[];
+  f.args.store.commitPreflight=async args=>{claims.push(args);return true;};
+  let historicalPlans=0, loaded;
+  f.args.buildHistoricalWorkPlan=async(source,date)=>{
+    historicalPlans++;
+    assert.deepEqual(source,f.source);
+    assert.equal(date,day);
+    return {...f.plan,window:{from:"2020-01-01",to:"2020-01-01"}};
+  };
+  f.args.loadDatasetInputs=async scope=>{loaded=scope;throw Error("fixture stops before publication");};
+  await dispatchRefreshPreflight(f.args);
+  assert.equal(historicalPlans,0);
+  assert.equal(claims[0].partitionId,f.plan.partitionId);
+  assert.equal(loaded.historicalReread,undefined);
+  f.args.buildWorkPlan=async()=>null;
+  await dispatchRefreshPreflight(f.args);
+  assert.deepEqual(claims[1].source,f.source);
+  assert.equal(claims[1].partitionId,`v1-reread:${day}`);
+  assert.deepEqual(loaded.window,{from:day,to:day});
+  assert.equal(loaded.historicalReread,true);
+  const stableId=loaded.claim.id;
+  f.source.queuedAt=100;
+  f.snapshot.candidates=[{...f.source,historicalDate:day}];
+  await dispatchRefreshPreflight(f.args);
+  assert.equal(loaded.claim.id,stableId);
+  f.args.buildWorkPlan=async()=>({...f.plan,partitionId:`v1-reread:${day}`});
+  assert.equal((await dispatchRefreshPreflight(f.args)).status,"work_plan_required");
+  assert.equal(claims.length,3);
+});

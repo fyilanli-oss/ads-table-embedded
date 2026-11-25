@@ -4,25 +4,40 @@ import {runRefreshChunk} from "./chunk-worker.server.js";
 import {reconcileStoredDatasetSources} from "../database/dataset-reconciliation.server.js";
 
 // Internal composition for a trusted work plan. The existing HTTP queue entry is queue-only.
-export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlementVerifier, readPage, validatePage, now, loadDatasetInputs}) {
+export async function dispatchRefreshPreflight({store, buildWorkPlan, buildHistoricalWorkPlan, entitlementVerifier, readPage, validatePage, now, loadDatasetInputs}) {
   if (!["readPreflightSnapshot","commitPreflight","loadBoundAuthority"].every(key=>typeof store?.[key]==="function")
     || [buildWorkPlan,readPage,validatePage,now,entitlementVerifier?.verify,entitlementVerifier?.isCurrent].some(fn=>typeof fn!=="function")) {
     throw new Error("REFRESH_PREFLIGHT_INPUT_INVALID");
   }
   if (loadDatasetInputs !== undefined && typeof loadDatasetInputs !== "function") throw Error("REFRESH_DATASET_INPUT_INVALID");
+  const historicalEnabled=buildHistoricalWorkPlan!==undefined;
+  if(historicalEnabled && [buildHistoricalWorkPlan,loadDatasetInputs,store.readRereadPreflightSnapshot].some(fn=>typeof fn!=="function")) {
+    throw Error("REFRESH_HISTORICAL_WORK_POLICY_REQUIRED");
+  }
   let claim;
   try {
-    const snapshot=await store.readPreflightSnapshot();
+    const snapshot=await (historicalEnabled?store.readRereadPreflightSnapshot():store.readPreflightSnapshot());
     if(snapshot?.configured!==true) return {status:"not_configured"};
     const candidates=[];
     const plans=new Map();
-    for(const source of snapshot.candidates) {
+    for(const {historicalDate,...source} of snapshot.candidates) {
       // This trusted planner must explicitly choose an eligible period, partition and workload.
       // Missing policy is not permission to invent dates or backfill disconnected periods.
-      const plan=structuredClone(await buildWorkPlan(structuredClone(source)));
+      let plan=structuredClone(await buildWorkPlan(structuredClone(source)));
+      let historical=false;
+      if(plan===null && historicalEnabled && historicalDate!==null) {
+        if(typeof historicalDate!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(historicalDate)) return {status:"work_plan_required"};
+        const work=await buildHistoricalWorkPlan(structuredClone(source),historicalDate);
+        if(work!==null) {
+          historical=true;
+          plan={cost:structuredClone(work?.cost),limits:structuredClone(work?.limits),
+            partitionId:`v1-reread:${historicalDate}`,workClass:"deep_reconciliation",window:{from:historicalDate,to:historicalDate}};
+        }
+      }
       if(plan===null) continue;
       const current=now(),l=plan?.limits,w=plan?.window;
       if(typeof plan?.partitionId!=="string"||plan.partitionId.length<1||plan.partitionId.length>256
+        || !historical && plan.partitionId.startsWith("v1-reread:")
         || !["requestTimeoutMs","finishReserveMs","maxRows","maxBytes","deadlineAt"].every(k=>Number.isSafeInteger(l?.[k])&&l[k]>0)
         || l.requestTimeoutMs>2_147_483_647||!Number.isSafeInteger(current)||current<0||l.deadlineAt-current<l.requestTimeoutMs+l.finishReserveMs
         || !Number.isSafeInteger(plan.cost?.requests)||plan.cost.requests<2
@@ -31,11 +46,12 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
         || l.maxRows>plan.cost.rows||l.maxBytes>plan.cost.bytes
         || ![w?.from,w?.to].every(d=>typeof d==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&new Date(`${d}T00:00:00Z`).toISOString().slice(0,10)===d)
         || w.from>w.to || loadDatasetInputs!==undefined && w.from!==w.to) return {status:"work_plan_required"};
-      const id=createHash("sha256").update(JSON.stringify([source,plan.partitionId,w])).digest("hex");
+      const identity=historical?[source.workspaceId,source.installGeneration,source.provider,source.accountId,plan.partitionId]:[source,plan.partitionId,w];
+      const id=createHash("sha256").update(JSON.stringify(identity)).digest("hex");
       const job={id,workspaceId:source.workspaceId,installGeneration:source.installGeneration,provider:source.provider,accountId:source.accountId,
         scheduledHour:source.scheduledHour,queuedAt:source.queuedAt,workClass:plan.workClass,cost:plan.cost,
         authority:{installationVerified:true,connected:true,setupComplete:true,allowedWindow:true}};
-      candidates.push(job);plans.set(id,{source,plan});
+      candidates.push(job);plans.set(id,{source,plan,historical});
     }
     const proposal=planRefreshPreflightAdmissions({...snapshot,candidates,now:now()});
     if(proposal.status!=="proposed") return {status:proposal.status,deferred:proposal.deferred};
@@ -50,7 +66,9 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
     if (result.status!=="awaiting_dataset" || loadDatasetInputs===undefined) return {claim:structuredClone(claim),...result};
 
     const {window,limits}=binding.plan;
-    const inputs=await loadDatasetInputs({claim:structuredClone(claim),window:structuredClone(window),deadlineAt:limits.deadlineAt});
+    let inputs=await loadDatasetInputs({claim:structuredClone(claim),window:structuredClone(window),deadlineAt:limits.deadlineAt,
+      ...binding.historical?{historicalReread:true}:{}});
+    if(binding.historical) inputs={...inputs,expectedRevision:1,googleDailyPackages:claim.provider==="google_ads"};
     const {owner,database,cipher,batches,expectedRevision,fxResolver,googleDailyPackages=false}=inputs;
     if (owner?.workspaceId!==claim.workspaceId || owner.generation!==claim.installGeneration || owner.provider!==claim.provider
       || owner.accountId!==claim.accountId || owner.connectionId!==binding.source.connectionId

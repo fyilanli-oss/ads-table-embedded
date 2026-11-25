@@ -458,6 +458,7 @@
       "docs/RAW_SOURCE_CONSTITUTION.md"
     ],
     "sha256": {
+      "supabase/migrations/20261125170837_eo06d_verified_reread_queue.sql": "660c1e26e252fc7b0b88783aeda4837495eb4ce439486e9ae1a863bda73dc1a0",
       "supabase/migrations/20261125153035_eo06d_google_daily_report_replacement.sql": "3b662a06f96f7045643b520756bab0a99e9e66782123a983b8e765174d8bb2ca",
       ".github/workflows/database-integrity.yml": "7b41c78eef7940aef01da4ff9ff858b1b046b1bbd647a7a98e76c203d7a8a2d5",
       ".github/workflows/repository-governance.yml": "d0c6feecc08f145588c72fac541040ca2e14949af7785961e5df27c01628b852",
@@ -507,7 +508,7 @@
       "app/lib/database/provider-account-authority-repository.server.js": "f08167c2cbc131b64cde7e58695a363cb02d7a864cd312f7e398b39b75dc9b7f",
       "app/lib/database/provider-connection-lifecycle-repository.server.js": "edcc6eb4a3fb0d9329b55ec9122a5ff1838103f8ec8e341fc2cef4951a382310",
       "app/lib/database/refresh-queue-postgres.server.js": "bbdd98410a5af2bcbded4eb5f396f01574d5609a03d82e39571561f1f9a7e0be",
-      "app/lib/database/refresh-work-repository.server.js": "c598d2031cb100c6373fc0ffe1ade1ef79d7b958060c46d717238ac3796c214f",
+      "app/lib/database/refresh-work-repository.server.js": "5910f20197bed9e77ac322e441d774b66cf2fee4aefe1938bdb389ee7ab6bc56",
       "app/lib/database/report-retention-policy.server.js": "50700992adaaa1529e9b074744babcd507abc9fdb2deadf3613be7b5631b153d",
       "app/lib/database/reporting-currency.server.js": "7595178b57397bab9e187341421489e84555e80af196d635992b9e7a3fabe640",
       "app/lib/database/runtime-postgres.server.js": "9c24879fd0d2f42c3f04bd2e1b60fabad40b24eb8b44d5cccce39217b76f3df1",
@@ -685,7 +686,7 @@
       "app/lib/refresh/observability.server.js": "30843c9fbe753b2d689756c63482035ba29d500381d9596a59892067ec155246",
       "app/lib/refresh/pd-prewrite-chunk.server.js": "29b295aa601c9e687dd95636a4023a8613a5e34179189635c057b9e5df77a201",
       "app/lib/refresh/pd-source-reader.server.js": "4e041c3521f858b3b7df6830ee781ddd9ea25290eaf7ace1173c05e59581c471",
-      "app/lib/refresh/preflight-bridge.server.js": "26280a4a7146ca40ac761e7c38ce99cefbd66cd13f9a3402b2ffe825a5365734",
+      "app/lib/refresh/preflight-bridge.server.js": "51543bd3dbe5e964851c85bddc61529dc60dad165e5f44d7c6dbc6f7016e3c05",
       "app/lib/refresh/queue-check.server.js": "4795afa7149373d342860a4428b6028252ff475a77716dc2bcba363a2b9105e6",
       "app/lib/refresh/queue-cron-entry.server.d.ts": "7f78161c378a99cf8c52a905a4a23ebc026fe81fba929d74d2a5104b491efe7b",
       "app/lib/refresh/queue-cron-entry.server.js": "1667e1f0c3f38394ca52f49e6f018579be7942496102cd98ec65c4fe2e0d72b2",
@@ -694,7 +695,7 @@
       "app/lib/refresh/quota-response-feedback.server.js": "5929583f6b1c1eb0d4e0d99c7060d635861a9a60d28468485c7a389853d5e3a8",
       "app/lib/refresh/quota-scope-resolver.server.js": "ff38b878371213d4ba5047b8bcd0005f75342e9c178281df72f85505fd13507f",
       "app/lib/refresh/quota-work-wait.server.js": "241ae261ce805bf76fe4c2f027969bbc67be6cf774f511201fb2381308f2cfcd",
-      "app/lib/refresh/scheduled-queue-check.server.js": "902b4db79699a038c08052564c77b5470ec0c021b9c2822beb17f20ae59c1ae6",
+      "app/lib/refresh/scheduled-queue-check.server.js": "8eb55c330b57a754efe89ec1d0b79d80c5d7cd35dfabee783ff219838a74396c",
       "app/lib/refresh/setup-proof-review.server.js": "4f2c59b4b72c791b944c3bb040fa1531eae96b91ba78b49e92aef2c952aeae91",
       "app/lib/refresh/shared-quota.server.js": "105a4f5ed3413395701e7f0246557b53de984be0cd68ba43f2225eaf3389852d",
       "app/lib/refresh/shopify-admin-identity-quota.server.js": "84e33743b3f8b9a8fc7514ab418b3283746470ebb935ef1d566abad4d1655537",
@@ -799,7 +800,7 @@
       "contracts/a6-parent-package-analysis-design-closure-v1.json": "54b606afd64eefc65edb7c322de7649e9e550737619426f1ce774ede997a1f60",
       "contracts/a6-quality-and-assurance-gates-v1.json": "707c38761519d4ac5e17b7b3cd32ae30dcfc306f406baa6c4676f74c152af81e",
       "contracts/a6-tech-01-engineering-integrity-audit-v1.json": "ab5fa0d88157a5710630560c11a97089dfc4cc047a19ab7cb32bf94a40072949",
-      "contracts/a6-tech-01-f01-migration-lineage-v1.json": "7f149001fc9728e2cd5b2a6f169f285875051b53011ecc0064839cbf8b3e02bd",
+      "contracts/a6-tech-01-f01-migration-lineage-v1.json": "63f6b41656ef4fc7ba2aa41f47895b2fc3f9e0caf95ba08f88131bc1c1d86d3d",
       "contracts/a6-tech-01-f01c-scoped-recovery-v1.json": "05173e82d2576d81fe5d93f0edb3193c5e053db28416d9b0d128e08d6dea941f",
       "contracts/demo/eo05b-v1/golden.json": "08b58ade3ed14843f25f9453710d8f1d15c01810c00556ae38718751f034befc",
       "contracts/demo/eo05b-v1/rolling-2026-11-10.json": "a482b2d1e9faebc4d768c437378b05a85ec9433312e904f9900158f7e65f8bc2",
@@ -871,7 +872,7 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "325da96ae5f4f320f06a0abd5545fd2032297cafc57c844d0cf5864cae661752",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "4a0a5e9388b55e57149b52e72cee4ae6be6649365da67ecd87e58ecb851a65c1",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "f9b693366516d4b2269c5ba33ae798579b529e07c82dacdc41d672573dcb5b76",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -1092,7 +1093,7 @@
       "tests/eo-05a-refresh-entitlement.test.js": "031c3890a186e5c6dff26583da975f1e0e2cc909ebdd27f1dccb8d5c4baa8e25",
       "tests/eo-05a-refresh-interrupted-work.test.js": "4a1b23ba9620c7a060694563e778826b9531f3f94bfdf89df64d22422089bd68",
       "tests/eo-05a-refresh-native-inventory.test.js": "966a279449260b734bd18c523af815b94a918023dfb240f01cfd72647a1ec26c",
-      "tests/eo-05a-refresh-preflight-bridge.test.js": "b50c3a9d17f11e301eaa6eeecf2f81f1e4ac5bbd4d151a05d10419b19b21e9cc",
+      "tests/eo-05a-refresh-preflight-bridge.test.js": "2d05cb4486ab06a67abe2ef9cb3aa2735ff389716650a38f1043fe3a37e572d7",
       "tests/eo-05a-refresh-queue-check.test.js": "b230806ed4a8d284cd72b0f38a02943ecb2a5e3dc8610d31a6fa02a720780a2e",
       "tests/eo-05a-refresh-queue-cron-entry.test.js": "6fa587eb5590ab0518c92ff1968eef981b025999ca6f063f9a6690f72d4e0503",
       "tests/eo-05a-refresh-scheduled-queue-check.test.js": "579ff1a4c204d43c7db46289f0c5850c267b36e6d59ee9a386bff751c584492b",
@@ -1250,9 +1251,9 @@
       "tools/eo05-admin-quota-context-probe.mjs": "e67525499cd3d2042298076e17ea2d84618c74781d78bd93fbbe44cfa827e0f9",
       "tools/eo05-customer-source-privacy-probe.mjs": "df854e763301a99f8ae21212bb84d5dca379647f735c51db4910bf1fc517e20d",
       "tools/eo05-final-synthetic-candidate.mjs": "f39563923c239b9d47f6ccba810ffddd544d434b8f416373cb94e92a7dd8343c",
-      "tools/eo05-four-phase-diagnostics.mjs": "c95afca832e974a24f69f819813a4eb003dd2cded579856f6a0923f7de6b29b9",
+      "tools/eo05-four-phase-diagnostics.mjs": "24acabcb3522760059189f769f33172ae598940d1a8dbc77aa46d951af3604d8",
       "tools/eo05-google-acceptance-probe.mjs": "6895c9f7f2180de717b27e2c86572cfcd79967bb7b84c0b0f1c450ffcf372797",
-      "tools/eo05-google-daily-packages-probe.mjs": "20a0f26f7010c2592d464ea3e527aa44b85cfee4d815a3c07c5d205c0b3c6de8",
+      "tools/eo05-google-daily-packages-probe.mjs": "056f0ff764445590387556e6b2c60b6bad1463b53da1ff0c279ae0eff889cee7",
       "tools/eo05-google-daily-timing-probe.mjs": "2d88d83e783665c4f9ca76bc4ada360e623fc5000c8566a4dacc167507b4add7",
       "tools/eo05-google-hosted-benchmark.mjs": "2724b75f248a74a447108afb0a35b804be8c13bee98f1da3ba43b8bd26fbd77e",
       "tools/eo05-google-identity-renewal-probe.mjs": "2f429c983600225ccdc9cadeede2611de9d48522dc575d5cb583b324b6f07fd1",
@@ -3800,6 +3801,54 @@
         "tests/fixtures/dataset-source-binding-fixture.js",
         "tools/eo05-google-daily-packages-probe.mjs",
         "tools/eo05b-source-dataset-binding-probe.mjs"
+      ]
+    },
+    {
+      "id": "eo06d-verified-reread-private-queue-2026-11-25",
+      "date": "2026-11-25",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat: Firat replied 'Onayliyorum Codex' to the scoped implementation and isolated test of one seven-day reread work order tied to the first verified closed report receipt and connected to the private worker."
+      },
+      "rationale": "Record one pending historical reread from the verified daily close, reserve it under current queue authority and quota preflight, and pass only the verified report date and first revision to the existing worker. Keep the HTTP scheduler queue-only and preserve source collection, credentials, existing report absence and failure semantics.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "tests/eo-05a-refresh-preflight-bridge.test.js",
+        "tests/eo-05a-refresh-scheduled-queue-check.test.js",
+        "tools/eo05-google-daily-packages-probe.mjs: F01 real PostgreSQL verified close, exactly seven days, authority change, early rejection and duplicate admission rejection",
+        "OAuth and raw source constitution guards; migration lineage"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-25",
+      "official_sources": [
+        "https://www.postgresql.org/docs/17/functions-datetime.html",
+        "https://www.postgresql.org/docs/17/explicit-locking.html",
+        "https://www.postgresql.org/docs/17/indexes-partial.html",
+        "https://supabase.com/docs/guides/database/functions"
+      ],
+      "changed_paths": [
+        "app/lib/database/refresh-work-repository.server.js",
+        "app/lib/refresh/preflight-bridge.server.js",
+        "app/lib/refresh/scheduled-queue-check.server.js",
+        "contracts/a6-tech-01-f01-migration-lineage-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "supabase/migrations/20261125170837_eo06d_verified_reread_queue.sql",
+        "tests/eo-05a-refresh-preflight-bridge.test.js",
+        "tools/eo05-four-phase-diagnostics.mjs",
+        "tools/eo05-google-daily-packages-probe.mjs"
       ]
     }
   ],

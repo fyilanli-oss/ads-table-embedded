@@ -1156,6 +1156,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261125170837",
+      "name": "eo06d_verified_reread_queue",
+      "file": "supabase/migrations/20261125170837_eo06d_verified_reread_queue.sql",
+      "created_with": "supabase@3.4.0 migration new eo06d_verified_reread_queue",
+      "repository_sql_sha256": "49919f3ab1c0ad5fc0e6bcc77270d50c864bb3a782f4c675da9ebe5bb526c560",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ],
   "scoped_live_apply_approvals": [

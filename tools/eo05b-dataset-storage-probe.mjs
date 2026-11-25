@@ -11,7 +11,7 @@ import {fxReportingCurrencyProbe} from "./eo05b-fx-reporting-currency-probe.mjs"
 import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
 import {maturityProbe} from "./eo05c-maturity-probe.mjs";
 import {reconciliationProbe} from "./eo05d-reconciliation-probe.mjs";
-import {klaviyoDailyTimingProbe} from "./eo05-klaviyo-daily-timing-probe.mjs";
+import {klaviyoDailyTimingProbe,klaviyoHistoricalRereadProbe} from "./eo05-klaviyo-daily-timing-probe.mjs";
 import {observabilityProbe} from "./eo05e-observability-probe.mjs";
 import {googleDailyPackagesProbe} from "./eo05-google-daily-packages-probe.mjs";
 import {googleDailyTimingProbe,prepareGoogleTimingLocalRoles,installGoogleCombinedCandidate,installGoogleWriterPreparationCandidate,installGooglePackageReuseCandidate,proveGoogleReportCanonicalParity} from "./eo05-google-daily-timing-probe.mjs";
@@ -77,6 +77,7 @@ export async function datasetStorageProbe(client, connection, environment = proc
       }
     }
     await client.query("set local role adstable_owner");
+    if(finalSynthetic) console.log("EO06D_KLAVIYO_HISTORICAL_REREAD_PASS",JSON.stringify(await klaviyoHistoricalRereadProbe(client,{ownerFixture})));
     // Keep complete-flow inventory independent of later fixture owners.
     await client.query("savepoint google_complete_flow");
     try{

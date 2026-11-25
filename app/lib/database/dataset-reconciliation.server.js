@@ -92,7 +92,7 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
   const dailyPackages = source.datasets.some(d => d.packageReceipts !== undefined);
   if(bound.provider==="google_ads"&&dailyPackages&&!googleDaily) return freezeMaturity({status:"held",holds:[{reason:"google_daily_handoff_required"}],sourceVerified:true,rowsStored:0,consumerReceipt:false,checkpointAdvanced:false,reportValuesChanged:false,publishable:false,authorizesActivation:false});
   const projection = projectors[bound.provider](source);
-  const klaviyoRevision = scheduled && bound.provider === "klaviyo" && expectedRevision > 0 && projection.rows.length > 0;
+  const klaviyoRevision = scheduled && bound.provider === "klaviyo" && expectedRevision > 0;
   if ((dailyPackages || klaviyoRevision) && (!scheduled || typeof database.transaction !== "function")) return freezeMaturity({
     status: "held", holds: [{reason: "daily_package_handoff_required"}], sourceVerified: true, rowsStored: 0,
     consumerReceipt: false, checkpointAdvanced: false, reportValuesChanged: false, publishable: false, authorizesActivation: false,
@@ -107,7 +107,7 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
     projection.holds.push(...fx.holds);
   }
   if (projection.holds.length || source.datasets.some(d => d.receipt.sourceState !== "complete" && !d.packageReceipts)
-    || dailyPackages && !googleDaily && projection.rows.length===0) return freezeMaturity({status: "held", holds: projection.holds,
+    || dailyPackages && !googleDaily && !klaviyoRevision && projection.rows.length===0) return freezeMaturity({status: "held", holds: projection.holds,
     sourceVerified: true, rowsStored: 0, consumerReceipt: false, checkpointAdvanced: false, reportValuesChanged: false, publishable: false, authorizesActivation: false});
   const businessDate = maturityDate(source.scope.window.from), timeZone = source.datasets[0].source.timezone;
   if (source.datasets.some(d => d.source.timezone !== timeZone)) fail("TIMEZONE_MISMATCH");

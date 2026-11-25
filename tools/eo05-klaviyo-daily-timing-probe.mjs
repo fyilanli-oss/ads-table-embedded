@@ -204,10 +204,10 @@ begin
 }
 
 async function installReportWriteCleanup(client) {
-  async function rewrite(signature,changes) {
+  async function rewrite(signature,changes,legacyChanges) {
     const {rows:[{definition}]}=await client.query("select pg_get_functiondef($1::regprocedure) definition",[signature]);
     let sql=definition;
-    for(const [before,after] of changes) {
+    for(const [before,after] of (legacyChanges&&sql.includes("  if row_count not between 1 and 200")?legacyChanges:changes)) {
       assert.equal(sql.split(before).length,2,`report write cleanup anchor: ${signature}: ${before}`);
       sql=sql.replace(before,()=>after);
     }
@@ -215,6 +215,17 @@ async function installReportWriteCleanup(client) {
   }
   const digest=expression=>`encode(sha256(convert_to(${expression},'UTF8')),'hex')`;
   await rewrite("analytics.stage_klaviyo_daily_report_package(jsonb,jsonb,jsonb,timestamptz,integer,integer)",[
+    ["  package_digest text;","  package_digest text;\n  canonical_package text;"],
+    ["    or octet_length(analytics.dataset_json(jsonb_build_object('write',p,'context',c)))>1048576 then",
+      "    or octet_length(canonical_package)>1048576 then"],
+    ["  if row_count>200 or (row_count=0 and (package_count<>1",
+      `  if row_count between 0 and 200 then
+    canonical_package:=analytics.dataset_json(jsonb_build_object('write',p,'context',c));
+  end if;
+  if row_count>200 or (row_count=0 and (package_count<>1`],
+    ["package_digest:=analytics.dataset_digest(jsonb_build_object('write',p,'context',c));",
+      `package_digest:=${digest("canonical_package")};`],
+  ],[
     ["  package_digest text;","  package_digest text;\n  canonical_package text;"],
     ["  if row_count not between 1 and 200\n    or octet_length(analytics.dataset_json(jsonb_build_object('write',p,'context',c)))>1048576 then",
       `  if row_count between 1 and 200 then
@@ -1210,7 +1221,7 @@ async function installPublishTimers(client,{reportOnly,optimized=false}) {
   }
 }
 
-function syntheticResponse(endpoint,owner,day,changedEvents=0,shopifyMapping=false) {
+function syntheticResponse(endpoint,owner,day,changedEvents=0,shopifyMapping=false,empty=false) {
   const url=new URL(endpoint);
   assert.equal(url.origin,"https://a.klaviyo.com");
   if (url.pathname.includes("/accounts")) return Response.json({data:[
@@ -1226,6 +1237,7 @@ function syntheticResponse(endpoint,owner,day,changedEvents=0,shopifyMapping=fal
     return Response.json({data:{type:kind+"-values-report",attributes:{results:[]}},links:{next:null}});
   }
   assert.equal(url.pathname,"/api/events");
+  if (empty) return Response.json({data:[],links:{next:null}});
   const offset=Number(url.searchParams.get("page[cursor]")??0);
   assert.ok(offset>=0&&offset<productEvents&&offset%pageSize===0);
   return Response.json({
@@ -1346,6 +1358,7 @@ export async function klaviyoHistoricalRereadProbe(client,{ownerFixture}) {
     // Advance only this rollback fixture's due marker so the real queue can admit the reread.
     await client.query(`update operations.refresh_historical_rereads set due_at=clock_timestamp()-interval '1 second'
       where workspace_id=$1 and provider='klaviyo'`,[owner.workspaceId]);
+    await client.query("savepoint klaviyo_nonempty_revision");
     const second=await runKlaviyoDailyTimingProbe(client,{...options,repeat:{
       day:first.businessDate,changedEvents:5,previous:first,
     }});
@@ -1363,8 +1376,18 @@ export async function klaviyoHistoricalRereadProbe(client,{ownerFixture}) {
         and w.account_id=r.account_id and w.job_id=r.admitted_job_id
       where r.workspace_id=$1 and r.provider='klaviyo'`,[owner.workspaceId,owner]);
     assert.deepEqual(admitted,{admitted_job_id:second.jobId,partition_id:"v1-reread:"+first.businessDate,permits:0});
+    await client.query("rollback to savepoint klaviyo_nonempty_revision");
+    await client.query("release savepoint klaviyo_nonempty_revision");
+    assert.deepEqual(await readFacts(),before);
+    const empty=await runKlaviyoDailyTimingProbe(client,{...options,repeat:{
+      day:first.businessDate,empty:true,previous:first,
+    }});
+    assert.deepEqual(await readFacts(),[]);
+    assert.equal((await client.query(KLAVIYO_DAILY_INSPECT_SQL,[owner,first.operationId])).rows[0].result.status,"superseded");
+    assert.deepEqual((await client.query(KLAVIYO_DAILY_INSPECT_SQL,[owner,empty.operationId])).rows[0].result,empty);
     return {rows:second.rowCount,packages:second.packages.length,revision:second.revision,
-      missingPackagePreservedFirst:true,changedRows:changed.length,closed:true};
+      missingPackagePreservedFirst:true,changedRows:changed.length,closed:true,
+      verifiedEmpty:{rows:empty.rowCount,revision:empty.revision,packages:empty.packages.length,closed:true}};
   } finally {
     await client.query("rollback to savepoint klaviyo_historical_reread");
     await client.query("release savepoint klaviyo_historical_reread");
@@ -1650,7 +1673,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     timedQuery(sql.includes("commit_klaviyo_dataset_source(")?"rawWrite":"rawReadback",sql,args))};
   const reportDatabase={
     async query(sql,args) {
-      if(historicalProof&&repeat&&sql===KLAVIYO_DAILY_PUBLISH_SQL) {
+      if(historicalProof&&repeat&&!repeat.empty&&sql===KLAVIYO_DAILY_PUBLISH_SQL) {
         await client.query("savepoint klaviyo_missing_report_package");
         try {
           await client.query("delete from pg_temp.adstable_klaviyo_daily_report_stage where package_ordinal=4");
@@ -1658,6 +1681,21 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
         } finally {
           await client.query("rollback to savepoint klaviyo_missing_report_package");
           await client.query("release savepoint klaviyo_missing_report_package");
+        }
+        assert.deepEqual((await client.query(KLAVIYO_DAILY_INSPECT_SQL,[owner,repeat.previous.operationId])).rows[0].result,
+          repeat.previous);
+        await client.query("savepoint klaviyo_forged_empty_stage");
+        try {
+          const [ownerJson,context,deadline,operationId,policy]=args;
+          const {rows:[{body}]}=await client.query("select body from pg_temp.adstable_klaviyo_daily_report_stage where package_ordinal=0");
+          await client.query("truncate pg_temp.adstable_klaviyo_daily_report_stage");
+          const staged=(await client.query(KLAVIYO_DAILY_STAGE_SQL,
+            [ownerJson,JSON.stringify({...body,rows:[]}),context,deadline,0,1])).rows[0].result;
+          await assert.rejects(client.query(sql,[ownerJson,context,deadline,operationId,policy,JSON.stringify([staged.digest])]),
+            /KLAVIYO_REPORT_EMPTY_SOURCE_UNVERIFIED/);
+        } finally {
+          await client.query("rollback to savepoint klaviyo_forged_empty_stage");
+          await client.query("release savepoint klaviyo_forged_empty_stage");
         }
         assert.deepEqual((await client.query(KLAVIYO_DAILY_INSPECT_SQL,[owner,repeat.previous.operationId])).rows[0].result,
           repeat.previous);
@@ -1765,7 +1803,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
           }:async()=>assert.equal(await store.isClaimCurrent({claim}),true);
           const fixtureFetch=async endpoint=>{
             requests++;
-            if (!detailed&&!endToEnd) return syntheticResponse(endpoint,owner,day,repeat?.changedEvents??0);
+            if (!detailed&&!endToEnd) return syntheticResponse(endpoint,owner,day,repeat?.changedEvents??0,false,repeat?.empty);
             const before=performance.now();
             try {
               const response=syntheticResponse(endpoint,owner,day,repeat?.changedEvents??0,shopifyMapping);
@@ -1791,7 +1829,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
               const begin=detailed||endToEnd?performance.now():0,attemptId=randomUUID(),stamp=new Date(now()).toISOString();
               const read={jobId:claim.id,fence:String(claim.fence),window,operationId,quotaContext,
                 observedAt:entitlementReceipt.observedAt,completedAt:stamp,deadlineAt:new Date(limits.deadlineAt).toISOString(),coverage};
-              if (dataset==="product_performance") {
+              if (dataset==="product_performance"&&!repeat?.empty) {
                 const stored=await rawStore.storeKlaviyoRawProductPackages({database:rawDatabase,owner,attemptId,pages,read,cipher,
                   policy,limits:storageLimits,now:stamp,maxPackages:20,guard});
                 batches.push(...stored.map(({ordinal})=>({attemptId,ordinal})));
@@ -1813,7 +1851,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
           return {kind:"complete",payload:{batchCount:batches.length}};
         } catch(error) {failed??=error;throw error;}
       },
-      validatePage:({payload})=>({complete:payload.batchCount>3,rows:[]}),
+      validatePage:({payload})=>({complete:repeat?.empty?payload.batchCount===3:payload.batchCount>3,rows:[]}),
       async loadDatasetInputs({claim,deadlineAt,historicalReread}) {
         assert.equal(claim.id,claimId);
         if(historicalProof) assert.equal(historicalReread,repeat?true:undefined);
@@ -1859,17 +1897,18 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
     }
     if (detailed||endToEnd) durations.reportFlow=ended-reportAt;
     assert.equal(run.work?.status,"completed",JSON.stringify(run));
-    assert.equal(reportReceipt?.rowCount,productEvents);
+    const expectedEventCount=repeat?.empty?0:productEvents;
+    assert.equal(reportReceipt?.rowCount,expectedEventCount);
     assert.equal(reportReceipt?.revision,repeat?2:1);
     if(repeat) assert.notEqual(reportReceipt.operationId,repeat.previous.operationId);
-    assert.deepEqual(reportReceipt.packages.map(part=>part.rowCount),[200,200,200,200,200]);
-    assert.equal(requests,dailyPurchaseOnly?11:15);
+    assert.deepEqual(reportReceipt.packages.map(part=>part.rowCount),repeat?.empty?[0]:[200,200,200,200,200]);
+    assert.equal(requests,repeat?.empty?7:dailyPurchaseOnly?11:15);
     const status=(await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",
       [owner.workspaceId,claimId])).rows[0]?.status;
     assert.equal(status,"completed");
     const sales=(await client.query("select count(*)::int n from analytics.cpd_product_sales_facts where installation_id=$1 and platform='klaviyo'",
       [owner.installationId])).rows[0].n;
-    assert.equal(sales,productEvents);
+    assert.equal(sales,expectedEventCount);
     let shopifyMappingMeasurement;
     if(mapping){
       const {rows:[linked]}=await client.query(`select count(*)::int sales,min(m.shopify_product_id) product

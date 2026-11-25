@@ -1186,6 +1186,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261125201832",
+      "name": "eo06d_klaviyo_verified_empty_reread",
+      "file": "supabase/migrations/20261125201832_eo06d_klaviyo_verified_empty_reread.sql",
+      "created_with": "supabase@3.4.0 migration new eo06d_klaviyo_verified_empty_reread",
+      "repository_sql_sha256": "da5cc6ba5ba93556330db61800f2f5c38e72b0442a075dd8aa2f58859a516b98",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ],
   "scoped_live_apply_approvals": [

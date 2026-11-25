@@ -1278,6 +1278,7 @@
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json"
     ],
     "sha256": {
+      "supabase/migrations/20261125201832_eo06d_klaviyo_verified_empty_reread.sql": "299770fd1f0413c197292a1dcf85ff5feb07323104e64b99409affb27b4c4a6f",
       "supabase/migrations/20261125185757_eo06d_klaviyo_multipart_revision.sql": "9fdff139710505b6de7d29a1854f8bad9258652eb9c44c6693cc406f94d91e7b",
       "supabase/migrations/20261125180106_eo06d_meta_packaged_report_reconciliation.sql": "a6c6d52d2a608285cdb36fd072ccf6eaef4e9b76142bd602bfaf2ec1013b8af2",
       "supabase/migrations/20261125170837_eo06d_verified_reread_queue.sql": "660c1e26e252fc7b0b88783aeda4837495eb4ce439486e9ae1a863bda73dc1a0",
@@ -1298,7 +1299,7 @@
       "app/lib/database/dataset-fx-policy.server.js": "bf1bc27e567b192d3aee2ccfd9bbe3ecab01fd6b972a177339b154a996eb3a4c",
       "app/lib/database/dataset-fx-resolver.server.js": "cf69147f9ab92250a581dd877a73749fcbab03e539ab1616861dc083b5293556",
       "app/lib/database/dataset-postgres.server.js": "2b5adabb3c0ab3adb2d981d48ed2f50810991ee16181eb31e949f6d7f815d056",
-      "app/lib/database/dataset-reconciliation.server.js": "c5aeb5372837089c3bfa3ecdc47c7a520c2d9d4bfd05540999b8094325a140bc",
+      "app/lib/database/dataset-reconciliation.server.js": "fdf996752abae3377030bd5e2417dd7eedad4c604612ce406afff34ccec34132",
       "app/lib/database/dataset-retention.server.js": "16ac5cef4b05ba9ee2f1fb8b961fcca04361f5070a308331d8e57c443e265584",
       "app/lib/database/dataset-rpc.server.js": "a2ac3b46dc6e0d11fc8bef53a98e809df17b89f58d61a47b48a681e556a29055",
       "app/lib/database/dataset-source-binding.server.js": "755b72bb1204467530b49a6ba604157bf3fb33053b12a1cd55ecbcba3f8ee3e9",
@@ -1789,7 +1790,7 @@
       "tools/eo05-google-source-role-probe.mjs": "fba96de648dd50a099dae4cdfd1e17807e5eb250cbc139d967a3f6e96b8ad19a",
       "tools/eo05-identity-authority-snapshot-probe.mjs": "0136e8dc5a5720b78d1cb4dca081f19e8b473812b6d66129b94f64fd5edf672c",
       "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
-      "tools/eo05-klaviyo-daily-timing-probe.mjs": "f5b391a9cb6a933ef6cfda4c16d94a6b13352131977af236fa77c030d75c3f9b",
+      "tools/eo05-klaviyo-daily-timing-probe.mjs": "e9737135dbf9135e37509e349f43c49c610420c44ff573208cb93024649bffe0",
       "tools/eo05-klaviyo-hosted-benchmark.mjs": "1a21a53113d2a87cebc4426d3d8ef5f99b9e746a399ab088dc48381766e77dd9",
       "tools/eo05-klaviyo-raw-datasets-probe.mjs": "e7d504cd848ad8380575fa8a9dd6755fc95354d9a208db4d7f1a40693cc50888",
       "tools/eo05-klaviyo-source-capture-probe.mjs": "c9b9f604a72611fb0f39a8e6a178dadd72fcc6ee2f340a4396d0d6058bbaf5ab",
@@ -5826,6 +5827,49 @@
         "supabase/migrations/20261125185757_eo06d_klaviyo_multipart_revision.sql",
         "tools/eo05-klaviyo-daily-timing-probe.mjs",
         "tools/eo05b-dataset-storage-probe.mjs"
+      ]
+    },
+    {
+      "id": "eo06d-klaviyo-verified-empty-reread-2026-11-25",
+      "date": "2026-11-25",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat: Firat replied 'onaylıyorum tamam devam et Codex.' to the scoped Klaviyo empty reread behavior and isolated tests for verified empty results versus missing coverage."
+      },
+      "rationale": "Allow one empty staged package only for a Klaviyo reread. Use the existing day replacement and readback once all required Klaviyo sources are verified complete and empty; reject missing or nonempty source evidence before removing the old facts. Keep source retention, dependency checks, receipt and job closure as in the existing publisher.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "tests/dataset-reconciliation.test.js: empty verified Klaviyo revision uses the existing report writer; an omitted source stops before any write",
+        "tools/eo05-klaviyo-daily-timing-probe.mjs: rollback-only history publication from 1,000 rows to a verified zero-row receipt; missing fifth package and forged empty stage preserve the prior report",
+        "OAuth and raw source constitution guards; migration lineage"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-25",
+      "official_sources": [
+        "https://www.postgresql.org/docs/17/tutorial-transactions.html",
+        "https://www.postgresql.org/docs/17/explicit-locking.html",
+        "https://supabase.com/docs/guides/database/functions",
+        "https://developers.klaviyo.com/en/reference/query_campaign_values",
+        "https://developers.klaviyo.com/en/reference/query_flow_values",
+        "https://developers.klaviyo.com/en/reference/get_events"
+      ],
+      "changed_paths": [
+        "app/lib/database/dataset-reconciliation.server.js",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "supabase/migrations/20261125201832_eo06d_klaviyo_verified_empty_reread.sql",
+        "tools/eo05-klaviyo-daily-timing-probe.mjs"
       ]
     }
   ],

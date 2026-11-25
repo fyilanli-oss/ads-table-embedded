@@ -10,7 +10,7 @@ import {applyStoredDatasetFx} from "./dataset-fx-resolver.server.js";
 import {bindGoogleDailyProductMappings} from "./google-daily-product-mapping.server.js";
 import {GOOGLE_DAILY_PRODUCT_REPORT_PLAN} from "../providers/google-reporting.server.js";
 import {maturityInstant, maturityDate, freezeMaturity} from "../refresh/maturity-policy.server.js";
-import {SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL,
+import {SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL, META_PACKAGED_REPORT_SQL,
   GOOGLE_DAILY_STAGE_SQL, GOOGLE_DAILY_PUBLISH_SQL, GOOGLE_DAILY_CORRECT_SQL, GOOGLE_DAILY_INSPECT_SQL, GOOGLE_DAILY_FINISH_SQL,
   KLAVIYO_DAILY_STAGE_SQL, KLAVIYO_DAILY_PUBLISH_SQL, KLAVIYO_DAILY_INSPECT_SQL, KLAVIYO_DAILY_FINISH_SQL} from "./dataset-rpc.server.js";
 export {SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL};
@@ -47,7 +47,7 @@ export function prepareDailyDatasetPackages({owner,rows,policy,operationId,now,c
     return write;
   };
   if (maxPackages===1 || rows.length===0) return [prepare(rows)];
-  if (!["klaviyo","google_ads"].includes(owner.provider) || rows.length>maxPackages*200) fail("PACKAGE_LIMIT");
+  if (!["klaviyo","google_ads","meta"].includes(owner.provider) || rows.length>maxPackages*200) fail("PACKAGE_LIMIT");
   const packages=[],keys=new Set();
   for (let offset=0;offset<rows.length;) {
     if (packages.length===maxPackages) fail("PACKAGE_LIMIT");
@@ -99,7 +99,8 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
   for (const {row} of projection.rows) if (row.occurred_at !== null && row.occurred_at !== undefined) row.occurred_at = canonicalDatasetEventTime(row.occurred_at);
   const configuration = source.datasets.filter(d => d.dataset === "configuration").flatMap(d => d.pages.map(p => p.ref));
   if (configuration.length) for (const {row} of projection.rows) row.provenance.sources = [...new Map([...row.provenance.sources, ...configuration].map(r => [r.page_id, r])).values()];
-  if (!dailyPackages && !googleDaily && projection.rows.length > 200) fail("ROW_LIMIT");
+  const metaPackaged=scheduled && bound.provider==="meta" && (expectedRevision>0 || projection.rows.length>200);
+  if (!metaPackaged && !dailyPackages && !googleDaily && projection.rows.length > 200) fail("ROW_LIMIT");
   if (projection.rows.length && fxResolver !== undefined) {
     const fx = await applyStoredDatasetFx({resolver: fxResolver, database, source, rows: projection.rows, deadlineAt: limits.deadlineAt, signal});
     projection.holds.push(...fx.holds);
@@ -128,17 +129,23 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
       jobCompleted:true,hourlyRefreshActivated:false,authorizesActivation:false,publishable:false});
     confirmed.set(result,bound);return result;
   }
-  const [write]=prepareDailyDatasetPackages({owner:bound,rows:projection.rows,policy,operationId,now:new Date(now()).toISOString(),context});
-  const requestDigest = sourcePayloadHash({write, context});
+  const writes=prepareDailyDatasetPackages({owner:bound,rows:projection.rows,policy,operationId,
+    now:new Date(now()).toISOString(),context,maxPackages:metaPackaged?5:1});
+  const write=metaPackaged?writes:writes[0];
+  const packages=metaPackaged?writes.map((pack,ordinal)=>({ordinal,rowCount:pack.rows.length,digest:sourcePayloadHash({write:pack,context})})):null;
+  const requestDigest=sourcePayloadHash(metaPackaged?{packages}:{write,context});
   stop(); let receipt;
   try {
-    const sql = scheduled ? SCHEDULED_DATASET_RECONCILE_SQL : DATASET_RECONCILE_SQL;
-    receipt = (await database.query(sql, [JSON.stringify(bound), JSON.stringify(write), JSON.stringify(context), new Date(limits.deadlineAt).toISOString()])).rows?.[0]?.result;
+    const sql = metaPackaged ? META_PACKAGED_REPORT_SQL : scheduled ? SCHEDULED_DATASET_RECONCILE_SQL : DATASET_RECONCILE_SQL;
+    const args=[JSON.stringify(bound),JSON.stringify(write),JSON.stringify(context),new Date(limits.deadlineAt).toISOString()];
+    if(metaPackaged) args.push(JSON.stringify(packages));
+    receipt = (await database.query(sql,args)).rows?.[0]?.result;
     if (receipt?.status === "mismatch" && receipt.operationId === operationId && receipt.requestDigest === requestDigest
       && receipt.comparison === "mismatch" && receipt.consumerReceipt === false && receipt.checkpointAdvanced === false) return freezeMaturity({...receipt, rowsStored: 0, sourceVerified: true, publishable: false, authorizesActivation: false});
     if (!receipt || receipt.status !== "consumed" || receipt.operationId !== operationId || receipt.requestDigest !== requestDigest
       || receipt.revision !== expectedRevision + 1 || receipt.consumerReceipt !== true || receipt.checkpointAdvanced !== true
-      || receipt.rowCount !== write.rows.length || receipt.comparison !== "matched") fail("RESULT_INVALID");
+      || receipt.rowCount !== projection.rows.length || receipt.comparison !== "matched"
+      || metaPackaged && canonicalSourceJson(receipt.packages??null)!==canonicalSourceJson(packages)) fail("RESULT_INVALID");
   } catch {fail("WRITE_UNCONFIRMED");} // Never inspect/retry after a lost write reply.
   stop();
   const readback = await inspectDatasetReconciliation({database, owner: bound, operationId});
@@ -153,7 +160,8 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
     } catch {fail("FINISH_UNCONFIRMED");}
     if (finished !== true) fail("FINISH_UNCONFIRMED");
   }
-  const result = freezeMaturity({...receipt, sourceVerified: true, rowsStored: receipt.rowCount, reportValuesChanged: receipt.changes?.length > 0,
+  const result = freezeMaturity({...receipt, sourceVerified: true, rowsStored: receipt.rowCount,
+    reportValuesChanged: metaPackaged ? receipt.rowCount>0 || receipt.removed>0 : receipt.changes?.length>0,
     ...(scheduled ? {jobCompleted: true} : {}),
     hourlyRefreshActivated: false, authorizesActivation: false, publishable: false});
   confirmed.set(result, bound); return result;

@@ -1166,6 +1166,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261125180106",
+      "name": "eo06d_meta_packaged_report_reconciliation",
+      "file": "supabase/migrations/20261125180106_eo06d_meta_packaged_report_reconciliation.sql",
+      "created_with": "supabase@3.4.0 migration new eo06d_meta_packaged_report_reconciliation",
+      "repository_sql_sha256": "8bea02402febb42e8eb04e50bedbc4ecc8b2fd19f3159d0c74e56ea4277d421b",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ],
   "scoped_live_apply_approvals": [

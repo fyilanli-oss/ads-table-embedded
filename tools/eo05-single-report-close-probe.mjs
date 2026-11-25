@@ -3,7 +3,6 @@ import {randomUUID} from "node:crypto";
 import {readFileSync} from "node:fs";
 import {registerHooks} from "node:module";
 import {syntheticMappingReconciliationSource} from "../tests/fixtures/refresh-shopify-mapping-probe.js";
-import {metaDailyReconciliationSource} from "./eo05-meta-daily-report-probe.mjs";
 
 const providers = ["google", "klaviyo"];
 
@@ -39,18 +38,17 @@ export async function loadSingleReportCloseCandidate(client, provider, {shopifyM
   return loadScheduledReportRehearsal({shopifyMapping,singleClose:true});
 }
 
-export async function loadMappedScheduledRefresh({metaDaily=false}={}) {
-  return (await loadScheduledReportRehearsal({shopifyMapping:true,singleClose:false,metaDaily})).runScheduledRefreshWithDataset;
+export async function loadMappedScheduledRefresh() {
+  return (await loadScheduledReportRehearsal({shopifyMapping:true,singleClose:false})).runScheduledRefreshWithDataset;
 }
 
-async function loadScheduledReportRehearsal({shopifyMapping,singleClose,metaDaily=false}) {
+async function loadScheduledReportRehearsal({shopifyMapping,singleClose}) {
   const variant = `?scheduledReportRehearsal=${randomUUID()}`;
   const files = ["../app/lib/database/dataset-reconciliation.server.js", "../app/lib/refresh/preflight-bridge.server.js", "../app/lib/refresh/scheduled-queue-check.server.js"]
     .map(file => new URL(file, import.meta.url));
   const sources = new Map(files.map((url, index) => {
     let current = readFileSync(url, "utf8").replaceAll("\r\n", "\n");
     if (shopifyMapping && index === 0) current = syntheticMappingReconciliationSource(current);
-    if (metaDaily && index === 0) current = metaDailyReconciliationSource(current);
     if (shopifyMapping && index === 1) {
       current = replaceOnce(current, "expectedRevision,fxResolver,googleDailyPackages=false}=inputs;", "expectedRevision,fxResolver,googleDailyPackages=false,bindSyntheticMappings}=inputs;");
       current = replaceOnce(current, "expectedRevision,fxResolver,googleDailyPackages,now,", "expectedRevision,fxResolver,googleDailyPackages,bindSyntheticMappings,now,");

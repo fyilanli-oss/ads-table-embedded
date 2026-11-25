@@ -1278,6 +1278,7 @@
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json"
     ],
     "sha256": {
+      "supabase/migrations/20261125180106_eo06d_meta_packaged_report_reconciliation.sql": "a6c6d52d2a608285cdb36fd072ccf6eaef4e9b76142bd602bfaf2ec1013b8af2",
       "supabase/migrations/20261125170837_eo06d_verified_reread_queue.sql": "660c1e26e252fc7b0b88783aeda4837495eb4ce439486e9ae1a863bda73dc1a0",
       "supabase/migrations/20261125153035_eo06d_google_daily_report_replacement.sql": "3b662a06f96f7045643b520756bab0a99e9e66782123a983b8e765174d8bb2ca",
       ".github/workflows/database-integrity.yml": "7b41c78eef7940aef01da4ff9ff858b1b046b1bbd647a7a98e76c203d7a8a2d5",
@@ -1295,10 +1296,10 @@
       "app/lib/database/customer-source-privacy.server.js": "07c9445cf9e4440b995a7f2dc5665229dd17794015e2c06518bcb33931e317ea",
       "app/lib/database/dataset-fx-policy.server.js": "bf1bc27e567b192d3aee2ccfd9bbe3ecab01fd6b972a177339b154a996eb3a4c",
       "app/lib/database/dataset-fx-resolver.server.js": "cf69147f9ab92250a581dd877a73749fcbab03e539ab1616861dc083b5293556",
-      "app/lib/database/dataset-postgres.server.js": "2000d4c0508216f1ee34faa38f027b1fb5e1b6ded2290b9e4d50645425eab48e",
-      "app/lib/database/dataset-reconciliation.server.js": "ecf9834376561c1d07088b53f4af0814bc70207538b00bb97dbc7c1cef320d59",
+      "app/lib/database/dataset-postgres.server.js": "2b5adabb3c0ab3adb2d981d48ed2f50810991ee16181eb31e949f6d7f815d056",
+      "app/lib/database/dataset-reconciliation.server.js": "d0189b77240aa6e654787190a71a9516da0e908696264aabb60a4d995fcdf65f",
       "app/lib/database/dataset-retention.server.js": "16ac5cef4b05ba9ee2f1fb8b961fcca04361f5070a308331d8e57c443e265584",
-      "app/lib/database/dataset-rpc.server.js": "253dacdfc8e3a5f388d630ee1024502a8589ffb980367d9085ab5fd15554c189",
+      "app/lib/database/dataset-rpc.server.js": "a2ac3b46dc6e0d11fc8bef53a98e809df17b89f58d61a47b48a681e556a29055",
       "app/lib/database/dataset-source-binding.server.js": "755b72bb1204467530b49a6ba604157bf3fb33053b12a1cd55ecbcba3f8ee3e9",
       "app/lib/database/dataset-source-reader.server.js": "40b92004120b65722121ffc0a5c648c7a040c007d85204a033ef5f600f39f7c1",
       "app/lib/database/dataset-source-values.server.js": "a8c10fcd26223597d7d1ae6c6c5e3f3a6304022c171159f34a2585357342f8c4",
@@ -1792,10 +1793,10 @@
       "tools/eo05-klaviyo-raw-datasets-probe.mjs": "e7d504cd848ad8380575fa8a9dd6755fc95354d9a208db4d7f1a40693cc50888",
       "tools/eo05-klaviyo-source-capture-probe.mjs": "c9b9f604a72611fb0f39a8e6a178dadd72fcc6ee2f340a4396d0d6058bbaf5ab",
       "tools/eo05-merchant-quota-context-probe.mjs": "699aae3f090c490ca59abba882ea3e36fbe25e817d7ce697a55a0cb294269deb",
-      "tools/eo05-meta-daily-report-probe.mjs": "89b64766f0895189bb4b8bda033f2da3d5bfa76d2f2d03514475803c1d9d4ded",
+      "tools/eo05-meta-daily-report-probe.mjs": "019a2e899c585c39814f3b0246e4e33d1cd0bd0c22a18b9b7cc6b7137ec31fa0",
       "tools/eo05-meta-first-day-probe.mjs": "54759310dd8a25fbacd710ef3ed130e62a862d498b8e81b2e1ebd7d9154e4abe",
       "tools/eo05-meta-raw-datasets-probe.mjs": "2ce162397322c014e8c9029e5d08beb53578a1fdc68d941476dae04b1dc2d3d5",
-      "tools/eo05-meta-shopify-refresh-probe.mjs": "b3ff46bcfea15cdda8703ef3a3455797f8a4a5b757021e88126810a432366082",
+      "tools/eo05-meta-shopify-refresh-probe.mjs": "cae75c71382f476e991b32515a7d07f1b916052c440f2a6acbd3698cfeab225f",
       "tools/eo05-meta-source-capture-probe.mjs": "a8cea28c2c80ced0436fe660dd201b73351d02336a4a3bcba5540cb63f2135b4",
       "tools/eo05-pmax-history-probe.mjs": "97a7338edab5f58455cad9acba5638490d7cb2fab737afa77eb663cd78037e82",
       "tools/eo05-privacy-source-worker-probe.mjs": "c120d7f57b50390e8da14c4975994759a662dd87333bb6dbaaee36eec4e0adfd",
@@ -1824,14 +1825,14 @@
       "tools/eo05-shopify-order-reconciliation-probe.mjs": "06eac560b4e00bbcdb2b83cdb5fc7d8c5f980f7589bef8b332794238ab185d24",
       "tools/eo05-shopify-order-work-probe.mjs": "1b3045b0c28ec2e8acaaa92e1308185becc02a03655ada9accf823cd52445bd9",
       "tools/eo05-single-account-selection-probe.mjs": "c87be931bf049384ceb339ec77c57f185f8245a9ff7764879c5eafa629bdfbf0",
-      "tools/eo05-single-report-close-probe.mjs": "dcd852d53a3c36ceb0277b45e2adf1543d3bbe284f346c1d2492d681964ec48b",
+      "tools/eo05-single-report-close-probe.mjs": "84d934b42ffffed1c86d31f4c7c60868ddab0e4b542d8d9aa6804ab78e336e6d",
       "tools/eo05-source-evidence-probe.mjs": "1a3e0245c32a6478c3ec5d845f01eea5b496fa0e7eec361802e0dbb6a809c718",
       "tools/eo05-source-retention-policy-probe.mjs": "8a137f4325fd407abf97deb721f1f81b3ac197f8b42d35273bb5927b08426d57",
       "tools/eo05-source-retention-probe.mjs": "621641d587b4622bf6b72e526932b83963ec46a57df4e346a17b6d78141f0d29",
       "tools/eo05-source-rule-probe.mjs": "bdba143e69a0ac680687dfbfce815bf8c97c7fa2228179e22cc5d5d4626477ab",
       "tools/eo05-verified-mapping-probe.mjs": "875aadd0c47e64d66f5fef187b2a803cd9716ff04b0ac0871f17cc97f84f88eb",
       "tools/eo05b-dataset-server-probe.mjs": "d6177954ab377f697209d5753651f7403e82b1c1349e0425405187ce33c3b02c",
-      "tools/eo05b-dataset-storage-probe.mjs": "8f2ce1be3c27e3b539f55532846f645ba7e68d8ea860aca283bbebc6909f6719",
+      "tools/eo05b-dataset-storage-probe.mjs": "51813a67a022a158b540e2f574b935e75542078804151a698bac3e92546b15ab",
       "tools/eo05b-demo-fixture.mjs": "c91cf0e2b82ae6bb4db46d4dfa4ffbc0e1415877075995a5bf5cbc1f30afdd73",
       "tools/eo05b-fx-reporting-currency-probe.mjs": "c5decd13fad2a1aebccacbdf6229bcfec590c429db8ab3380008c318c479a9d5",
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
@@ -5730,6 +5731,54 @@
         "supabase/migrations/20261125170837_eo06d_verified_reread_queue.sql",
         "tools/eo05-four-phase-diagnostics.mjs",
         "tools/eo05-google-daily-packages-probe.mjs"
+      ]
+    },
+    {
+      "id": "eo06d-meta-packaged-report-reconciliation-2026-11-25",
+      "date": "2026-11-25",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat: Firat replied 'Onaylıyorum Codex' to the scoped preparation and isolated synthetic proof of Meta first and second publication, five packages over 1,000 report rows, retaining the previous report on incomplete packages."
+      },
+      "rationale": "Replace the isolated Meta writer adapter with the narrow existing scheduled Dataset transport, with exact package digests, prior verified receipt and a single verified close. Keep Meta sold-product evidence on hold. Preserve OAuth, native requests, Google and Klaviyo behavior, and live deployment state.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "tests/dataset-reconciliation.test.js",
+        "tests/eo-05a-refresh-preflight-bridge.test.js",
+        "tools/eo05-meta-shopify-refresh-probe.mjs: isolated queue-to-close Meta first report and rejection of incomplete first publication",
+        "tools/eo05-meta-daily-report-probe.mjs: two real PostgreSQL publications with 1,000 rows in five packages, preserved verified prior state on missing or truncated packages, exact receipt and closure",
+        "OAuth and raw source constitution guards; migration lineage"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-25",
+      "official_sources": [
+        "https://www.postgresql.org/docs/17/tutorial-transactions.html",
+        "https://www.postgresql.org/docs/17/explicit-locking.html",
+        "https://www.postgresql.org/docs/17/indexes-partial.html",
+        "https://supabase.com/docs/guides/database/functions"
+      ],
+      "changed_paths": [
+        "app/lib/database/dataset-postgres.server.js",
+        "app/lib/database/dataset-reconciliation.server.js",
+        "app/lib/database/dataset-rpc.server.js",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "supabase/migrations/20261125180106_eo06d_meta_packaged_report_reconciliation.sql",
+        "tools/eo05-meta-daily-report-probe.mjs",
+        "tools/eo05-meta-shopify-refresh-probe.mjs",
+        "tools/eo05-single-report-close-probe.mjs",
+        "tools/eo05b-dataset-storage-probe.mjs"
       ]
     }
   ],

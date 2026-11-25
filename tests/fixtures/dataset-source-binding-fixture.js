@@ -57,7 +57,7 @@ export function googleDatasetNativeRows(family,account,{nonempty=true,googlePurc
 
 /** All native responses/credentials/owners are synthetic. Real capture projection,
  * AEAD and decrypt paths are used; this fake DB is not SQL/native acceptance. */
-export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", googleRevenueMicros, googleProducts=1, googleSalesProducts=googleProducts, googlePageSize=25, googleStorageMaxBytes=1048576, googleDailyReport=false, klaviyoDailyPurchaseOnly=false, shopifyMapping=false, owner: givenOwner = null, cipher: givenCipher = null, jobId = "synthetic-binding-job"} = {}) {
+export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", googleRevenueMicros, googleProducts=1, googleSalesProducts=googleProducts, googlePageSize=25, googleStorageMaxBytes=1048576, googleDailyReport=false, klaviyoDailyPurchaseOnly=false, shopifyMapping=false, metaPackedImpressions=null, owner: givenOwner = null, cipher: givenCipher = null, jobId = "synthetic-binding-job"} = {}) {
   const owner = givenOwner ? structuredClone(givenOwner) : datasetStorageFixture().owner;
   if (!givenOwner) {owner.installationId = "1"; owner.provider = provider; owner.accountId = provider === "meta" ? "act_123" : provider === "klaviyo" ? "account-1" : "123";}
   if (provider === "klaviyo") owner.selectionEpoch = null;
@@ -82,12 +82,23 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
     }
   } else if (provider === "meta") {
     for (const [dataset, family] of [["account_performance", "ad_channel_daily_insights"], ["product_performance", "ad_product_breakdown_daily_insights"]]) {
-      const record = {account_id: "123", campaign_id: "10", adset_id: "20", ad_id: "30", campaign_name: "Campaign", adset_name: "Group", ad_name: "Ad", date_start: day, date_stop: day,
+      const record = {account_id: owner.accountId.slice(4), campaign_id: "10", adset_id: "20", ad_id: "30", campaign_name: "Campaign", adset_name: "Group", ad_name: "Ad", date_start: day, date_stop: day,
         impressions: "9007199254740993", spend: "1.234567890123456789", clicks: "5", outbound_clicks: [{action_type: "outbound_click", value: "4"}],
         actions: [{action_type: "offsite_conversion.fb_pixel_purchase", value: "2.5"}], action_values: [{action_type: "offsite_conversion.fb_pixel_purchase", value: "12.5"}],
         product_id: "product-1", converted_product_quantity: "2", converted_product_value: "12.5"};
-      const page = projectMetaRawPage(parseMetaRawJson(JSON.stringify({data: nonempty ? [record] : []})), {family, ordinal: 0, accountId: owner.accountId, window, requestId: "synthetic"}).page;
-      native.push({dataset, pages: [{family: "meta_permission_check", records: [], selectedFields: ["scopes"]}, page]});
+      let pages = [nonempty ? [record] : []];
+      if (metaPackedImpressions !== null) {
+        const base = {account_id: record.account_id, campaign_id: "10", adset_id: "20", date_start: day, date_stop: day,
+          impressions: metaPackedImpressions, spend: "1.23", clicks: "2"};
+        pages = dataset === "account_performance"
+          ? [Array.from({length:20}, (_, i) => ({...base, ad_id:String(100+i)}))]
+          : Array.from({length:10}, (_, ordinal) => Array.from({length:98}, (_, i) => ({
+            ...base, ad_id:String(100+ordinal), product_id:String(20000+ordinal*98+i),
+          })));
+      }
+      const projected = pages.map((data, ordinal) => projectMetaRawPage(parseMetaRawJson(JSON.stringify({data})),
+        {family, ordinal, accountId: owner.accountId, window, requestId: "synthetic"}).page);
+      native.push({dataset, pages: [{family: "meta_permission_check", records: [], selectedFields: ["scopes"]}, ...projected]});
     }
   } else {
     const metrics = [["order", "Placed Order"], ["cart", "Added to Cart"], ...missingMetric ? [] : [["checkout", "Checkout Started"]], ["product", "Ordered Product"]]
@@ -140,10 +151,11 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
       captureLayer: "native_response_projection", numericFidelity: "lossless_token", fieldCoverage: page.selectedFields ?? ["records"], schemaVersion: spec.schema, sanitizerVersion: spec.sanitizer, payload: page}));
     const records = Object.fromEntries(["references", "rules", "mappings", "orders", "lines", "journeys", "claims", "links"].map(k => [k, []]));
     const f = sourceStoreFixture({owner, cipher, attemptId, sourceState: item.partial ? "partial" : "complete", pages, records,
-      ...provider==="google_ads"&&googleProducts>1?{limits:{maxRows:1000,maxBytes:1048576}}:{}});
+      ...metaPackedImpressions!==null?{limits:{maxRows:1000,maxBytes:1048576}}:{}});
     const write = f.prepare(), batchId = String(++nextId), read = {jobId, fence, window, operationId, dataset: item.dataset, ...reportPlan, ...(item.coverage ? {coverage: item.coverage} : {})};
-    const receipt = {status: "committed", batchId, commitId: randomUUID(), digest: sourcePayloadHash(write.body), sourceState: write.body.sourceState,
-      manifest: {counts: {pages: pages.length}, [spec.read]: read, [spec.digest]: sourcePayloadHash(write.body)}};
+    const digest = metaPackedImpressions !== null ? createHash("sha256").update(JSON.stringify(write.body)).digest("hex") : sourcePayloadHash(write.body);
+    const receipt = {status: "committed", batchId, commitId: randomUUID(), digest, sourceState: write.body.sourceState,
+      manifest: {counts: {pages: pages.length}, [spec.read]: read, [spec.digest]: digest}};
     const storedPages = write.body.pages.map(p => ({...p, id: String(++nextId), available: true, expired: false, retentionPruned: false}));
     envelopes.set(attemptId, {receipt, pages: storedPages, dataset: item.dataset, sourceWrite: write}); batches.push({attemptId, ordinal: 0});
   }

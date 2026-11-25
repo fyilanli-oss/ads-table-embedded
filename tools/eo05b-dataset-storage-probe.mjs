@@ -16,6 +16,7 @@ import {observabilityProbe} from "./eo05e-observability-probe.mjs";
 import {googleDailyPackagesProbe} from "./eo05-google-daily-packages-probe.mjs";
 import {googleDailyTimingProbe,prepareGoogleTimingLocalRoles,installGoogleCombinedCandidate,installGoogleWriterPreparationCandidate,installGooglePackageReuseCandidate,proveGoogleReportCanonicalParity} from "./eo05-google-daily-timing-probe.mjs";
 import {metaShopifyRefreshProbe} from "./eo05-meta-shopify-refresh-probe.mjs";
+import {metaPackagedCorrectionProbe} from "./eo05-meta-daily-report-probe.mjs";
 import {createSharedRefreshProbe} from "./eo05-shared-refresh-probe.mjs";
 
 async function rejected(client, action, pattern) {
@@ -311,6 +312,7 @@ export async function datasetStorageProbe(client, connection, environment = proc
     await maturityProbe(client, {ownerFixture});
     await reconciliationProbe(client, {ownerFixture});
     console.log("EO05_GOOGLE_DAILY_PACKAGES_PASS",JSON.stringify(await googleDailyPackagesProbe(client,{ownerFixture})));
+    console.log("EO06D_META_PACKAGED_CORRECTION_PASS",JSON.stringify(await metaPackagedCorrectionProbe(client,{ownerFixture})));
     await observabilityProbe(client, {ownerFixture});
     for (const provider of ["google_ads", "meta", "klaviyo"]) {
       const owner = await ownerFixture(client, provider), source = await sourceFixture(client, owner);

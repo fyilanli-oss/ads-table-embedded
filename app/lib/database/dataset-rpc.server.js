@@ -21,6 +21,10 @@ export const DATASET_RECONCILIATION_RPC = Object.freeze([
   ["select analytics.inspect_dataset_reconciliation($1::jsonb,$2::uuid) as result", "analytics.inspect_dataset_reconciliation(jsonb,uuid)"],
 ].map(Object.freeze));
 export const SCHEDULED_DATASET_RECONCILE_SQL = "select analytics.commit_scheduled_dataset_reconciliation($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz) as result";
+export const META_PACKAGED_REPORT_SQL = "select analytics.commit_scheduled_meta_packaged_report($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz,$5::jsonb) as result";
+export const META_PACKAGED_REPORT_RPC = Object.freeze([
+  Object.freeze([META_PACKAGED_REPORT_SQL,"analytics.commit_scheduled_meta_packaged_report(jsonb,jsonb,jsonb,timestamptz,jsonb)"]),
+]);
 export const SCHEDULED_DATASET_FINISH_SQL = "select analytics.finish_scheduled_dataset_reconciliation($1::jsonb,$2::text,$3::bigint,$4::uuid,$5::text) as result";
 export const KLAVIYO_DAILY_STAGE_SQL = "select analytics.stage_klaviyo_daily_report_package($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz,$5::integer,$6::integer) as result";
 export const KLAVIYO_DAILY_PUBLISH_SQL = "select analytics.publish_klaviyo_staged_report_day($1::jsonb,$2::jsonb,$3::timestamptz,$4::uuid,$5::jsonb,$6::jsonb) as result";

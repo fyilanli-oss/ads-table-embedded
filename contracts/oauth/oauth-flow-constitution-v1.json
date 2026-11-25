@@ -1711,6 +1711,7 @@
       "supabase/migrations/20261122104235_eo05_google_daily_verified_product_links.sql": "0a27ac94c00e58e9282e2ead014f5ef7a818017db8ea116b565b5b89b0bc0d5a",
       "supabase/migrations/20261122111445_eo05_google_register_report_product_link.sql": "bf38547d3109221720f29a281935e11cdc65e1e6372cdbc20083f63f425aded4",
       "supabase/migrations/20261122142447_eo05_klaviyo_daily_purchase_scope.sql": "d569d2797913113cf6d374c70e61e0bb3064adee1adc80ba06705418b019d28a",
+      "supabase/migrations/20261125093522_eo06b_report_sales_compare.sql": "a90e5d119104775270da4e3aa2f216028c98f0102e434cd6d00538fc63213858",
       "tests/a6-docs-01-turkish-standardization.test.js": "94dfc2dc17b85bb8b90c2946f1bd31df0ed5eab5c75b357e6ff77eac4b656f51",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
@@ -1835,6 +1836,7 @@
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
       "tools/eo05d-reconciliation-probe.mjs": "cfa524d612e31a13ec495f884c65110df1386cc068c9d5101e2ffcb8038d6476",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
+      "tools/eo06b-report-sales-compare-probe.mjs": "8c58a6b7935073ef442a7e0618f4e0cd339353ccb684e8a89a49bd4050e4893b",
       "tools/f01-database-replay.mjs": "b23e14a8236a2ea276b15b2a016996082a4078ef401d9ed92139f5055cd36a2a",
       "tools/f01-identity-oauth-rollout.mjs": "5894b9ae54363fcf31372ed0a1abf39d3c0e1dfea428190232a0420b0b11f787",
       "tools/f01-live-readiness-plan.mjs": "d4eb8e8ca9d80d6e99cea8c9cf475b388db46a756e2e7a631c5c245e8e7bb25b",
@@ -5289,6 +5291,47 @@
       "official_sources": [
         "https://developers.openai.com/ads/openapi.json",
         "https://developers.openai.com/ads/api-reference/insights#conversion-insights"
+      ]
+    },
+    {
+      "id": "eo06b-dataset-compare-reader-2026-11-25",
+      "date": "2026-11-25",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Fırat: Onaylıyorum Codex. Explicit reply to the private read-only SQL query for two periods, narrow execution permission, required protection records, and isolated filter and store-scope verification."
+      },
+      "rationale": "Read published Dataset product sales facts for the same shop scope and filters in two bounded calendar windows. Preserve row-level support, observations, product identity, partial coverage and native currency. No OAuth or raw ingestion behavior changes.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "tools/eo06b-report-sales-compare-probe.mjs",
+        "tools/check-migration-lineage.mjs",
+        "tools/check-raw-source-constitution.mjs",
+        "tools/check-oauth-constitution.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-25",
+      "official_sources": [
+        "https://supabase.com/docs/guides/database/postgres/row-level-security",
+        "https://www.postgresql.org/docs/17/sql-createfunction.html",
+        "https://www.postgresql.org/docs/17/xfunc-volatility.html",
+        "https://pglite.dev/docs/about"
+      ],
+      "changed_paths": [
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "supabase/migrations/20261125093522_eo06b_report_sales_compare.sql",
+        "tools/eo06b-report-sales-compare-probe.mjs"
       ]
     }
   ],

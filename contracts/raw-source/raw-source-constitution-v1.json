@@ -707,6 +707,7 @@
       "app/lib/refresh/shopify-order-reconciliation.server.js": "ce5447273a67f1389f74e11dcc49e9433ae03789b6ad36a0bd1274e2009bb30d",
       "app/lib/refresh/shopify-order-work-reservation.server.js": "fda53410962e762c15bbfcb3bee2b1514562c4b66a43e86127370421be8add4e",
       "app/lib/refresh/work-stop-policy.server.js": "807206c9e6532d0f56d0495021ec2cd9647fcdf5b69ba81bc1602b36e2d1bea5",
+      "app/lib/reporting/compare-calendar.server.js": "835612ae103397bcf9bffab07ab7204c1d60a128552d6693ca6fbb1ba435f180",
       "app/lib/server-error-log.server.d.ts": "88c8ecd0f839ab09c65ab0ec1095b696285f593335d4dd7ceba15b09747d2045",
       "app/lib/server-error-log.server.js": "62218cac33d6eb6a6b5e81460783aa390f3b3f4ff216fd855db75a11811ca71a",
       "app/lib/shopify/admin-identity.server.d.ts": "e389f358e688f0ed713c0249a624c049c942250e2f5916e209fb7f0de9195a60",
@@ -1095,6 +1096,7 @@
       "tests/eo-05a-refresh-work-repository.test.js": "c9c723f2b1799aa702924dcfb4fa826996009cdf101768a41fb6f3259e64ada9",
       "tests/eo-05a-refresh-work-stops.test.js": "58a010e6fd6a1812f2f48492f78bfc38a6cfbc0312402dcd1974cad0d87e655f",
       "tests/eo-05a-shared-quota.test.js": "4f0dbc974dd882b3317fbc537bb6d8dc4309eb2bd9546a34b93ff223210ba03e",
+      "tests/eo-06b-compare-calendar.test.js": "1e4470bd90af4a64b2a18b309ce0917853b95aba31fb2ab7354653ccb6d2bdfb",
       "tests/eo05b-demo-fixture.test.js": "d63b2bbb733d25c1f4585314f4094b010e4b6de2ca23032fc2b2d36f1aabde41",
       "tests/f01-live-readiness.test.js": "5225024e104f9087337452827f674961944f4dd1d53b808a0a0ac66bdef0a6eb",
       "tests/fixtures/customer-worker-fixture.js": "11b10dbd255ff34d6af9b11496866c3ad22145f21e60343ca0d50587eba21352",
@@ -3349,6 +3351,38 @@
       "official_sources": [
         "https://developers.openai.com/ads/openapi.json",
         "https://developers.openai.com/ads/api-reference/insights#conversion-insights"
+      ]
+    },
+    {
+      "id": "eo06b-compare-calendar-2026-11-25",
+      "date": "2026-11-25",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Fırat: Onaylıyorum Codex. Explicit reply to an independent Compare date module, its calendar tests and the required protection registration for those files in PR #390."
+      },
+      "rationale": "Resolve bounded, equal-length report comparison windows from shop business-date labels without reading or changing Dataset data, source records, provider requests, or OAuth behavior.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "changed_paths": [
+        "app/lib/reporting/compare-calendar.server.js",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "tests/eo-06b-compare-calendar.test.js"
+      ],
+      "tests": [
+        "tests/eo-06b-compare-calendar.test.js",
+        "tools/check-raw-source-constitution.mjs",
+        "tools/check-oauth-constitution.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "separate_merge_approval"
       ]
     }
   ],

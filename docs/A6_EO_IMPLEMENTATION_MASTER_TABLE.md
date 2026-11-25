@@ -194,6 +194,7 @@ Bu kanıt API işleyicisinden izole veritabanına kadar olan zinciri kapsar. Ger
 **V1 tekrar okuma kararı.** Kapanan gün ertesi sabah okunup doğrulama sonrası rapora açılır. Aynı gün, ilk başarılı okumadan **7 gün sonra** mevcut refresh kapsamıyla **bir kez** tam okunur. Başarısız tekrar okumada son doğrulanmış yayın korunur. Yeni yayın, doğrulamaları tamamlandığında görünür. Sağlayıcıya göre rapor tarihi ve EO-05-C’deki `unknown`, `provisional` ve `final` anlamları korunur. [Refresh sözleşmesi](EO_05A_REFRESH_CONTRACT.md#v1-geçmiş-günü-tekrar-okuma) · [Kesinleşme kaydı](EO_05C_MATURITY_FINALITY.md)
 
 - [ ] **EO-06-D · V1 geçmiş gün düzeltmesi.** Planlı okumayı kuyruğa bağla ve EO-05-C/D ile tarih temelini ve yetkili revizyonu doğrula. Aynı günün bir kez planlandığını, başarısız koşuda eski yayının korunduğunu ve doğrulanmış yeni yayının rapora yansıdığını test et. Uygulama ve kabul açık.
+  - **Google Ads paketli yayın hazırlığı.** Önceki doğrulanmış makbuz ve sürüme bağlı düzeltme, normal 200 satırlık paket sınırlarıyla tek işlemde çalışır. İlk yayın ve düzeltme aynı mevcut yetki ve kaynak doğrulamalarına tabidir. İzole provada 1.000 satır, eksik beşinci paketle eski yayının korunması ve doğrulanmış ikinci yayın sınanır. Kuyruk, canlı uygulama ve canlı kabul ayrı adımlardır.
 
 [EO-06-D makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo06d_compare_data_states_2026_11_25). Bu kayıt mevcut davranışın ve açık kararların depo incelemesidir. Yeni API alanı veya canlı uygulama için teknik kapsam ayrı belirlenir.
 

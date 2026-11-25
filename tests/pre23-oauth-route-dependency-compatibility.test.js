@@ -19,7 +19,8 @@ test("patched real fs-routes preserves the complete existing route tree",async()
  assert.equal(routesRequire("minimatch").makeRe,undefined);
  const expected=JSON.parse(readFileSync(new URL("fixtures/pre23-route-config-baseline.json",import.meta.url),"utf8"));
  // The captured baseline is JSON: omit undefined optional properties on both sides.
- assert.deepEqual(routeGraph(JSON.parse(JSON.stringify(await routesAt(path.join(root,"app"))))),routeGraph(expected));
+ const compareRoute={id:"routes/api.reports.compare",file:"routes/api.reports.compare.ts",path:"api/reports/compare"};
+ assert.deepEqual(routeGraph(JSON.parse(JSON.stringify(await routesAt(path.join(root,"app"))))),routeGraph([...expected,compareRoute]));
 });
 test("real route discovery retains default hidden-file and explicit file/folder ignores",async()=>{
  const directory=mkdtempSync(path.join(tmpdir(),"adstable-routes-compat-"));

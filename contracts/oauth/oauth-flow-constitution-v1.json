@@ -1578,6 +1578,7 @@
       "app/routes/_admin.ad-analysis.tsx": "082128424347814f6ebf3aefe72f15f050e311af6cbb18aa0641f8e417e79522",
       "app/routes/_admin.settings.tsx": "3308c252d0777fad0a328fcdbd06c037022350d40427a14a74e539e30dfaedd9",
       "app/routes/_admin.tsx": "4d7c102d846e1b2f8c3cf74c3932ac103b4c647ba731769d476e96caf8372690",
+      "app/routes/api.reports.compare.ts": "f318ec90504e1086f7180bf56b762d71df7f3d6e55d7617c59d9539d2b966053",
       "app/routes/auth.$.tsx": "10d0342790bd90122f5c57a41cd3c8ad784f6556b095ac8e89cb8bf8b9dec0c7",
       "app/routes/auth.google-ads.callback.ts": "31117361e75a1af2955afc4762da48a9220ef4044c52e4dcc208eaa3d6543584",
       "app/routes/auth.klaviyo.callback.ts": "01719e18e1b75d20290ab0c012b104907a6bb8ba8d308acf48664f32b9805705",
@@ -1754,7 +1755,7 @@
       "tests/permission-release.test.js": "1393a4af41192cdc7dc2b58a8a3a275df19c3bcd44eedfd6b8634434717b5b2f",
       "tests/permission-settings.test.js": "5a53c68e019cfd23042a0b29e7062deee495f8faafec5df24e0283f9e38e481f",
       "tests/permission-setup-selection.test.js": "c767fed7b7dc4c51fb3a96bba1a8d95162d2e6db873cac0a779401e5f745b132",
-      "tests/pre23-oauth-route-dependency-compatibility.test.js": "65dc7a0fe2d1b16683ec8808991a7abb1dec7dcd2d08623c5c3ee706fac450f4",
+      "tests/pre23-oauth-route-dependency-compatibility.test.js": "a38b2221a9e1cb20a600cecbe5e8a1529bb6ba2c9a1b215a15b12db290890364",
       "tests/raw-fixture-calendar-permission.test.js": "352a2467a5f724d13e08dd873d3c397521bbd301be9e1f2cc9fbbedb2d54f9e6",
       "tests/shopify-permission-readback.test.js": "2b7500dd9424aa324b2c9a61b5e3d57f1ce1a3fe37a1dc192e63c49fe3e6d21e",
       "tests/shopify-permission-scope-protocol.test.js": "4f7828c38691a70c656373897be106ab3a757dad75b84515af7d6aa3e8d8f00c",
@@ -5332,6 +5333,47 @@
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "supabase/migrations/20261125093522_eo06b_report_sales_compare.sql",
         "tools/eo06b-report-sales-compare-probe.mjs"
+      ]
+    },
+    {
+      "id": "eo06c-compare-read-only-api-2026-11-25",
+      "date": "2026-11-25",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Fırat: Onaylıyorum Codex. Explicit reply to one read-only Compare API route based on the existing verified Shopify session, existing Dataset query, and isolated equal-filter and cross-shop tests."
+      },
+      "rationale": "Expose an isolated, authenticated, same-origin Compare resource endpoint for the existing Dataset reader. Reuse the read-only installation authority and preserve stored date labels, observation states and decimals. No OAuth flow, callback, token, permission or source capture changes.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "tests/eo-06c-compare-api.test.js",
+        "tests/pre23-oauth-route-dependency-compatibility.test.js",
+        "tests/eo-06b-compare-calendar.test.js",
+        "tools/check-oauth-constitution.mjs",
+        "tools/check-raw-source-constitution.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-25",
+      "official_sources": [
+        "https://shopify.dev/docs/api/shopify-app-react-router/v3/authenticate/admin",
+        "https://reactrouter.com/how-to/resource-routes",
+        "https://node-postgres.com/features/queries"
+      ],
+      "changed_paths": [
+        "app/routes/api.reports.compare.ts",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "tests/pre23-oauth-route-dependency-compatibility.test.js"
       ]
     }
   ],

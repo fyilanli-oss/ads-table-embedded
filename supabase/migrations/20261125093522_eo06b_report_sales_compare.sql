@@ -99,7 +99,16 @@ end;
 $reader$;
 
 revoke all on function analytics.read_report_sales_compare(uuid,bigint,bigint,text,date,date,date,date,text,text,text,text,text)
- from public,anon,authenticated,service_role,adstable_refresh_coordinator,adstable_refresh_dataset_runner;
+ from public,anon,authenticated,service_role,adstable_refresh_coordinator;
+-- The refresh dataset runner is provisioned separately and may not exist yet.
+do $permissions$
+begin
+ if to_regrole('adstable_refresh_dataset_runner') is not null then
+  revoke all on function analytics.read_report_sales_compare(uuid,bigint,bigint,text,date,date,date,date,text,text,text,text,text)
+   from adstable_refresh_dataset_runner;
+ end if;
+end;
+$permissions$;
 grant execute on function analytics.read_report_sales_compare(uuid,bigint,bigint,text,date,date,date,date,text,text,text,text,text)
  to adstable_runtime;
 

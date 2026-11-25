@@ -4,6 +4,7 @@ import {readFile} from "node:fs/promises";
 // Run with the absolute URL of a PGlite module installed outside this repository.
 const {PGlite} = await import(process.argv[2]);
 const db = await PGlite.create();
+const hasRefreshRunner = process.argv[3] !== "--without-refresh-runner";
 const a = "11111111-1111-4111-8111-111111111111";
 const b = "22222222-2222-4222-8222-222222222222";
 const product1 = "gid://shopify/Product/111";
@@ -17,7 +18,7 @@ try {
     create role adstable_owner;
     create role adstable_runtime;
     create role adstable_refresh_coordinator;
-    create role adstable_refresh_dataset_runner;
+    ${hasRefreshRunner ? "create role adstable_refresh_dataset_runner;" : ""}
     create role anon;
     create role authenticated;
     create role service_role;
@@ -27,8 +28,10 @@ try {
     create schema evidence authorization adstable_owner;
     create schema analytics authorization adstable_owner;
     create schema identity authorization adstable_owner;
-    grant usage on schema analytics to adstable_runtime, adstable_refresh_dataset_runner, anon;
+    grant usage on schema analytics to adstable_runtime, anon;
+    ${hasRefreshRunner ? "grant usage on schema analytics to adstable_refresh_dataset_runner;" : ""}
     set role adstable_owner;
+    ${hasRefreshRunner ? "alter default privileges in schema analytics grant execute on functions to adstable_refresh_dataset_runner;" : ""}
     create table app.workspaces (id uuid, status text);
     create table shopify.installations (workspace_id uuid, id bigint, install_generation bigint, status text);
     create table privacy.deletion_runs (workspace_id uuid, install_generation bigint, status text);
@@ -104,14 +107,16 @@ try {
   await assert.rejects(db.query(call, withChanges({9: null})), /REPORT_COMPARE_FILTER_INVALID/);
   await assert.rejects(db.query("select * from analytics.cpd_product_sales_facts"), /permission denied/);
 
-  for (const role of ["anon", "authenticated", "service_role", "adstable_refresh_coordinator", "adstable_refresh_dataset_runner"]) {
+  const deniedRoles = ["anon", "authenticated", "service_role", "adstable_refresh_coordinator"];
+  if (hasRefreshRunner) deniedRoles.push("adstable_refresh_dataset_runner");
+  for (const role of deniedRoles) {
     await db.exec(`reset role; set role ${role}`);
     await assert.rejects(db.query(call, args), /permission denied/);
   }
   await db.exec(`reset role; insert into privacy.deletion_runs values ('${a}', 1, 'pending'); set role adstable_runtime`);
   await assert.rejects(db.query(call, args), /REPORT_COMPARE_SCOPE_UNAVAILABLE/);
   const version = (await db.query("show server_version")).rows[0].server_version;
-  console.log(`Compare SQL probe passed on PostgreSQL ${version}: equal periods, filters, metric states, shop and role isolation.`);
+  console.log(`Compare SQL probe passed on PostgreSQL ${version} (${hasRefreshRunner ? "with" : "without"} refresh runner): equal periods, filters, metric states, shop and role isolation.`);
 } finally {
   await db.close();
 }

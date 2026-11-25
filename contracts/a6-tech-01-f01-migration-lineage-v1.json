@@ -1142,7 +1142,7 @@
       "name": "eo06b_report_sales_compare",
       "file": "supabase/migrations/20261125093522_eo06b_report_sales_compare.sql",
       "created_with": "supabase@3.4.0 migration new eo06b_report_sales_compare",
-      "repository_sql_sha256": "bf38c9ec248a39078fa47f6135888842f7b3e76280ad31d68757c67c82c89b24",
+      "repository_sql_sha256": "79d1845e1eb986ce4994e3c76cdb53e50fb168970a3528e2ee5352d7d26ec976",
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false

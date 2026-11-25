@@ -93,8 +93,9 @@ for (const provider of ["google_ads", "meta", "klaviyo"]) test("reconciliation p
 });
 
 const sharedShopifyInstallation=datasetStorageFixture().owner;
-test("scheduled Klaviyo revision reaches the packaged writer after the source shrinks to one part", async () => {
-  const f=await fixture("klaviyo");
+for (const nonempty of [true,false]) test(`scheduled Klaviyo revision uses one report package for ${nonempty?"a smaller result":"a verified empty result"}`, async () => {
+  const f=await fixture("klaviyo",{nonempty});
+  const rowCount=nonempty?2:0;
   const {jobId,fence,window}=f.envelopes.values().next().value.receipt.manifest.klaviyoDatasetRead;
   const calls=[];
   let part,receipt;
@@ -106,14 +107,15 @@ test("scheduled Klaviyo revision reaches the packaged writer after the source sh
       const write=JSON.parse(args[1]),context=JSON.parse(args[2]);
       assert.equal(context.expectedRevision,1);
       assert.equal(args[5],1);
-      part={ordinal:0,rowCount:2,digest:sourcePayloadHash({write,context})};
+      assert.equal(write.rows.length,rowCount);
+      part={ordinal:0,rowCount,digest:sourcePayloadHash({write,context})};
       return {rows:[{result:{status:"staged",operationId:write.operationId,packageCount:1,...part}}]};
     }
     if(sql===KLAVIYO_DAILY_PUBLISH_SQL) {
       calls.push("publish");
       const context=JSON.parse(args[1]);
       receipt={version:"klaviyo-daily-receipt-v1",operationId:args[3],status:"consumed",comparison:"matched",
-        consumerReceipt:true,checkpointAdvanced:true,rowCount:2,revision:2,jobId,fence,
+        consumerReceipt:true,checkpointAdvanced:true,rowCount,revision:2,jobId,fence,
         businessDate:context.businessDate,timeZone:context.timeZone,packages:[part],batchIds:context.batchIds};
       receipt.digest=sourcePayloadHash(receipt);
       return {rows:[{result:receipt}]};
@@ -129,7 +131,12 @@ test("scheduled Klaviyo revision reaches the packaged writer after the source sh
     }
     return read(sql,args);
   };
-  const result=await reconcileStoredDatasetSources({...f,scheduled:true,expectedRevision:1,admittedScope:{jobId,fence,...window}});
+  const input={...f,scheduled:true,expectedRevision:1,admittedScope:{jobId,fence,...window}};
+  if (!nonempty) {
+    await assert.rejects(reconcileStoredDatasetSources({...input,batches:f.batches.slice(0,-1)}),/DATASET_PROJECTION_DATASET_MISSING/);
+    assert.deepEqual(calls,[]);
+  }
+  const result=await reconcileStoredDatasetSources(input);
   assert.equal(result.jobCompleted,true);
   assert.equal(f.request(),undefined);
   assert.deepEqual(calls,["stage","publish","inspect","finish"]);

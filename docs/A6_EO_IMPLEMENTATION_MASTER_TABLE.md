@@ -165,6 +165,16 @@ Summary/Table için 90 gün, Daily için 31 gün sınırı her aralığa ayrı u
 
 EO-06-B’nin bu adımının çıktısı, sorgunun kullanacağı günler ve eşleme kurallarıdır. Grafik bağlantısı EO-07’de yapılır.
 
+### EO-06-C Compare API ve PostgreSQL provası
+
+**25 Kasım 2026.** Mevcut Compare API işleyicisi, depodaki mağaza kurulum SQL fonksiyonları ve kanonik Compare migration’ı aynı izole PostgreSQL 17.5 provasında çalıştı. Shopify oturumu ve Admin mağaza yanıtı sentetik olarak verildi. Prova iki mağazayı aynı ürün, hesap, kampanya ve kanal filtreleriyle çağırdı.
+
+- Birinci mağazada 1–7 Ekim ve 24–30 Eylül karşılaştırıldı. 2 Ekim’deki iki ürün satışı ve 36,75 TRY korundu. 3 Ekim’deki kısmi tutar boş kaldı. 25 Eylül’deki kayıtlı sıfırlar döndü. Diğer günlere sıfır satırı eklenmedi.
+- İkinci mağazada aynı filtreler yalnız o mağazanın 99 TRY’lik satırını döndürdü. İstekten mağaza kapsamı gönderme denemesi 400 döndü.
+- Refresh Dataset rolünün mevcut olduğu ve olmadığı iki prova ile 12 mevcut takvim/API testi geçti.
+
+Bu kanıt API işleyicisinden izole veritabanına kadar olan zinciri kapsar. Gerçek Shopify Admin oturumu, canlı mağaza verisi ve yayın kabulü açık kalır. [Prova kodu](../tools/eo06b-report-sales-compare-probe.mjs) · [Makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo06c_compare_api_sql_rehearsal_2026_11_25)
+
 ## EO-07 — Shopify'a özgü üç yüzeyli arayüz
 
 **26 adımlık çalışmadan kabul referansları.** EO-07-A’da 07 ve 15’in ayar/teslim kapsamı, EO-07-C’de 08–10, 16–19 ve 21’in ürün seviyesi kanıtı gözden geçirilir. [Açık kabul tablosu](plans/EO_05_06_REVISED_PLAN_2026_10_27.md#eo-05-26-adımlık-çalışma-ve-açık-kabul-maddeleri)

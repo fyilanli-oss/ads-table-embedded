@@ -62,7 +62,7 @@ async function verifyGoogleDailyReplacement(client,{owner,first,rpc,reject,day})
  assert.deepEqual(updatedFacts.map(r=>r.id),originalFacts.map(r=>r.id));
  assert.ok(updatedFacts.some((row,i)=>row.sales_value!==originalFacts[i].sales_value));
  const {rows:[sourceCheck]}=await client.query(`select count(*) filter(where source_state='partial')::int as partial,
-   count(*) filter(where manifest ? 'datasetRevisionPermit')::int as permits
+   count(*) filter(where manifest ?| array['datasetRevisionPermit','googleDailyRevisionPermits'])::int as permits
    from evidence.source_batches where authority=$1::jsonb and id=any($2::bigint[])`,[ownerJson,revised.batchIds]);
  assert.ok(sourceCheck.partial>0);
  assert.equal(sourceCheck.permits,0);

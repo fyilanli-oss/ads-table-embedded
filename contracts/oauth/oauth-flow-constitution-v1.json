@@ -1278,7 +1278,7 @@
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json"
     ],
     "sha256": {
-      "supabase/migrations/20261125153035_eo06d_google_daily_report_replacement.sql": "aa030b81a624f0758b476f873b1fffaf891a456f1bfc5b5c4e6842e4521e6e50",
+      "supabase/migrations/20261125153035_eo06d_google_daily_report_replacement.sql": "3b662a06f96f7045643b520756bab0a99e9e66782123a983b8e765174d8bb2ca",
       ".github/workflows/database-integrity.yml": "7b41c78eef7940aef01da4ff9ff858b1b046b1bbd647a7a98e76c203d7a8a2d5",
       ".github/workflows/repository-governance.yml": "d0c6feecc08f145588c72fac541040ca2e14949af7785961e5df27c01628b852",
       ".github/workflows/shopify-app-deploy.yml": "ef078addb630fdb624189c0f12625524a7e3dcaf708f2059f95e7a2884cf5d24",
@@ -1774,7 +1774,7 @@
       "tools/eo05-final-synthetic-candidate.mjs": "f39563923c239b9d47f6ccba810ffddd544d434b8f416373cb94e92a7dd8343c",
       "tools/eo05-four-phase-diagnostics.mjs": "c95afca832e974a24f69f819813a4eb003dd2cded579856f6a0923f7de6b29b9",
       "tools/eo05-google-acceptance-probe.mjs": "6895c9f7f2180de717b27e2c86572cfcd79967bb7b84c0b0f1c450ffcf372797",
-      "tools/eo05-google-daily-packages-probe.mjs": "3056da26446a2bf073498dbd37a56ed23e6e172cb420740874ce54154520d92a",
+      "tools/eo05-google-daily-packages-probe.mjs": "20a0f26f7010c2592d464ea3e527aa44b85cfee4d815a3c07c5d205c0b3c6de8",
       "tools/eo05-google-daily-timing-probe.mjs": "2d88d83e783665c4f9ca76bc4ada360e623fc5000c8566a4dacc167507b4add7",
       "tools/eo05-google-hosted-benchmark.mjs": "2724b75f248a74a447108afb0a35b804be8c13bee98f1da3ba43b8bd26fbd77e",
       "tools/eo05-google-identity-renewal-probe.mjs": "2f429c983600225ccdc9cadeede2611de9d48522dc575d5cb583b324b6f07fd1",
@@ -5648,7 +5648,7 @@
         "explicit": true,
         "source": "Owner chat: Firat replied 'Onayliyorum Codex.' to adding the protected packaged writer change and isolated 1,000-row success and failure checks to the previously approved EO-06-D implementation."
       },
-      "rationale": "Permit a complete Google Ads report replacement through a separate scheduled-runner RPC only for the verified previous daily publication. Leave the existing first-publish RPC definition unchanged. Keep every existing row guard and accept a transaction-bound revision permit for a partial Google source package only after full group verification in the same owner-only correction. Preserve package, authority, retention, physical readback and receipt checks. The scheduled seven-day enqueue and activation are outside this writer change.",
+      "rationale": "Permit a complete Google Ads report replacement through a separate scheduled-runner RPC only for the verified previous daily publication. Leave the existing first-publish RPC definition unchanged. Keep every existing row guard and accept a transaction-bound revision permit for a partial Google source package only after full group verification in the same owner-only correction. Batch the transaction-bound permits and fact updates by existing report package, with per-row validation and prior receipt scope checks. Preserve package, authority, retention, physical readback and receipt checks. The scheduled seven-day enqueue and activation are outside this writer change.",
       "scope": {
         "runtime_code": true,
         "live_provider": false,

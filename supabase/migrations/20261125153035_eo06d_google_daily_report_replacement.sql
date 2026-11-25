@@ -12,13 +12,15 @@ declare j jsonb:=to_jsonb(new); b evidence.source_batches%rowtype; o jsonb; ref 
  f analytics.fx_rates%rowtype; k text; keys text[]; expected jsonb; identity_kind text; native jsonb; all_complete boolean:=true; context jsonb; original_source jsonb; native_read jsonb; permit jsonb;
 begin
  if tg_op='UPDATE' then
-  select manifest->'datasetRevisionPermit' into permit from evidence.source_batches where workspace_id=new.workspace_id and installation_id=new.installation_id
+  select coalesce(manifest->'datasetRevisionPermit',
+    case when new.platform='google_ads' then manifest->'googleDailyRevisionPermits'->(tg_table_name||':'||old.id::text) end)
+   into permit from evidence.source_batches where workspace_id=new.workspace_id and installation_id=new.installation_id
    and installation_generation=new.installation_generation and id=new.source_batch_id and storage_state='committed'
    and handoff_state='pending'
    and (source_state='complete' or (
     source_state='partial' and new.platform='google_ads' and primary_source='google_ads'
     and manifest->'googleDatasetRead' ? 'packageCount'
-    and manifest->'datasetRevisionPermit'->'googleVerifiedPackage'=
+    and manifest->'googleDailyRevisionPermits'->(tg_table_name||':'||old.id::text)->'googleVerifiedPackage'=
       jsonb_build_object('jobId',new.provenance->'source_context'->>'job_id',
         'fence',new.provenance->'source_context'->>'fence',
         'window',new.provenance->'source_context'->'window')
@@ -148,9 +150,7 @@ declare
   head jsonb;
   prior jsonb;
   old_fact jsonb;
-  ref jsonb;
   table_name text;
-  completed timestamptz;
   day date := (c->>'businessDate')::date;
   timezone text := c->'sourceContext'->'snapshot'->>'timezone';
   started timestamptz := (c->>'startedAt')::timestamptz;
@@ -196,12 +196,11 @@ begin
         or (old_fact->>'retain_until')::timestamptz<=clock_timestamp() then
         raise exception 'GOOGLE_REPORT_REPLACEMENT_SCOPE_INVALID';
       end if;
-      for ref in select value from jsonb_array_elements(old_fact->'provenance'->'sources') loop
-        perform analytics.assert_dataset_source(o,ref);
-        select (b.manifest->'googleDatasetRead'->>'completedAt')::timestamptz into completed
-          from evidence.source_batches b where b.id=(ref->>'batch_id')::bigint and b.authority=o;
-        if completed is null or completed>started then raise exception 'GOOGLE_REPORT_REPLACEMENT_STALE'; end if;
-      end loop;
+      -- inspect_google_daily_report has checked every page reference and the old physical digest.
+      -- An old fact must be covered by that exact verified receipt.
+      if not coalesce(prior->'sources' @> (old_fact->'provenance'->'sources'),false) then
+        raise exception 'GOOGLE_REPORT_REPLACEMENT_SCOPE_INVALID';
+      end if;
       if not (coalesce(staged_keys,'{}'::jsonb) ? (table_name||':'||(old_fact->>'native_key_hash')))
         and analytics.dataset_retention_has_dependents(table_name,old_fact) then
         raise exception 'DATASET_RECONCILIATION_DEPENDENT';
@@ -237,6 +236,10 @@ declare
   staged_keys jsonb;
   source_id bigint;
   mapping_column text;
+  permits jsonb;
+  updates jsonb;
+  group_rows record;
+  actual_updates integer;
   day date := (c->>'businessDate')::date;
   w uuid := (o->>'workspaceId')::uuid;
   i bigint := (o->>'installationId')::bigint;
@@ -254,6 +257,8 @@ begin
       using w,i,g,a,day,staged_keys;
   end loop;
   for s in select body from pg_temp.adstable_google_daily_report_stage order by package_ordinal loop
+    permits:='{}'::jsonb;
+    updates:='[]'::jsonb;
     for item in select value from jsonb_array_elements(s.body->'rows') loop
       table_name:=item->>'table';
       r:=item->'row';
@@ -272,8 +277,7 @@ begin
         or (old_fact->>'retain_until')::timestamptz<=clock_timestamp() then
         raise exception 'DATASET_RECONCILIATION_KEY_CONFLICT';
       end if;
-      select array_agg(attname::text),string_agg(format('%I=v.%I',attname,attname),',')
-        into allowed,assignments from pg_catalog.pg_attribute
+      select array_agg(attname::text) into allowed from pg_catalog.pg_attribute
         where attrelid=('analytics.'||table_name)::regclass and attnum>0 and not attisdropped
           and attname not in ('id','workspace_id','installation_id','installation_generation','provider_connection_id',
             'platform','platform_account_id','canonical_reporting_account_id','revision','created_at','updated_at',
@@ -282,28 +286,49 @@ begin
         or r->>'payload_digest' is distinct from analytics.google_daily_digest(r-array['native_key_canonical','native_key_hash','grain_version','row_schema_version','payload_digest']) then
         raise exception 'DATASET_ROW_SHAPE_INVALID';
       end if;
-      for source_id in select distinct (ref->>'batch_id')::bigint from jsonb_array_elements(r->'provenance'->'sources') ref loop
-        perform analytics.hold_report_source_batch(o,source_id,(policy->>'until')::timestamptz);
-      end loop;
       foreach mapping_column in array array['product_mapping_id','sold_product_mapping_id','advertised_product_mapping_id'] loop
         if r->>mapping_column is not null then
           perform analytics.hold_report_mapping(o,(r->>mapping_column)::bigint,(policy->>'until')::timestamptz);
         end if;
       end loop;
       source_id:=(r->>'source_batch_id')::bigint;
-      update evidence.source_batches set manifest=manifest||jsonb_build_object('datasetRevisionPermit',jsonb_build_object(
+      permits:=jsonb_set(permits,array[source_id::text],coalesce(permits->source_id::text,'{}'::jsonb)||
+        jsonb_build_object(table_name||':'||(old_fact->>'id'),jsonb_build_object(
         'transactionId',pg_catalog.txid_current()::text,'table',table_name,'id',old_fact->>'id',
         'fromRevision',old_fact->>'revision','toRevision',((old_fact->>'revision')::bigint+1)::text,
         'before',old_fact->>'payload_digest','after',r->>'payload_digest',
         'googleVerifiedPackage',jsonb_build_object('jobId',c->'sourceContext'->>'job_id',
-          'fence',c->'sourceContext'->>'fence','window',c->'sourceContext'->'window')))
-        where id=source_id and authority=o and handoff_state='pending';
-      if not found then raise exception 'DATASET_REVISION_PROTOCOL_REQUIRED'; end if;
-      execute format('update analytics.%I x set %s,revision=x.revision+1,updated_at=clock_timestamp(),
-        retention_policy_version=$3,retain_until=$4 from jsonb_populate_record(null::analytics.%I,$1) v where x.id=$2',
-        table_name,assignments,table_name) using r,(old_fact->>'id')::bigint,policy->>'version',(policy->>'until')::timestamptz;
-      update evidence.source_batches set manifest=manifest-'datasetRevisionPermit' where id=source_id and authority=o;
+          'fence',c->'sourceContext'->>'fence','window',c->'sourceContext'->'window'))));
+      updates:=updates||jsonb_build_array(jsonb_build_object('id',old_fact->>'id','table',table_name,'row',r));
     end loop;
+    -- Each package has at most 200 rows. Write each source's exact row permits once,
+    -- then update in table batches. The original trigger still checks every row.
+    update evidence.source_batches b set manifest=manifest||jsonb_build_object('googleDailyRevisionPermits',p.value)
+      from jsonb_each(permits) p where b.id=p.key::bigint and b.authority=o and b.handoff_state='pending'
+        and not (b.manifest ? 'googleDailyRevisionPermits') and not (b.manifest ? 'datasetRevisionPermit');
+    get diagnostics actual_updates=row_count;
+    if actual_updates<>(select count(*) from jsonb_object_keys(permits)) then
+      raise exception 'DATASET_REVISION_PROTOCOL_REQUIRED';
+    end if;
+    for group_rows in select entry->>'table' as name,jsonb_agg(entry) as items
+      from jsonb_array_elements(updates) entry group by entry->>'table'
+    loop
+      select string_agg(format('%I=v.%I',attname,attname),',') into assignments
+        from pg_catalog.pg_attribute where attrelid=('analytics.'||group_rows.name)::regclass and attnum>0 and not attisdropped
+          and attname in (select jsonb_object_keys(group_rows.items->0->'row'));
+      execute format('update analytics.%I x set %s,revision=x.revision+1,updated_at=clock_timestamp(),
+        retention_policy_version=$2,retain_until=$3 from (
+          select (item->>''id'')::bigint as fact_id,data.* from jsonb_array_elements($1) item
+          cross join lateral jsonb_populate_record(null::analytics.%I,item->''row'') data
+        ) v where x.id=v.fact_id',group_rows.name,assignments,group_rows.name)
+        using group_rows.items,policy->>'version',(policy->>'until')::timestamptz;
+      get diagnostics actual_updates=row_count;
+      if actual_updates<>jsonb_array_length(group_rows.items) then
+        raise exception 'GOOGLE_REPORT_PACKAGE_WRITE_INVALID';
+      end if;
+    end loop;
+    update evidence.source_batches b set manifest=manifest-'googleDailyRevisionPermits'
+      from jsonb_object_keys(permits) as p(id) where b.id=p.id::bigint and b.authority=o;
     if jsonb_array_length(s.body->'rows')=0 then continue; end if;
     written:=analytics.commit_google_daily_package(o,s.body||jsonb_build_object('operationId',gen_random_uuid()));
     if written->>'status' is distinct from 'stored'

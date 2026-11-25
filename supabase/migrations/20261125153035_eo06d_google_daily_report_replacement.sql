@@ -181,7 +181,7 @@ end $fn$;
 revoke all on function analytics.replace_google_staged_report_day(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)
   from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner;
 
-create or replace function analytics.publish_google_staged_report_day(o jsonb,c jsonb,d timestamptz,operation uuid,policy jsonb,digests jsonb)
+create function analytics.correct_google_staged_report_day(o jsonb,c jsonb,d timestamptz,operation uuid,policy jsonb,digests jsonb)
 returns jsonb language plpgsql security definer set search_path='' as $fn$
 declare b evidence.source_batches%rowtype;r jsonb;v text;kind text;ids jsonb;proof jsonb;receipt jsonb;anchor bigint;
  day date:=(c->>'businessDate')::date;tz text:=c->'sourceContext'->'snapshot'->>'timezone';raw_operation text;completed timestamptz;started timestamptz;groups integer:=0;revision integer;
@@ -190,17 +190,15 @@ begin
  perform analytics.assert_google_daily_report_claim(o,c,d);
  perform analytics.verify_google_daily_report_stage(o,c,d,operation,policy,digests);
  if jsonb_typeof(c->'expectedRevision') is distinct from 'number'
- or coalesce(c->>'expectedRevision','') !~ '^(0|[1-9][0-9]{0,8})$' or policy->>'version' is distinct from 'report-source-3y-v1'
+ or coalesce(c->>'expectedRevision','') !~ '^[1-9][0-9]{0,8}$' or policy->>'version' is distinct from 'report-source-3y-v1'
  or jsonb_typeof(c->'batchIds') is distinct from 'array' or jsonb_array_length(c->'batchIds') not between 2 and 41
  or c->'sourceContext'->'window' is distinct from jsonb_build_object('from',day,'to',day)
  or (select count(distinct value) from jsonb_array_elements_text(c->'batchIds'))<>jsonb_array_length(c->'batchIds')
  or (select count(distinct value->>'page_id') from jsonb_array_elements(c->'sources'))<>jsonb_array_length(c->'sources')
  or exists(select 1 from jsonb_array_elements(c->'sources') ref where not(c->'batchIds' ? (ref->>'batch_id')))
- or exists(select 1 from evidence.source_batches where authority=o and
-  (manifest->'googleDailyReceipt'->>'operationId'=operation::text
-   or (c->'expectedRevision'='0'::jsonb and
-    (manifest->'googleDailyReceipt'->>'businessDate'=day::text or manifest->'datasetReconciliation'->>'businessDate'=day::text))))
- then raise exception 'GOOGLE_REPORT_FIRST_DAY_REQUIRED';end if;
+ or exists(select 1 from evidence.source_batches where authority=o
+   and manifest->'googleDailyReceipt'->>'operationId'=operation::text)
+ then raise exception 'GOOGLE_REPORT_CORRECTION_SCOPE_INVALID';end if;
  perform analytics.assert_report_source_context(o,c->'sourceContext',(policy->>'until')::timestamptz,c->'sources');
  perform id from evidence.source_batches where authority=o and id in(select value::bigint from jsonb_array_elements_text(c->'batchIds')) order by id for update;
  for v in select value from jsonb_array_elements_text(c->'batchIds') loop
@@ -243,12 +241,8 @@ begin
  end loop;
  update pg_temp.adstable_google_daily_report_stage set daily_sources_verified=true;
  revision:=(c->>'expectedRevision')::integer+1;
- if revision=1 then
-  proof:=analytics.write_google_staged_first_report_day(o,c,d,operation,policy,digests);
- else
-  if started is distinct from (c->>'startedAt')::timestamptz then raise exception 'GOOGLE_REPORT_SOURCE_INVALID'; end if;
-  proof:=analytics.replace_google_staged_report_day(o,c,d,operation,policy,digests);
- end if;
+ if started is distinct from (c->>'startedAt')::timestamptz then raise exception 'GOOGLE_REPORT_SOURCE_INVALID'; end if;
+ proof:=analytics.replace_google_staged_report_day(o,c,d,operation,policy,digests);
  receipt:=jsonb_build_object('version','google-daily-receipt-v1','operationId',operation,'status','consumed','comparison','matched',
   'consumerReceipt',true,'checkpointAdvanced',true,'businessDate',day,'timeZone',tz,'revision',revision,'completedAt',completed,
   'rowCount',proof->'rowCount','packages',proof->'packages','batchIds',c->'batchIds','sources',c->'sources',
@@ -260,13 +254,15 @@ begin
   manifest=manifest||jsonb_build_object('datasetConsumerReceipt',jsonb_build_object('operationId',operation,'anchorBatchId',anchor::text,'digest',receipt->>'digest'))
   where authority=o and id in(select value::bigint from jsonb_array_elements_text(c->'batchIds'));
  update evidence.source_batches set manifest=manifest||jsonb_build_object('googleDailyReceipt',receipt) where id=anchor and authority=o;
- if proof ? 'previousBatchIds' then
-  update evidence.source_batches set manifest=manifest||jsonb_build_object('datasetSupersededBy',operation::text)
-    where authority=o and id in (select value::bigint from jsonb_array_elements_text(proof->'previousBatchIds'));
- end if;
+ update evidence.source_batches set manifest=manifest||jsonb_build_object('datasetSupersededBy',operation::text)
+   where authority=o and id in (select value::bigint from jsonb_array_elements_text(proof->'previousBatchIds'));
  if exists(select 1 from evidence.source_batches where authority=o and id in(select value::bigint from jsonb_array_elements_text(c->'batchIds'))
    and octet_length(manifest::text)>1048576) then raise exception 'GOOGLE_REPORT_RECEIPT_INVALID';end if;
  return receipt;
 end $fn$;
+revoke all on function analytics.correct_google_staged_report_day(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)
+  from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner;
+grant execute on function analytics.correct_google_staged_report_day(jsonb,jsonb,timestamptz,uuid,jsonb,jsonb)
+  to adstable_refresh_dataset_runner;
 reset role;
 commit;

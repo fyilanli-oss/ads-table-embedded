@@ -458,7 +458,7 @@
       "docs/RAW_SOURCE_CONSTITUTION.md"
     ],
     "sha256": {
-      "supabase/migrations/20261125153035_eo06d_google_daily_report_replacement.sql": "befa70b3a0a2d29073936d7afdd41d1a71834049d9a07077c812c77fced9b26e",
+      "supabase/migrations/20261125153035_eo06d_google_daily_report_replacement.sql": "3d60474d37aefcbc9ce6a86668af31ca673109f193bf24ab73665e7292bbc4bc",
       ".github/workflows/database-integrity.yml": "7b41c78eef7940aef01da4ff9ff858b1b046b1bbd647a7a98e76c203d7a8a2d5",
       ".github/workflows/repository-governance.yml": "d0c6feecc08f145588c72fac541040ca2e14949af7785961e5df27c01628b852",
       ".github/workflows/shopify-app-deploy.yml": "ef078addb630fdb624189c0f12625524a7e3dcaf708f2059f95e7a2884cf5d24",
@@ -475,10 +475,10 @@
       "app/lib/database/customer-source-privacy.server.js": "07c9445cf9e4440b995a7f2dc5665229dd17794015e2c06518bcb33931e317ea",
       "app/lib/database/dataset-fx-policy.server.js": "bf1bc27e567b192d3aee2ccfd9bbe3ecab01fd6b972a177339b154a996eb3a4c",
       "app/lib/database/dataset-fx-resolver.server.js": "cf69147f9ab92250a581dd877a73749fcbab03e539ab1616861dc083b5293556",
-      "app/lib/database/dataset-postgres.server.js": "91feaf8f537e9a83a613429dea53ecaf3c1fa414a5ee968583be5d2651babe13",
-      "app/lib/database/dataset-reconciliation.server.js": "42c9f8a07ee1b2ed97f0b384b6b80d738e371b6f69c36f59a113b08365c9a27e",
+      "app/lib/database/dataset-postgres.server.js": "2000d4c0508216f1ee34faa38f027b1fb5e1b6ded2290b9e4d50645425eab48e",
+      "app/lib/database/dataset-reconciliation.server.js": "ecf9834376561c1d07088b53f4af0814bc70207538b00bb97dbc7c1cef320d59",
       "app/lib/database/dataset-retention.server.js": "16ac5cef4b05ba9ee2f1fb8b961fcca04361f5070a308331d8e57c443e265584",
-      "app/lib/database/dataset-rpc.server.js": "882bbae7854d0df6be9cbcaf31788eb8607ce721d0051d8f21a13436c9a2d7ef",
+      "app/lib/database/dataset-rpc.server.js": "253dacdfc8e3a5f388d630ee1024502a8589ffb980367d9085ab5fd15554c189",
       "app/lib/database/dataset-source-binding.server.js": "755b72bb1204467530b49a6ba604157bf3fb33053b12a1cd55ecbcba3f8ee3e9",
       "app/lib/database/dataset-source-reader.server.js": "40b92004120b65722121ffc0a5c648c7a040c007d85204a033ef5f600f39f7c1",
       "app/lib/database/dataset-source-values.server.js": "a8c10fcd26223597d7d1ae6c6c5e3f3a6304022c171159f34a2585357342f8c4",
@@ -799,7 +799,7 @@
       "contracts/a6-parent-package-analysis-design-closure-v1.json": "54b606afd64eefc65edb7c322de7649e9e550737619426f1ce774ede997a1f60",
       "contracts/a6-quality-and-assurance-gates-v1.json": "707c38761519d4ac5e17b7b3cd32ae30dcfc306f406baa6c4676f74c152af81e",
       "contracts/a6-tech-01-engineering-integrity-audit-v1.json": "ab5fa0d88157a5710630560c11a97089dfc4cc047a19ab7cb32bf94a40072949",
-      "contracts/a6-tech-01-f01-migration-lineage-v1.json": "ddfdbe28e0ef93f09d6f291b1d488e46b83020de02ceff1b607cb22e872c196d",
+      "contracts/a6-tech-01-f01-migration-lineage-v1.json": "3413254b8dfbab0ab8855d883070646428271a002d188254699174fdfbe57c4e",
       "contracts/a6-tech-01-f01c-scoped-recovery-v1.json": "05173e82d2576d81fe5d93f0edb3193c5e053db28416d9b0d128e08d6dea941f",
       "contracts/demo/eo05b-v1/golden.json": "08b58ade3ed14843f25f9453710d8f1d15c01810c00556ae38718751f034befc",
       "contracts/demo/eo05b-v1/rolling-2026-11-10.json": "a482b2d1e9faebc4d768c437378b05a85ec9433312e904f9900158f7e65f8bc2",
@@ -871,7 +871,7 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "325da96ae5f4f320f06a0abd5545fd2032297cafc57c844d0cf5864cae661752",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "55b37928f67c4dbc710845c6c224d178fc178ba908f8fb6df7b74b03146db75f",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "0b2a0e08594e326917e16bb01abe39b7da13c8f8234d9bcc88e388e06942bad9",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -1252,7 +1252,7 @@
       "tools/eo05-final-synthetic-candidate.mjs": "f39563923c239b9d47f6ccba810ffddd544d434b8f416373cb94e92a7dd8343c",
       "tools/eo05-four-phase-diagnostics.mjs": "c95afca832e974a24f69f819813a4eb003dd2cded579856f6a0923f7de6b29b9",
       "tools/eo05-google-acceptance-probe.mjs": "6895c9f7f2180de717b27e2c86572cfcd79967bb7b84c0b0f1c450ffcf372797",
-      "tools/eo05-google-daily-packages-probe.mjs": "d0ba066401d594792166f6920109f87745b510546b73fda2180eba26160ea182",
+      "tools/eo05-google-daily-packages-probe.mjs": "51a95349d87a334124a433b10bb100671dedf9cd724816759eeb2615c29b1b3c",
       "tools/eo05-google-daily-timing-probe.mjs": "2d88d83e783665c4f9ca76bc4ada360e623fc5000c8566a4dacc167507b4add7",
       "tools/eo05-google-hosted-benchmark.mjs": "2724b75f248a74a447108afb0a35b804be8c13bee98f1da3ba43b8bd26fbd77e",
       "tools/eo05-google-identity-renewal-probe.mjs": "2f429c983600225ccdc9cadeede2611de9d48522dc575d5cb583b324b6f07fd1",
@@ -3761,7 +3761,7 @@
         "explicit": true,
         "source": "Owner chat: Firat replied 'Onayliyorum Codex.' to adding the protected packaged writer change and isolated 1,000-row success and failure checks to the previously approved EO-06-D implementation."
       },
-      "rationale": "Permit a complete Google Ads report replacement only for the verified previous daily publication. Keep existing package, authority, raw source, retention, row, physical readback and receipt guards. The scheduled seven-day enqueue and activation are outside this writer change.",
+      "rationale": "Permit a complete Google Ads report replacement through a separate scheduled-runner RPC only for the verified previous daily publication. Leave the existing first-publish RPC definition unchanged. Keep existing package, authority, raw source, retention, row, physical readback and receipt guards. The scheduled seven-day enqueue and activation are outside this writer change.",
       "scope": {
         "runtime_code": true,
         "live_provider": false,
@@ -3790,7 +3790,9 @@
         "https://supabase.com/changelog.md"
       ],
       "changed_paths": [
+        "app/lib/database/dataset-postgres.server.js",
         "app/lib/database/dataset-reconciliation.server.js",
+        "app/lib/database/dataset-rpc.server.js",
         "contracts/a6-tech-01-f01-migration-lineage-v1.json",
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "contracts/raw-source/raw-source-constitution-v1.json",

@@ -11,7 +11,7 @@ import {bindGoogleDailyProductMappings} from "./google-daily-product-mapping.ser
 import {GOOGLE_DAILY_PRODUCT_REPORT_PLAN} from "../providers/google-reporting.server.js";
 import {maturityInstant, maturityDate, freezeMaturity} from "../refresh/maturity-policy.server.js";
 import {SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL,
-  GOOGLE_DAILY_STAGE_SQL, GOOGLE_DAILY_PUBLISH_SQL, GOOGLE_DAILY_INSPECT_SQL, GOOGLE_DAILY_FINISH_SQL,
+  GOOGLE_DAILY_STAGE_SQL, GOOGLE_DAILY_PUBLISH_SQL, GOOGLE_DAILY_CORRECT_SQL, GOOGLE_DAILY_INSPECT_SQL, GOOGLE_DAILY_FINISH_SQL,
   KLAVIYO_DAILY_STAGE_SQL, KLAVIYO_DAILY_PUBLISH_SQL, KLAVIYO_DAILY_INSPECT_SQL, KLAVIYO_DAILY_FINISH_SQL} from "./dataset-rpc.server.js";
 export {SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL};
 
@@ -241,7 +241,8 @@ async function commitScheduledGoogleDailyReport({database,owner,prepareWrites,wr
           || staged.packageCount!==packages.length || staged.rowCount!==rowCount || staged.digest!==digest) fail("RESULT_INVALID");
       }
       stop();
-      const written=(await tx.query(GOOGLE_DAILY_PUBLISH_SQL,[ownerJson,contextJson,deadline,operationId,
+      const publishSql=context.expectedRevision===0?GOOGLE_DAILY_PUBLISH_SQL:GOOGLE_DAILY_CORRECT_SQL;
+      const written=(await tx.query(publishSql,[ownerJson,contextJson,deadline,operationId,
         JSON.stringify(writes[0].policy),JSON.stringify(digests)])).rows?.[0]?.result;
       if (written?.version!=="google-daily-receipt-v1" || written.status!=="consumed" || written.operationId!==operationId
         || written.consumerReceipt!==true || written.checkpointAdvanced!==true || written.comparison!=="matched"

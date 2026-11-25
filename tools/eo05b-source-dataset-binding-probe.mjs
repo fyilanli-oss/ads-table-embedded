@@ -16,8 +16,8 @@ export async function storedBindingFixture(client, owner, options = {}) {
     await client.query("update evidence.source_batches set manifest=manifest || $2::jsonb where id=$1", [receipt.batchId, JSON.stringify(metadata)]);
   }
   await client.query(`insert into operations.refresh_work_bindings(workspace_id,install_generation,provider,account_id,job_id,fence,source,from_date,to_date,partition_id)
-    values($1,$2,$3,$4,'synthetic-binding-job',1,$5::jsonb,'2026-11-01','2026-11-01','synthetic-only')`,
-  [owner.workspaceId, owner.generation, owner.provider, owner.accountId, JSON.stringify(fixture.source)]);
+    values($1,$2,$3,$4,$6,1,$5::jsonb,'2026-11-01','2026-11-01','synthetic-only')`,
+  [owner.workspaceId, owner.generation, owner.provider, owner.accountId, JSON.stringify(fixture.source), options.jobId ?? "synthetic-binding-job"]);
   return {...fixture, database: client};
 }
 

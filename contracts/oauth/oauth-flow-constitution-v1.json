@@ -1278,6 +1278,7 @@
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json"
     ],
     "sha256": {
+      "supabase/migrations/20261125153035_eo06d_google_daily_report_replacement.sql": "befa70b3a0a2d29073936d7afdd41d1a71834049d9a07077c812c77fced9b26e",
       ".github/workflows/database-integrity.yml": "7b41c78eef7940aef01da4ff9ff858b1b046b1bbd647a7a98e76c203d7a8a2d5",
       ".github/workflows/repository-governance.yml": "d0c6feecc08f145588c72fac541040ca2e14949af7785961e5df27c01628b852",
       ".github/workflows/shopify-app-deploy.yml": "ef078addb630fdb624189c0f12625524a7e3dcaf708f2059f95e7a2884cf5d24",
@@ -1294,7 +1295,7 @@
       "app/lib/database/dataset-fx-policy.server.js": "bf1bc27e567b192d3aee2ccfd9bbe3ecab01fd6b972a177339b154a996eb3a4c",
       "app/lib/database/dataset-fx-resolver.server.js": "cf69147f9ab92250a581dd877a73749fcbab03e539ab1616861dc083b5293556",
       "app/lib/database/dataset-postgres.server.js": "91feaf8f537e9a83a613429dea53ecaf3c1fa414a5ee968583be5d2651babe13",
-      "app/lib/database/dataset-reconciliation.server.js": "74abf9845cb9e7b07ff271761d42f78537b9d345f5a2a016391b278e6b6584a6",
+      "app/lib/database/dataset-reconciliation.server.js": "42c9f8a07ee1b2ed97f0b384b6b80d738e371b6f69c36f59a113b08365c9a27e",
       "app/lib/database/dataset-retention.server.js": "16ac5cef4b05ba9ee2f1fb8b961fcca04361f5070a308331d8e57c443e265584",
       "app/lib/database/dataset-rpc.server.js": "882bbae7854d0df6be9cbcaf31788eb8607ce721d0051d8f21a13436c9a2d7ef",
       "app/lib/database/dataset-source-binding.server.js": "755b72bb1204467530b49a6ba604157bf3fb33053b12a1cd55ecbcba3f8ee3e9",
@@ -1773,7 +1774,7 @@
       "tools/eo05-final-synthetic-candidate.mjs": "f39563923c239b9d47f6ccba810ffddd544d434b8f416373cb94e92a7dd8343c",
       "tools/eo05-four-phase-diagnostics.mjs": "c95afca832e974a24f69f819813a4eb003dd2cded579856f6a0923f7de6b29b9",
       "tools/eo05-google-acceptance-probe.mjs": "6895c9f7f2180de717b27e2c86572cfcd79967bb7b84c0b0f1c450ffcf372797",
-      "tools/eo05-google-daily-packages-probe.mjs": "06303e6a0e0bdef025d847c1e78b928e122a70e76c1340b756e3e90e59a1b5f0",
+      "tools/eo05-google-daily-packages-probe.mjs": "d0ba066401d594792166f6920109f87745b510546b73fda2180eba26160ea182",
       "tools/eo05-google-daily-timing-probe.mjs": "2d88d83e783665c4f9ca76bc4ada360e623fc5000c8566a4dacc167507b4add7",
       "tools/eo05-google-hosted-benchmark.mjs": "2724b75f248a74a447108afb0a35b804be8c13bee98f1da3ba43b8bd26fbd77e",
       "tools/eo05-google-identity-renewal-probe.mjs": "2f429c983600225ccdc9cadeede2611de9d48522dc575d5cb583b324b6f07fd1",
@@ -1833,7 +1834,7 @@
       "tools/eo05b-demo-fixture.mjs": "c91cf0e2b82ae6bb4db46d4dfa4ffbc0e1415877075995a5bf5cbc1f30afdd73",
       "tools/eo05b-fx-reporting-currency-probe.mjs": "c5decd13fad2a1aebccacbdf6229bcfec590c429db8ab3380008c318c479a9d5",
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
-      "tools/eo05b-source-dataset-binding-probe.mjs": "d9aa68f202922f0978a05b411781fcbc4685b86337b56cfcab32964316713d79",
+      "tools/eo05b-source-dataset-binding-probe.mjs": "52c34872817f45d70ca823ab6fc53574020389038dab6ebb92062a2af6886d74",
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
       "tools/eo05d-reconciliation-probe.mjs": "cfa524d612e31a13ec495f884c65110df1386cc068c9d5101e2ffcb8038d6476",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
@@ -5638,6 +5639,49 @@
       "changed_paths": [
         "contracts/a6-eo-implementation-master-v1.json",
         "contracts/oauth/oauth-flow-constitution-v1.json"
+      ]
+    },
+    {
+      "id": "eo06d-google-daily-report-correction-2026-11-25",
+      "date": "2026-11-25",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat: Firat replied 'Onayliyorum Codex.' to adding the protected packaged writer change and isolated 1,000-row success and failure checks to the previously approved EO-06-D implementation."
+      },
+      "rationale": "Permit a complete Google Ads report replacement only for the verified previous daily publication. Keep existing package, authority, raw source, retention, row, physical readback and receipt guards. The scheduled seven-day enqueue and activation are outside this writer change.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "145 focused local JS tests for Dataset reconciliation, Google daily timing and stored source reads",
+        "Existing F01 PostgreSQL Google daily package rollback probe with a 1,000-row previous report, missing fifth package, and a verified revised receipt",
+        "OAuth and raw source constitution and migration lineage guards"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-25",
+      "official_sources": [
+        "https://www.postgresql.org/docs/17/tutorial-transactions.html",
+        "https://www.postgresql.org/docs/17/explicit-locking.html",
+        "https://www.postgresql.org/docs/17/sql-createfunction.html",
+        "https://supabase.com/docs/guides/database/functions",
+        "https://supabase.com/changelog.md"
+      ],
+      "changed_paths": [
+        "app/lib/database/dataset-reconciliation.server.js",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "supabase/migrations/20261125153035_eo06d_google_daily_report_replacement.sql",
+        "tools/eo05-google-daily-packages-probe.mjs",
+        "tools/eo05b-source-dataset-binding-probe.mjs"
       ]
     }
   ],

@@ -89,7 +89,6 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
     || source.scope.window.to !== admittedScope.to)) fail("ADMITTED_SCOPE_MISMATCH");
   if(typeof googleDailyPackages!=="boolean"||googleDailyPackages && (!scheduled||bound.provider!=="google_ads")) fail("INPUT_INVALID");
   const googleDaily=googleDailyPackages;
-  if(googleDaily && expectedRevision!==0) fail("GOOGLE_FIRST_DAY_REQUIRED");
   const dailyPackages = source.datasets.some(d => d.packageReceipts !== undefined);
   if(bound.provider==="google_ads"&&dailyPackages&&!googleDaily) return freezeMaturity({status:"held",holds:[{reason:"google_daily_handoff_required"}],sourceVerified:true,rowsStored:0,consumerReceipt:false,checkpointAdvanced:false,reportValuesChanged:false,publishable:false,authorizesActivation:false});
   if (dailyPackages && (!scheduled || typeof database.transaction !== "function")) return freezeMaturity({

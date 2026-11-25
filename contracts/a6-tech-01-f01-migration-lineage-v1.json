@@ -1146,6 +1146,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261125153035",
+      "name": "eo06d_google_daily_report_replacement",
+      "file": "supabase/migrations/20261125153035_eo06d_google_daily_report_replacement.sql",
+      "created_with": "supabase@3.4.0 migration new eo06d_google_daily_report_replacement",
+      "repository_sql_sha256": "d00bc7d879a3b31c8714e695f5202cefdd3b97c01796718f54947064a35d3aa9",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ],
   "scoped_live_apply_approvals": [

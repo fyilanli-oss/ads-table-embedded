@@ -11,7 +11,7 @@ import {createKlaviyoSourceCapture} from "../../app/lib/providers/klaviyo-source
 import {buildKlaviyoCampaignValuesRequest, buildKlaviyoFlowValuesRequest, buildKlaviyoPdValuesRequest} from "../../app/lib/providers/klaviyo-reporting.server.js";
 
 const day = "2026-11-01", window = {from: day, to: day};
-function nativeGoogle(family, account, nonempty, purchase = "2.5") {
+function nativeGoogle(family, account, nonempty, purchase = "2.5", revenueMicros = "12500000") {
   if (family === "account_identity") return [{customer: {id: account, currencyCode: "USD", timeZone: "UTC", descriptiveName: "Synthetic"}}];
   if (!nonempty) return [];
   const base = {customer: {id: account}, campaign: {id: "10", name: "Synthetic Shopping", advertisingChannelType: "SHOPPING"},
@@ -21,7 +21,7 @@ function nativeGoogle(family, account, nonempty, purchase = "2.5") {
   if (family === "shopping_product_daily") return [{...base, segments: {...base.segments, productMerchantId: "99", productFeedLabel: "US", productItemId: "product-1"}, metrics: {impressions: "7", clicks: "2", costMicros: "1234567"}}];
   if (["shopping_cart_data_product_sales_daily", "cart_data_product_sales_daily"].includes(family)) return [{...base,
     segments: {...base.segments, productMerchantId: "99", productFeedLabel: "US", productItemId: "product-1", productSoldItemId: "product-1"},
-    metrics: {unitsSold: "2", revenueMicros: "12500000", leadUnitsSold: "2", leadRevenueMicros: "12500000", crossSellUnitsSold: "0", crossSellRevenueMicros: "0", allUnitsSold: "2", allRevenueMicros: "12500000"}}];
+    metrics: {unitsSold: "2", revenueMicros, leadUnitsSold: "2", leadRevenueMicros: revenueMicros, crossSellUnitsSold: "0", crossSellRevenueMicros: "0", allUnitsSold: "2", allRevenueMicros: revenueMicros}}];
   return [];
 }
 async function nativeKlaviyoPage(path, body, request = null) {
@@ -34,20 +34,20 @@ async function nativeKlaviyoPage(path, body, request = null) {
 
 // Shared synthetic native rows for capture and stored-source tests. Cardinalities
 // describe the input; no projected report row is removed to meet a target count.
-export function googleDatasetNativeRows(family,account,{nonempty=true,googlePurchase="2.5",googleProducts=1,googleSalesProducts=googleProducts,shopifyMapping=false,mappedTimingSample=false}={}) {
+export function googleDatasetNativeRows(family,account,{nonempty=true,googlePurchase="2.5",googleRevenueMicros,googleProducts=1,googleSalesProducts=googleProducts,shopifyMapping=false,mappedTimingSample=false}={}) {
   if(!Number.isInteger(googleProducts)||googleProducts<1||googleProducts>500||shopifyMapping&&googleProducts!==1
     ||!Number.isInteger(googleSalesProducts)||googleSalesProducts<0||googleSalesProducts>googleProducts)throw Error("SYNTHETIC_GOOGLE_PRODUCTS_INVALID");
   if(shopifyMapping&&["shopping_product_daily","shopping_cart_data_product_sales_daily","cart_data_product_sales_daily"].includes(family))return [];
   if((shopifyMapping||mappedTimingSample)&&["pmax_product_daily","pmax_cart_data_product_sales_daily"].includes(family)){
     const sales=family.includes("cart_data");
     const equivalent=sales?"shopping_cart_data_product_sales_daily":"shopping_product_daily";
-    return nativeGoogle(equivalent,account,nonempty,googlePurchase).slice(0,sales?googleSalesProducts:1).map(row=>({
+    return nativeGoogle(equivalent,account,nonempty,googlePurchase,googleRevenueMicros).slice(0,sales?googleSalesProducts:1).map(row=>({
       customer:row.customer,campaign:{...row.campaign,advertisingChannelType:"PERFORMANCE_MAX"},metrics:row.metrics,
       segments:{...row.segments,productLanguage:"en",productItemId:"shopify_US_123_456",
         ...(sales?{productSoldItemId:shopifyMapping==="split_sale"?"shopify_US_124_457":"shopify_US_123_456"}:{})},
     }));
   }
-  return nativeGoogle(family,account,nonempty,googlePurchase).flatMap(row=>{
+  return nativeGoogle(family,account,nonempty,googlePurchase,googleRevenueMicros).flatMap(row=>{
     if(!["shopping_product_daily","shopping_cart_data_product_sales_daily","cart_data_product_sales_daily"].includes(family))return [row];
     const sales=family.includes("cart_data");
     return Array.from({length:sales?googleSalesProducts:googleProducts},(_,n)=>({...row,segments:{...row.segments,
@@ -57,11 +57,11 @@ export function googleDatasetNativeRows(family,account,{nonempty=true,googlePurc
 
 /** All native responses/credentials/owners are synthetic. Real capture projection,
  * AEAD and decrypt paths are used; this fake DB is not SQL/native acceptance. */
-export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", googleProducts=1, googleSalesProducts=googleProducts, googlePageSize=25, googleStorageMaxBytes=1048576, googleDailyReport=false, klaviyoDailyPurchaseOnly=false, shopifyMapping=false, owner: givenOwner = null, cipher: givenCipher = null} = {}) {
+export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", googleRevenueMicros, googleProducts=1, googleSalesProducts=googleProducts, googlePageSize=25, googleStorageMaxBytes=1048576, googleDailyReport=false, klaviyoDailyPurchaseOnly=false, shopifyMapping=false, owner: givenOwner = null, cipher: givenCipher = null, jobId = "synthetic-binding-job"} = {}) {
   const owner = givenOwner ? structuredClone(givenOwner) : datasetStorageFixture().owner;
   if (!givenOwner) {owner.installationId = "1"; owner.provider = provider; owner.accountId = provider === "meta" ? "act_123" : provider === "klaviyo" ? "account-1" : "123";}
   if (provider === "klaviyo") owner.selectionEpoch = null;
-  const operationId = randomUUID(), jobId = "synthetic-binding-job", fence = "1", source = {workspaceId: owner.workspaceId, installGeneration: owner.generation,
+  const operationId = randomUUID(), fence = "1", source = {workspaceId: owner.workspaceId, installGeneration: owner.generation,
     provider, accountId: owner.accountId, connectionId: owner.connectionId, connectionVersion: owner.connectionVersion, accountRowId: "1", selectionId: owner.selectionEpoch,
     eligibleFromMs: Date.parse("2026-10-31T00:00:00Z"), timezone: "UTC", currency: "USD"};
   const spec = provider === "google_ads" ? {read: "googleDatasetRead", digest: "googleDatasetInputDigest", schema: "google-raw-datasets-v2", sanitizer: "google-query-fields-v1"}
@@ -74,7 +74,7 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
     const productFamilies = googleDailyReport ? GOOGLE_DAILY_PRODUCT_QUERY_FAMILIES : GOOGLE_REPORTING_QUERY_FAMILIES.slice(9);
     for (const [dataset, families] of [["account_performance", GOOGLE_REPORTING_QUERY_FAMILIES.slice(0, 9)], ["product_performance", productFamilies]]) {
       native.push({dataset, pages: families.flatMap(family => {
-       const rows=googleDatasetNativeRows(family,owner.accountId,{nonempty,googlePurchase,googleProducts,googleSalesProducts,shopifyMapping});
+       const rows=googleDatasetNativeRows(family,owner.accountId,{nonempty,googlePurchase,googleRevenueMicros,googleProducts,googleSalesProducts,shopifyMapping});
        return Array.from({length:Math.max(1,Math.ceil(rows.length/googlePageSize))},(_,ordinal)=>projectGoogleRawPage(
         parseGoogleRawJson(JSON.stringify({results:rows.slice(ordinal*googlePageSize,(ordinal+1)*googlePageSize),...((ordinal+1)*googlePageSize<rows.length)?{nextPageToken:"synthetic-"+(ordinal+1)}:{}})),
         {family,query:queries[family],ordinal,accountId:owner.accountId,requestId:"synthetic"}));

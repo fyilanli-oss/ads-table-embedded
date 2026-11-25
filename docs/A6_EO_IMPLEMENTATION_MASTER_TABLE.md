@@ -120,6 +120,8 @@ Referans: A6-RM-06/07, E9-T8, R3/R4/R7.
 
 EO-05 başında başlayan çalışma tek kayıt olarak EO-05 altında izlenir. [26 adımın teslim, açık kanıt ve kapanış tablosu](plans/EO_05_06_REVISED_PLAN_2026_10_27.md#eo-05-26-adımlık-çalışma-ve-açık-kabul-maddeleri) · [Makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo05_ordered_remediation_acceptance_2026_11_25)
 
+[Sentetik prova ve mevcut kod kanıtı](plans/EO_05_06_REVISED_PLAN_2026_10_27.md#sentetik-prova-ve-mevcut-kod-kanıtı) ilgili adımı, kullanılan kodu, doğrulanan sonucu ve gerçek kanıt açığını birlikte gösterir.
+
 ## EO-06 — Formül, sorgu ve aynı-origin BFF/API
 
 **26 adımlık çalışmadan kabul referansları.** EO-06-A kapsam kararında 24–25, EO-06-E teknik kabulünde 20 ve 26 gözden geçirilir. [Açık kabul tablosu](plans/EO_05_06_REVISED_PLAN_2026_10_27.md#eo-05-26-adımlık-çalışma-ve-açık-kabul-maddeleri)

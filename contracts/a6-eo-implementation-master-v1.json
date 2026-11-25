@@ -6,6 +6,60 @@
     "acceptance_table": "docs/plans/EO_05_06_REVISED_PLAN_2026_10_27.md#eo-05-26-adımlık-çalışma-ve-açık-kabul-maddeleri",
     "human_package_index": "docs/A6_EO_IMPLEMENTATION_MASTER_TABLE.md",
     "step_count": 26,
+    "synthetic_evidence": {
+      "document": "docs/plans/EO_05_06_REVISED_PLAN_2026_10_27.md#sentetik-prova-ve-mevcut-kod-kanıtı",
+      "review_existing_code_and_evidence_before_proposing_reimplementation_or_rerun": true,
+      "counts_as_native_acceptance": false,
+      "entries": {
+        "shopify_orders_read": {
+          "step_refs": [12, 13],
+          "implementation": [
+            "app/lib/refresh/shopify-order-admin-reader.server.js",
+            "app/lib/refresh/shopify-order-background-dispatcher.server.js"
+          ],
+          "evidence": [
+            "https://github.com/fyilanli-oss/ads-table-embedded/pull/251",
+            "https://github.com/fyilanli-oss/ads-table-embedded/pull/252",
+            "https://github.com/fyilanli-oss/ads-table-embedded/pull/237",
+            "tests/shopify-order-independent-admin.test.js",
+            "tests/shopify-order-background-dispatcher.test.js"
+          ],
+          "open_step_refs": [12, 13, 24]
+        },
+        "shopify_order_source_capture": {
+          "step_refs": [15],
+          "implementation": ["app/lib/shopify/order-source-write.server.js"],
+          "evidence": [
+            "https://github.com/fyilanli-oss/ads-table-embedded/pull/297",
+            "tests/shopify-order-source-write.test.js",
+            "tools/eo05-shopify-order-admin-probe.mjs"
+          ],
+          "open_step_refs": [15, 23, 24]
+        },
+        "three_provider_shopify_product_mapping": {
+          "step_refs": [8, 9, 10, 18, 23],
+          "fixture": "tools/eo05-shopify-mapping-timing-fixture.mjs",
+          "evidence": [
+            "https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/44929858330/job/136923882139",
+            "tools/eo05-google-daily-timing-probe.mjs",
+            "tools/eo05-klaviyo-daily-timing-probe.mjs",
+            "tools/eo05-meta-shopify-refresh-probe.mjs"
+          ],
+          "open_step_refs": [8, 9, 10, 18]
+        },
+        "daily_refresh_queue_to_verified_close": {
+          "step_refs": [12, 23, 26],
+          "fixture": "tools/eo05b-dataset-storage-probe.mjs",
+          "evidence": [
+            "https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/45033065265/job/137248715698",
+            "https://github.com/fyilanli-oss/ads-table-embedded/pull/379",
+            "tools/eo05-shared-refresh-probe.mjs",
+            "docs/EO_05A_REFRESH_CONTRACT.md#13-uygulama-ve-kapasite-kararları"
+          ],
+          "open_step_refs": [12, 23, 26]
+        }
+      }
+    },
     "downstream_references_are_acceptance_reviews": true,
     "closure": {
       "record_each_relevant_step_status_and_evidence": true,

@@ -1,3 +1,9 @@
+## EO-05 26 adımlık çalışma ve açık kabul maddeleri
+
+25 Kasım 2026 ürün sahibi kararıyla [26 adımlık çalışma ve kabul tablosu](plans/EO_05_06_REVISED_PLAN_2026_10_27.md#eo-05-26-adımlık-çalışma-ve-açık-kabul-maddeleri) EO-05 altında tek kayıt olarak izlenir. Tablo yapılan teslimleri, açık kalan gerçek kanıtı ve ilgili kapanış kontrolünü adım numarasıyla gösterir. Kaynak sıra ve çalışmaların geçmişi korunur.
+
+EO-06, EO-07 ve EO-08 kabulünde [ana paket tablosundaki referanslar](A6_EO_IMPLEMENTATION_MASTER_TABLE.md) üzerinden ilgili satırlar gözden geçirilir. Paket kapanışı için sonuç, kanıt bağlantısı ve varsa ürün sahibinin erteleme kararı kaydedilir. Gerçek kanıtı eksik bir satır sentetik prova veya kod teslimiyle kapatılamaz. Overlap ve Klaviyo Spend hesabının sonraki paket ataması açık kalır. [Makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo05_ordered_remediation_acceptance_2026_11_25)
+
 ## EO-05 — Refresh kapanış güncellemesi ve EO-06 başlangıcı, 22 Kasım 2026
 
 Üç sağlayıcılı son sentetik prova ilk kuyruk taramasından üçüncü iş emrinin kapanışına **48,983 sn** sürdü. Google Ads 17, Klaviyo 11, Meta 12 istek yaptı. Sağlayıcı başına 1.000 Dataset satırı ve bir makbuz doğrulandı. Klaviyo'nun normal istek aralıkları açıktı. Canlı sağlayıcı yanıt süresi ve canlı kapasite bu provada ölçülmedi. [Prova kaydı](https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/45033065265/job/137248715698) · [Klaviyo PR #387](https://github.com/fyilanli-oss/ads-table-embedded/pull/387) · [Meta notu PR #386](https://github.com/fyilanli-oss/ads-table-embedded/pull/386)

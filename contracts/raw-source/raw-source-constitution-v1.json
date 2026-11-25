@@ -791,7 +791,7 @@
       "contracts/a6-eo-f5-product-route-map-v1.json": "cfae8b77fa44f27978db120865852ece9d3ea03cfc83600f7576e71f9d34067b",
       "contracts/a6-eo-f6-effort-risk-comparison-v1.json": "94ead4504333f50bd1379e3f13e4fa68c5f19bf256c5e4006033fa73dc3e9f3e",
       "contracts/a6-eo-f7-go-decision-v1.json": "c3ed10cfca08ebeab27ebd63c17be60e912b36904accce0e2e38ae174f0d4aa9",
-      "contracts/a6-eo-implementation-master-v1.json": "fa884f2f64d21955937831400d5ce630f01b9a38355fdef02f09d91f83a210fe",
+      "contracts/a6-eo-implementation-master-v1.json": "26107c6f3840b8adab1e3920479b6eff3010fb4655698b0201c71aa33125dd7d",
       "contracts/a6-eo-secret-inventory-recovery-v1.json": "e8a3e0cc74b446507a3e8f79a9338eee28b3cea7e2ccfd5737d77be182ce7299",
       "contracts/a6-ops-local-01-safe-cleanup-v1.json": "30a77abdc5a4ed9bc92bfac8d4c14ac3e96ed2432eecf2110dc227747ea43e83",
       "contracts/a6-ops-shopify-01-isolated-preproduction-v1.json": "a6f76b340227c6bbce22e4c59959e8e8247e99204e8da773f2a55c3282f42e06",
@@ -847,7 +847,7 @@
       "contracts/eo-05-step15-google-live-acceptance-v1.json": "1444654b503858b047b2bd1dc0a1c41d0e7bca2e192023a63c7ebb5c95e4dbd5",
       "contracts/eo-05-step15-google-source-role-v1.json": "00e7820d1b0537f42d6af09d593857169d6f1a7b8baf200953c86b8358977835",
       "contracts/eo-05-step15-storage-design-v1.json": "6aea99251e3b467c3ac2c48cec3d81a201c35527e135c0ebac2b957ddd7c8d2c",
-      "contracts/eo-05a-global-refresh-design-v1.json": "988e94949aca65209ba2f52b87c14253b4ff353c067b4439bfaf7dd0e1481541",
+      "contracts/eo-05a-global-refresh-design-v1.json": "de2d4183a9af17e56394e9a57d1a0c6e4cd8dac85c6b00d341f121e8672dd3b0",
       "contracts/eo-05a-quota-authority-binding-v1.json": "36513785f0c62a18f0a4d81169f77b534b7aaa85e80e9821becde522401eec0a",
       "contracts/eo-05a-quota-native-transport-v1.json": "867509849717c4500cf206e1a4f05c0487bddfea1fe9fdcf8130299ad5dae461",
       "contracts/eo-05a-quota-scope-resolver-v1.json": "9162628db08897eb901e65b6dde438edc4ca5cce42b8c138e942ee1e4536c881",
@@ -870,7 +870,7 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "325da96ae5f4f320f06a0abd5545fd2032297cafc57c844d0cf5864cae661752",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "30851e4a9efb397f57dca7da0a134eb64048b879d01da555b5e51cb7c85610c8",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "9c95f35a010f6399b92cafc439ec3ba7a59747e5a79f0d82f77e9ae1b363bbb0",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -3710,6 +3710,45 @@
       ],
       "changed_paths": [
         "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json"
+      ]
+    },
+    {
+      "id": "eo06d-v1-seven-day-reread-policy-2026-11-25",
+      "date": "2026-11-25",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat: Firat explicitly approved the proposed refresh contract and EO-06 work record for first publication the next morning, one full reread seven days after first success, and keeping the last verified report on failure."
+      },
+      "rationale": "Record the approved V1 schedule and verified-publication policy. Queue and publication implementation and acceptance remain pending. No OAuth flow or raw source behavior change.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "tools/check-oauth-constitution.mjs",
+        "tools/check-raw-source-constitution.mjs",
+        "tests/eo-05a-global-refresh-design.test.js",
+        "Static cross-check of the refresh and EO-06-D records"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-25",
+      "official_sources": [
+        "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
+      ],
+      "changed_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/eo-05a-global-refresh-design-v1.json",
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "contracts/raw-source/raw-source-constitution-v1.json"
       ]

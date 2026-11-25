@@ -1,4 +1,14 @@
 {
+  "eo06d_v1_historical_reread_2026_11_25": {
+    "package": "A6-EO-06-D",
+    "status": "owner_approved_policy_implementation_and_acceptance_pending",
+    "document": "docs/A6_EO_IMPLEMENTATION_MASTER_TABLE.md#eo-06-d-veri-durumları-ve-refresh-kanıtı",
+    "policy": "contracts/eo-05a-global-refresh-design-v1.json#v1_historical_reread_2026_11_25",
+    "supersedes_open_cadence_decision_in": "eo06d_compare_data_states_2026_11_25",
+    "dependencies": ["A6-EO-05-C", "A6-EO-05-D"],
+    "pending": ["queue scheduling for exactly one full same-day reread", "provider and report date basis verification", "authorized report revision and receipt verification", "failure preserves last valid publication", "verified revision becomes visible"],
+    "runtime_or_live_change_authorized": false
+  },
   "eo06d_compare_data_states_2026_11_25": {
     "package": "A6-EO-06-D",
     "status": "existing_states_documented_freshness_and_historical_reread_open",

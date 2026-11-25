@@ -227,7 +227,19 @@
   "daily_refresh_operating_contract_2026_11_21": {
     "document": "docs/EO_05A_REFRESH_CONTRACT.md",
     "authority": "Approved daily product design. Supersedes the historical workspace hourly cadence and hourly-hot-window defaults for normal provider data refresh. Preserves existing source, OAuth, retention, Dataset and production approval gates.",
-    "normal_cadence": "Once per closed source business day, using the verified reporting-account IANA timezone and eligible connection and selection period. The existing queue polling interval is a separate control. Exact production dispatch time, deadline reserve and provider-specific historical corrections remain open.",
+    "normal_cadence": "Once the next morning for each closed source business day, using the verified reporting-account IANA timezone and eligible connection and selection period. The existing queue polling interval is a separate control. Exact production dispatch time and deadline reserve remain open.",
+    "v1_historical_reread_2026_11_25": {
+      "status": "owner_approved_policy_implementation_and_acceptance_pending",
+      "document": "docs/EO_05A_REFRESH_CONTRACT.md#v1-geçmiş-günü-tekrar-okuma",
+      "eo06_work_record": "contracts/a6-eo-implementation-master-v1.json#eo06d_v1_historical_reread_2026_11_25",
+      "days_after_first_successful_read": 7,
+      "scheduled_rereads_per_report_day": 1,
+      "scope": "Full existing daily refresh for the same eligible source business day. Daily steady state includes the initial read of the previous day and one historical day reread.",
+      "failure": "Keep the last valid verified publication visible.",
+      "publication": "Make revised data visible only after the authorized revision and publication verifications complete.",
+      "provider_attribution_and_finality_unchanged": true,
+      "runtime_activated": false
+    },
     "standard_measurement_steps": ["queue_enqueued", "queue_and_admission", "provider_collection", "raw_store_and_readback", "dataset_handoff", "postgresql_source_evidence_read", "report_preparation", "postgresql_report_write", "report_receipt_readback", "job_completed"],
     "report_write_detail": ["shared_lock_claim_and_authority", "package_validation", "source_proof_and_retention", "row_controls", "canonical_JSON_and_digests", "existing_row_lookup_and_locking", "triggers", "insert_or_authorized_update", "physical_fact_verification", "single_report_receipt_and_checkpoint"],
     "completion": "All packages are verified before atomic publication. One verified receipt, one checkpoint and one completed work order per provider account and day. The store-level result is complete only after every expected eligible provider closes independently. Missing or unconfirmed outcomes cannot advance freshness.",

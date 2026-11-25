@@ -1136,6 +1136,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261125093522",
+      "name": "eo06b_report_sales_compare",
+      "file": "supabase/migrations/20261125093522_eo06b_report_sales_compare.sql",
+      "created_with": "supabase@3.4.0 migration new eo06b_report_sales_compare",
+      "repository_sql_sha256": "bf38c9ec248a39078fa47f6135888842f7b3e76280ad31d68757c67c82c89b24",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

@@ -5416,6 +5416,44 @@
         "supabase/migrations/20261125093522_eo06b_report_sales_compare.sql",
         "tools/eo06b-report-sales-compare-probe.mjs"
       ]
+    },
+    {
+      "id": "eo06b-compare-live-approval-record-2026-11-25",
+      "date": "2026-11-25",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat 2026-11-25: Fırat replied 'Onaylıyorum devam edelim Codex' to applying the merged Compare migration to live Supabase. After the prepared-only lineage was identified, Fırat replied 'Onaylıyorum' to the separate PR recording that authorization and verification procedure for version 20261125093522, with the SQL unchanged."
+      },
+      "rationale": "Record the separately approved, exact Compare version and project, along with preflight and post-application checks. This PR performs no live database operation and changes no SQL or runtime behavior.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "tools/check-migration-lineage.mjs",
+        "tools/check-oauth-constitution.mjs",
+        "tools/check-raw-source-constitution.mjs",
+        "tests/a6-tech-01-f01-migration-lineage.test.js"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-25",
+      "official_sources": [
+        "https://supabase.com/docs/guides/deployment/database-migrations",
+        "https://supabase.com/docs/reference/api/v1-apply-a-migration",
+        "https://supabase.com/docs/reference/api/v1-list-migration-history"
+      ],
+      "changed_paths": [
+        "contracts/oauth/oauth-flow-constitution-v1.json"
+      ]
     }
   ],
   "coverage": {

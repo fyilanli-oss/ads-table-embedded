@@ -798,7 +798,7 @@
       "contracts/a6-parent-package-analysis-design-closure-v1.json": "54b606afd64eefc65edb7c322de7649e9e550737619426f1ce774ede997a1f60",
       "contracts/a6-quality-and-assurance-gates-v1.json": "707c38761519d4ac5e17b7b3cd32ae30dcfc306f406baa6c4676f74c152af81e",
       "contracts/a6-tech-01-engineering-integrity-audit-v1.json": "ab5fa0d88157a5710630560c11a97089dfc4cc047a19ab7cb32bf94a40072949",
-      "contracts/a6-tech-01-f01-migration-lineage-v1.json": "b64656f581dcb09764c0ed03ab2983f37b55dabfac66fa5a925ab3fed2e41337",
+      "contracts/a6-tech-01-f01-migration-lineage-v1.json": "318aa14f19fea4ce29ae7f66fd9ef8c5f76797376e83ac187c770efda7a14bcf",
       "contracts/a6-tech-01-f01c-scoped-recovery-v1.json": "05173e82d2576d81fe5d93f0edb3193c5e053db28416d9b0d128e08d6dea941f",
       "contracts/demo/eo05b-v1/golden.json": "08b58ade3ed14843f25f9453710d8f1d15c01810c00556ae38718751f034befc",
       "contracts/demo/eo05b-v1/rolling-2026-11-10.json": "a482b2d1e9faebc4d768c437378b05a85ec9433312e904f9900158f7e65f8bc2",
@@ -870,7 +870,7 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "325da96ae5f4f320f06a0abd5545fd2032297cafc57c844d0cf5864cae661752",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "a7836ef60e2a0f51694fe699d1615e18dd3565f728a9913b62409943cf7c2f62",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "3b93e16c06e26211a6fa7051a4f8d74423f5df651d82221ffbb47e68e72bde82",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -3520,6 +3520,46 @@
         "contracts/raw-source/raw-source-constitution-v1.json",
         "supabase/migrations/20261125093522_eo06b_report_sales_compare.sql",
         "tools/eo06b-report-sales-compare-probe.mjs"
+      ]
+    },
+    {
+      "id": "eo06b-compare-live-approval-record-2026-11-25",
+      "date": "2026-11-25",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat 2026-11-25: Fırat replied 'Onaylıyorum devam edelim Codex' to applying the merged Compare migration to live Supabase. After the prepared-only lineage was identified, Fırat replied 'Onaylıyorum' to the separate PR recording that authorization and verification procedure for version 20261125093522, with the SQL unchanged."
+      },
+      "rationale": "Record the separately approved, exact Compare version and project, along with preflight and post-application checks. This PR performs no live database operation and changes no SQL or runtime behavior.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "tools/check-migration-lineage.mjs",
+        "tools/check-oauth-constitution.mjs",
+        "tools/check-raw-source-constitution.mjs",
+        "tests/a6-tech-01-f01-migration-lineage.test.js"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-25",
+      "official_sources": [
+        "https://supabase.com/docs/guides/deployment/database-migrations",
+        "https://supabase.com/docs/reference/api/v1-apply-a-migration",
+        "https://supabase.com/docs/reference/api/v1-list-migration-history"
+      ],
+      "changed_paths": [
+        "contracts/a6-tech-01-f01-migration-lineage-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json"
       ]
     }
   ],

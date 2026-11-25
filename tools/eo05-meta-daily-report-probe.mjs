@@ -1,99 +1,114 @@
 import assert from "node:assert/strict";
+import {storedBindingFixture} from "./eo05b-source-dataset-binding-probe.mjs";
+import {reconcileStoredDatasetSources, DATASET_RECONCILE_READ_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {META_PACKAGED_REPORT_SQL} from "../app/lib/database/dataset-rpc.server.js";
 
-function replaceOnce(source, search, replacement) {
-  assert.equal(source.split(search).length, 2, search);
-  return source.replace(search, () => replacement);
-}
-
-// Adapt the existing report write/readback in the rollback database. Preserve
-// its fenced entry point, source checks, retention, per-row write/verification,
-// and same-receipt closure. Only the isolated adapter supplies package arrays.
-export function metaDailyWriterSql(sql) {
-  sql=replaceOnce(sql,"begin\n perform 1",`extra_packages jsonb; pack jsonb; pack_summary jsonb:='[]'; combined_rows jsonb:='[]';
-begin
- perform 1`);
-  sql=replaceOnce(sql," perform evidence.assert_source_owner(o);",` perform evidence.assert_source_owner(o);
- if jsonb_typeof(p)='array' then
-  if o->>'provider' is distinct from 'meta' or c->>'expectedRevision' is distinct from '0'
-   or jsonb_array_length(p)<>5 then raise exception 'META_REPORT_PACKAGE_COUNT';end if;
-  extra_packages:=p;
-  for pack in select value from jsonb_array_elements(extra_packages) with ordinality t(value,n) order by n loop
-   if jsonb_typeof(pack) is distinct from 'object' or (select count(*) from jsonb_object_keys(pack))<>4
-    or not pack ?& array['version','operationId','policy','rows'] or pack->>'version' is distinct from 'eo05b-storage-v1'
-    or pack-'rows' is distinct from (extra_packages->0)-'rows'
-    or jsonb_typeof(pack->'rows') is distinct from 'array' or jsonb_array_length(pack->'rows')<>200
-    then raise exception 'META_REPORT_PACKAGE_INVALID';end if;
-   -- The existing digest rejects canonical inputs over 1 MiB as it hashes.
-   pack_summary:=pack_summary||jsonb_build_array(jsonb_build_object('ordinal',jsonb_array_length(pack_summary),
-    'rowCount',200,'digest',analytics.dataset_digest(jsonb_build_object('write',pack,'context',c))));
-   combined_rows:=combined_rows||(pack->'rows');
-  end loop;
-  h:=analytics.dataset_digest(jsonb_build_object('packages',pack_summary));
-  p:=jsonb_set(extra_packages->0,'{rows}',combined_rows);
- end if;`);
-  sql=replaceOnce(sql,"jsonb_array_length(p->'rows') not between 0 and 200\n or octet_length(analytics.dataset_json(p))>1048576",
-    "jsonb_array_length(p->'rows') not between 0 and (case when extra_packages is null then 200 else 1000 end)\n or (extra_packages is null and octet_length(analytics.dataset_json(p))>1048576)");
-  sql=replaceOnce(sql," h:=analytics.dataset_digest(jsonb_build_object('write',p,'context',c));\n if jsonb_typeof(c)",
-    " if extra_packages is null then h:=analytics.dataset_digest(jsonb_build_object('write',p,'context',c));end if;\n if jsonb_typeof(c)");
-  sql=replaceOnce(sql," or octet_length(analytics.dataset_json(jsonb_build_object('write',p,'context',c)))>1048576",
-    " or (extra_packages is null and octet_length(analytics.dataset_json(jsonb_build_object('write',p,'context',c)))>1048576)");
-  // Keep replacement out of this first-publication-only rehearsal.
-  sql=replaceOnce(sql,"old_count:=old_count+1;if old_count>200", "old_count:=old_count+1;if extra_packages is not null or old_count>200");
-  sql=replaceOnce(sql," limit 201) x',name)"," limit %s) x',name,case when extra_packages is null then 201 else 1001 end)");
-  // The whole-day context, date/timezone floor and superset of references have
-  // already been locked and checked. Keep the per-row equality and membership
-  // checks and map-specific retention, and reuse the shared proof only here.
-  sql=replaceOnce(sql,"if analytics.report_retention_until((r->>'business_date')::date,r->>'source_timezone') is distinct from (p->'policy'->>'until')::timestamptz",
-    "if (extra_packages is null and analytics.report_retention_until((r->>'business_date')::date,r->>'source_timezone') is distinct from (p->'policy'->>'until')::timestamptz)");
-  sql=replaceOnce(sql,`   perform analytics.assert_report_source_context(o,r->'provenance'->'source_context',(p->'policy'->>'until')::timestamptz,r->'provenance'->'sources');
-   for k in select distinct x->>'batch_id' from jsonb_array_elements(r->'provenance'->'sources') x loop
-    perform analytics.hold_report_source_batch(o,k::bigint,(p->'policy'->>'until')::timestamptz);
-   end loop;`,`   if extra_packages is null then
-    perform analytics.assert_report_source_context(o,r->'provenance'->'source_context',(p->'policy'->>'until')::timestamptz,r->'provenance'->'sources');
-    for k in select distinct x->>'batch_id' from jsonb_array_elements(r->'provenance'->'sources') x loop
-     perform analytics.hold_report_source_batch(o,k::bigint,(p->'policy'->>'until')::timestamptz);
-    end loop;
-   end if;`);
-  sql=replaceOnce(sql," for item in select value from jsonb_array_elements(p->'rows') loop\n  name:=item->>'table';",` for item in
-  select entries.value from jsonb_array_elements(coalesce(extra_packages,jsonb_build_array(p))) with ordinality packages(body,n)
-  cross join lateral jsonb_array_elements(packages.body->'rows') with ordinality entries(value,n)
-  order by packages.n,entries.n
- loop
-  name:=item->>'table';`);
-  // Keep the existing 256 KiB receipt bound and the full row evidence required
-  // by inspect. Initial inserts already have the same digests in receipt.rows.
-  sql=replaceOnce(sql,"   changes:=changes||jsonb_build_array(jsonb_build_object('table',name,'id',rid::text,'before',null,'after',r->>'payload_digest','action','inserted'));",
-    "   if extra_packages is null then changes:=changes||jsonb_build_array(jsonb_build_object('table',name,'id',rid::text,'before',null,'after',r->>'payload_digest','action','inserted'));end if;");
-  return replaceOnce(sql," result:=result||jsonb_build_object('digest',analytics.dataset_digest(result));",
-    " if extra_packages is not null then result:=result||jsonb_build_object('packages',pack_summary);end if;\n result:=result||jsonb_build_object('digest',analytics.dataset_digest(result));");
-}
-
-export function metaDailyInspectorSql(sql) {
-  return replaceOnce(sql," limit 201) x',t)"," limit %s) x',t,case when o->>'provider'='meta' and r ? 'packages' then 1001 else 201 end)");
-}
-
-export async function installMetaDailyReportRehearsal(client) {
-  assert.equal(client.connectionParameters.host,"127.0.0.1");
-  assert.equal(Number(client.connectionParameters.port),54322);
-  for(const [signature,adapt] of [["analytics._commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)",metaDailyWriterSql],
-    ["analytics.inspect_dataset_reconciliation(jsonb,uuid)",metaDailyInspectorSql]]){
-    const {rows:[{definition}]}=await client.query("select pg_get_functiondef($1::regprocedure) definition",[signature]);
-    await client.query(adapt(definition));
+export async function metaPackagedCorrectionProbe(client, {ownerFixture}) {
+  assert.equal(client.connectionParameters.host, "127.0.0.1");
+  assert.equal(Number(client.connectionParameters.port), 54322);
+  await client.query("savepoint meta_packaged_correction");
+  try {
+    await client.query("set local role postgres");
+    await client.query("grant adstable_refresh_dataset_runner to adstable_owner with inherit false,set true,admin false");
+    await client.query("set local role adstable_owner");
+    const day = "2026-11-01", owner = await ownerFixture(client, "meta"), ownerJson = JSON.stringify(owner);
+    await client.query("update integrations.provider_connections set connected_at='2026-10-31' where id=$1", [owner.connectionId]);
+    await client.query("update integrations.reporting_account_bindings set effective_from='2026-10-31' where connection_id=$1", [owner.connectionId]);
+    const facts = async () => (await client.query(`
+      select 'pd_facts' as table_name,id::text,payload_digest,revision from analytics.pd_facts where installation_id=$1 and platform='meta'
+      union all
+      select 'cpd_product_performance_facts',id::text,payload_digest,revision from analytics.cpd_product_performance_facts where installation_id=$1 and platform='meta'
+      order by table_name,id`, [owner.installationId])).rows;
+    const inspect = async operation => (await client.query(DATASET_RECONCILE_READ_SQL, [ownerJson,operation])).rows[0].result;
+    const rpc = async (sql, args) => {
+      await client.query("set local role adstable_refresh_dataset_runner");
+      const result = await client.query(sql, args);
+      await client.query("set local role adstable_owner");
+      return result;
+    };
+    const assertClosed = async job => {
+      assert.equal((await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",
+        [owner.workspaceId, job])).rows[0].status, "completed");
+    };
+    async function publish(expectedRevision, impressions, checkMissingPackages) {
+      const job = "synthetic-meta-publication-"+expectedRevision;
+      const input = await storedBindingFixture(client,owner,{jobId:job,metaPackedImpressions:impressions});
+      const deadlineAt = Date.now()+120000, observedAt = new Date().toISOString();
+      const fence = (await client.query("select (coalesce(max(fence),0)+1)::text as n from operations.refresh_runs")).rows[0].n;
+      const scope = [owner.workspaceId,owner.generation,owner.provider,owner.accountId,job,fence];
+      await client.query(`update operations.refresh_work_bindings set fence=$6,deadline_at_ms=$7,source=operations.refresh_preflight_source($1,$2,$3,$4)
+        where workspace_id=$1 and install_generation=$2 and provider=$3 and account_id=$4 and job_id=$5`, [...scope,deadlineAt]);
+      for (const {attemptId} of input.batches) await client.query(`
+        update evidence.source_batches set manifest=jsonb_set(jsonb_set(jsonb_set(manifest,
+        '{metaDatasetRead,fence}',to_jsonb($3::text)),'{metaDatasetRead,observedAt}',to_jsonb($4::text)),'{metaDatasetRead,completedAt}',to_jsonb($4::text))
+        where authority=$1::jsonb and attempt_id=$2`, [ownerJson,attemptId,fence,observedAt]);
+      await client.query(`insert into operations.refresh_runs(workspace_id,install_generation,provider,account_id,job_id,fence,cost,status)
+        values($1,$2,$3,$4,$5,$6,'{"requests":12,"rows":1000,"bytes":4000000,"connections":1,"dbWrites":20}'::jsonb,'running')`, scope);
+      await client.query(`insert into operations.refresh_work_progress(workspace_id,install_generation,provider,account_id,job_id,fence,stage,from_date,to_date)
+        values($1,$2,$3,$4,$5,$6,'ready_for_dataset',$7,$7)`, [...scope,day]);
+      const database = {async query(sql,args) {
+        if (sql===META_PACKAGED_REPORT_SQL && checkMissingPackages) await checkMissingPackages(args);
+        try {return await rpc(sql,args);} catch(error) {
+          console.error("EO06D_META_SQL", JSON.stringify({message:error.message,code:error.code,where:error.where}));
+          throw error;
+        }
+      }};
+      const result = await reconcileStoredDatasetSources({...input,database,limits:{...input.limits,deadlineAt,maxBytes:4000000},
+        expectedRevision,scheduled:true,admittedScope:{jobId:job,fence,from:day,to:day}});
+      assert.equal(result.revision,expectedRevision+1);
+      assert.equal(result.rowCount,1000);
+      assert.deepEqual(result.packages.map(pack=>pack.rowCount),[200,200,200,200,200]);
+      assert.equal(result.jobCompleted,true);
+      await assertClosed(job);
+      return result;
+    }
+    const first = await publish(0,"42");
+    const {rows:[scheduled]} = await client.query(`select r.business_date::text as day,r.first_digest,
+      r.due_at=w.finished_at+interval '7 days' as on_time,r.admitted_at
+      from operations.refresh_historical_rereads r join operations.refresh_runs w
+        on w.workspace_id=r.workspace_id and w.install_generation=r.install_generation and w.provider=r.provider
+        and w.account_id=r.account_id and w.job_id=r.first_job_id and w.fence=r.first_fence
+      where r.workspace_id=$1 and r.provider='meta'`,[owner.workspaceId]);
+    assert.deepEqual(scheduled,{day,first_digest:first.digest,on_time:true,admitted_at:null});
+    const before = await facts();
+    assert.equal(before.length,1000);
+    const saved = await inspect(first.operationId);
+    const second = await publish(1,"43",async args => {
+      const packages = JSON.parse(args[1]), truncated = structuredClone(packages);
+      truncated[4].rows.pop();
+      for (const [invalid,reason] of [[packages.slice(0,4),/META_REPORT_PACKAGE_COUNT/],[truncated,/META_REPORT_PACKAGE_INVALID/]]) {
+        await client.query("savepoint meta_correction_missing_package");
+        try {
+          await assert.rejects(rpc(META_PACKAGED_REPORT_SQL,[args[0],JSON.stringify(invalid),...args.slice(2)]),reason);
+        } finally {
+          await client.query("rollback to savepoint meta_correction_missing_package");
+          await client.query("release savepoint meta_correction_missing_package");
+        }
+        assert.deepEqual(await inspect(first.operationId),saved);
+        assert.deepEqual(await facts(),before);
+        const {rows:[state]} = await client.query(`select count(*) filter(where handoff_state='pending')::int as pending,
+          count(*) filter(where manifest ? 'datasetReconciliation')::int as receipts
+          from evidence.source_batches where authority=$1::jsonb and id in
+            (select value::bigint from jsonb_array_elements_text($2::jsonb->'batchIds'))`, [ownerJson,args[2]]);
+        assert.deepEqual(state,{pending:2,receipts:0});
+      }
+    });
+    const after = await facts();
+    assert.deepEqual(after.map(row=>row.id),before.map(row=>row.id));
+    assert.ok(after.every((row,i)=>row.payload_digest!==before[i].payload_digest && Number(row.revision)===Number(before[i].revision)+1));
+    assert.equal(second.replaced,1000);
+    assert.equal((await inspect(first.operationId)).status,"superseded");
+    assert.equal((await inspect(second.operationId)).digest,second.digest);
+    const {rows:[queue]} = await client.query(`select count(*)::int as entries from operations.refresh_historical_rereads
+      where workspace_id=$1 and provider='meta' and business_date=$2`,[owner.workspaceId,day]);
+    assert.equal(queue.entries,1);
+    const {rows:[state]}=await client.query(`select count(*) filter(where manifest ? 'datasetReconciliation')::int as receipts,
+      count(*) filter(where manifest ? 'metaDailyRevisionPermits')::int as permits
+      from evidence.source_batches where authority=$1::jsonb`,[ownerJson]);
+    assert.deepEqual(state,{receipts:2,permits:0});
+    return {rows:1000,packages:5,incompletePreservedPrevious:true,revised:1000,closed:true};
+  } finally {
+    await client.query("rollback to savepoint meta_packaged_correction");
+    await client.query("release savepoint meta_packaged_correction");
   }
-}
-
-export function metaDailyReconciliationSource(source) {
-  source=replaceOnce(source,'["klaviyo","google_ads"].includes(owner.provider)', '["klaviyo","google_ads","meta"].includes(owner.provider)');
-  source=replaceOnce(source,'  if (!dailyPackages && !googleDaily && projection.rows.length > 200)',
-    '  const metaDaily=bound.provider==="meta" && scheduled && expectedRevision===0;\n  if (!metaDaily && !dailyPackages && !googleDaily && projection.rows.length > 200)');
-  source=replaceOnce(source,'  const [write]=prepareDailyDatasetPackages({owner:bound,rows:projection.rows,policy,operationId,now:new Date(now()).toISOString(),context});',
-    `  const prepared=prepareDailyDatasetPackages({owner:bound,rows:projection.rows,policy,operationId,now:new Date(now()).toISOString(),context,maxPackages:metaDaily?5:1});
-  if(metaDaily && (prepared.length!==5 || prepared.some(p=>p.rows.length!==200))) fail("META_PACKAGE_COVERAGE");
-  const write=metaDaily?prepared:prepared[0];
-  const expectedPackages=metaDaily?prepared.map((pack,ordinal)=>({ordinal,rowCount:pack.rows.length,digest:sourcePayloadHash({write:pack,context})})):null;`);
-  source=replaceOnce(source,'  const requestDigest = sourcePayloadHash({write, context});',
-    '  const requestDigest = metaDaily ? sourcePayloadHash({packages:expectedPackages}) : sourcePayloadHash({write, context});');
-  return replaceOnce(source,'      || receipt.rowCount !== write.rows.length || receipt.comparison !== "matched") fail("RESULT_INVALID");',
-    '      || receipt.rowCount !== projection.rows.length || receipt.comparison !== "matched"\n      || metaDaily && canonicalSourceJson(receipt.packages??null)!==canonicalSourceJson(expectedPackages)) fail("RESULT_INVALID");')
-    .replace('reportValuesChanged: receipt.changes?.length > 0','reportValuesChanged: metaDaily ? receipt.rowCount > 0 : receipt.changes?.length > 0');
 }

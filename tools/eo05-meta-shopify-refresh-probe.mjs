@@ -5,7 +5,8 @@ import {registerHooks} from "node:module";
 import {createConfiguredSourceEvidenceCipher} from "../app/lib/database/source-evidence-config.server.js";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {createSharedQuotaRepository} from "../app/lib/database/shared-quota-repository.server.js";
-import {DATASET_RECONCILE_READ_SQL,SCHEDULED_DATASET_RECONCILE_SQL,SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {DATASET_RECONCILE_READ_SQL,SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {META_PACKAGED_REPORT_SQL} from "../app/lib/database/dataset-rpc.server.js";
 import {GOOGLE_ACCEPTANCE_COORDINATOR_ROLE_CHECK_SQL,GOOGLE_ACCEPTANCE_COORDINATOR_RPC} from "../app/lib/database/google-acceptance-coordinator-postgres.server.js";
 import {createTokenVault} from "../app/lib/oauth/token-vault.server.js";
 import {createTokenEnvelopeCipher,readProviderTokenKeyring} from "../app/lib/oauth/token-envelope.server.js";
@@ -18,7 +19,6 @@ import {createGoogleTimingLedger,prepareGoogleTimingLocalRoles} from "./eo05-goo
 import {metaFirstDayRehearsalEnvironment} from "./eo05-meta-first-day-probe.mjs";
 import {seedShopifyMappingTimingFixture} from "./eo05-shopify-mapping-timing-fixture.mjs";
 import {loadMappedScheduledRefresh} from "./eo05-single-report-close-probe.mjs";
-import {installMetaDailyReportRehearsal} from "./eo05-meta-daily-report-probe.mjs";
 
 const sourceRole="adstable_meta_source_runner", datasetRole="adstable_refresh_dataset_runner";
 const coordinatorRole="adstable_refresh_coordinator", digest=()=>randomBytes(32).toString("hex");
@@ -73,7 +73,6 @@ export async function metaShopifyRefreshProbe(client,owner,{sharedRefresh}={}) {
   await client.query("set local role postgres");
   await client.query(`grant ${sourceRole} to adstable_owner with inherit false,set true,admin false`);
   await client.query("set local role adstable_owner");
-  await installMetaDailyReportRehearsal(client);
 
   const now=Date.now, issued=now(), day=sharedRefresh?.day??new Date(issued-86400000).toISOString().slice(0,10), window={from:day,to:day};
   const connectedAt=new Date(issued-3*86400000).toISOString();
@@ -151,7 +150,7 @@ export async function metaShopifyRefreshProbe(client,owner,{sharedRefresh}={}) {
         return {rows:[]};
       }
       if(sql.startsWith("select pg_catalog.set_config("))return query(sql,args,kind);
-      if(sql===SCHEDULED_DATASET_RECONCILE_SQL){write=true;publicationArgs=args;ledger.phaseAt("reportWrite",connected);}
+      if(sql===META_PACKAGED_REPORT_SQL){write=true;publicationArgs=args;ledger.phaseAt("reportWrite",connected);}
       if(sql===DATASET_RECONCILE_READ_SQL)ledger.phaseAt("receiptReadback",connected);
       if(sql===SCHEDULED_DATASET_FINISH_SQL)ledger.phaseAt("jobClose",connected);
       const result=await asRole(role,sql,args,kind);
@@ -172,7 +171,7 @@ export async function metaShopifyRefreshProbe(client,owner,{sharedRefresh}={}) {
         cancelAtEndOfCycle:false,trialEndsAt:null,currentBillingCycle:{startTime:new Date(issued-86400000).toISOString(),endTime:new Date(issued+86400000).toISOString()},
         items:[{handle:"monthly",price:{active:true}}],pendingUpdate:null}}});
     }});
-  const runScheduled=await loadMappedScheduledRefresh({metaDaily:true}), observer=await loadMeasuredReader(ledger), batches=[];
+  const runScheduled=await loadMappedScheduledRefresh(), observer=await loadMeasuredReader(ledger), batches=[];
   let result;
   try{
     ledger.start();
@@ -275,7 +274,7 @@ export async function metaShopifyRefreshProbe(client,owner,{sharedRefresh}={}) {
     await client.query("savepoint meta_daily_negative");
     try {
       await client.query(`set local role ${datasetRole}`);
-      await assert.rejects(client.query(SCHEDULED_DATASET_RECONCILE_SQL,[ownerJson,JSON.stringify(invalid),context,publicationArgs[3]]),reason);
+      await assert.rejects(client.query(META_PACKAGED_REPORT_SQL,[ownerJson,JSON.stringify(invalid),context,...publicationArgs.slice(3)]),reason);
     } finally {
       await client.query("rollback to savepoint meta_daily_negative");
       await client.query("release savepoint meta_daily_negative");

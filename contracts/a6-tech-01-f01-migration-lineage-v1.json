@@ -1147,5 +1147,48 @@
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
     }
+  ],
+  "scoped_live_apply_approvals": [
+    {
+      "id": "eo06b-compare-live-approval-record-2026-11-25",
+      "date": "2026-11-25",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat 2026-11-25: Fırat replied 'Onaylıyorum devam edelim Codex' to applying the merged Compare migration to live Supabase. After the prepared-only lineage was identified, Fırat replied 'Onaylıyorum' to the separate PR recording that authorization and verification procedure for version 20261125093522, with the SQL unchanged."
+      },
+      "project_name": "ads-table-embedded",
+      "project_ref": "podpwkrpmjiksskxhwsu",
+      "version": "20261125093522",
+      "name": "eo06b_report_sales_compare",
+      "file": "supabase/migrations/20261125093522_eo06b_report_sales_compare.sql",
+      "repository_sql_sha256": "79d1845e1eb986ce4994e3c76cdb53e50fb168970a3528e2ee5352d7d26ec976",
+      "source_commit": "f2adec2aef076cbbf1fd5f722cfeb385f4a213f8",
+      "applied": false,
+      "takes_effect": "After this approval record is reviewed, passes required CI, and is merged with separate owner approval. For this exact target, version and hash only, this record supersedes the prepared entry's live-application restriction. The prepared entry remains the replay classification.",
+      "preflight": [
+        "Confirm exact main SQL hash and target project ref. Check migration history and the exact Compare function signature for absence.",
+        "Verify adstable_owner, adstable_runtime, required relation columns and effective privileges. The refresh dataset runner is optional.",
+        "Use a version-preserving scoped migration path. A dry run must list only 20261125093522. Stop if there is any additional pending SQL, history mismatch, or no verified way to preserve that version."
+      ],
+      "post_apply": [
+        "Confirm a single migration history entry with the exact version and name, and no other changes to the migration history.",
+        "Read back the exact function definition, owner, volatility, fixed search path and grants. Check the runtime role has EXECUTE and PUBLIC, anon, authenticated, service_role and refresh roles lack it when present.",
+        "Check the function rejects an invalid range and an unbound synthetic scope without reading customer report rows. Record the live result separately with observed evidence."
+      ],
+      "stop_condition": "On the first provider error or an ambiguous response, stop. No retry, alternate route or ledger repair without separate explicit owner approval.",
+      "scope": {
+        "other_migrations": false,
+        "history_repair": false,
+        "runtime_deploy": false,
+        "oauth_or_provider_mutation": false,
+        "customer_data_write": false
+      },
+      "official_checked_at": "2026-11-25",
+      "official_sources": [
+        "https://supabase.com/docs/guides/deployment/database-migrations",
+        "https://supabase.com/docs/reference/api/v1-apply-a-migration",
+        "https://supabase.com/docs/reference/api/v1-list-migration-history"
+      ]
+    }
   ]
 }

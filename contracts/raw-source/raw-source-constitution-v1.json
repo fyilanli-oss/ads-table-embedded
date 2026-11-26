@@ -458,7 +458,7 @@
       "docs/RAW_SOURCE_CONSTITUTION.md"
     ],
     "sha256": {
-      "app/lib/reporting/v1-report-read.server.js": "beb506fc1cf052d55512cdd1f65050928b2389558946cb6f6e4f6b70cf427a2a",
+      "app/lib/reporting/v1-report-read.server.js": "f64cb22313d48686fca679a2bf4b6f5cae69be6cbc0d85dad2c4c95ba3b3f5c3",
       "supabase/migrations/20261126083358_eo06bc_v1_report_read.sql": "54668700749a41f61ab110c037d0390fed579c5c7a77b249f80e37886b977797",
       "tools/eo06e-compare-reread-proof.mjs": "d4d8f2966ab3add110bc9c0a8e0a5b987dd7c5f7706eff06bfb0936ea81d71f5",
       "supabase/migrations/20261125201832_eo06d_klaviyo_verified_empty_reread.sql": "299770fd1f0413c197292a1dcf85ff5feb07323104e64b99409affb27b4c4a6f",
@@ -1109,7 +1109,7 @@
       "tests/eo-05a-refresh-work-stops.test.js": "58a010e6fd6a1812f2f48492f78bfc38a6cfbc0312402dcd1974cad0d87e655f",
       "tests/eo-05a-shared-quota.test.js": "4f0dbc974dd882b3317fbc537bb6d8dc4309eb2bd9546a34b93ff223210ba03e",
       "tests/eo-06b-compare-calendar.test.js": "1e4470bd90af4a64b2a18b309ce0917853b95aba31fb2ab7354653ccb6d2bdfb",
-      "tests/eo-06c-compare-api.test.js": "5e8b3f8504166486e9ceee233adefca1788eccba50972a5385ea785536fe8a97",
+      "tests/eo-06c-compare-api.test.js": "7a909c08f432b84ccd464b4f06396f7b53db11c0a8610cc2f78bd17f4fe38ef1",
       "tests/eo05b-demo-fixture.test.js": "d63b2bbb733d25c1f4585314f4094b010e4b6de2ca23032fc2b2d36f1aabde41",
       "tests/f01-live-readiness.test.js": "5225024e104f9087337452827f674961944f4dd1d53b808a0a0ac66bdef0a6eb",
       "tests/fixtures/customer-worker-fixture.js": "11b10dbd255ff34d6af9b11496866c3ad22145f21e60343ca0d50587eba21352",

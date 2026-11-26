@@ -102,6 +102,13 @@ test("V1 ambiguous and absent placement never duplicate a sale or create a non-a
   }
 });
 
+test("V1 a recorded zero in the reverse direction is not a mutual sale", async () => {
+  const {body} = await readV1([reportFact, {...reportFact, advertised_product_id: OTHER_PRODUCT,
+    sold_product_id: PRODUCT, sales_value: "0", sales_quantity: "0"}]);
+  assert.equal(body.primary.groups.length, 2);
+  assert.deepEqual(body.primary.productLinks.map(link => [link.from, link.to, link.mutual]), [[PRODUCT, OTHER_PRODUCT, false]]);
+});
+
 test("V1 retains native currencies and product units with missing FX, and sums verified FX exactly", async () => {
   const trySale = {...reportFact, reporting_currency: "TRY", reporting_value: "100"};
   const usdSale = {...reportFact, currency: "USD", sales_value: "10", sales_quantity: "1", reporting_currency: "TRY"};

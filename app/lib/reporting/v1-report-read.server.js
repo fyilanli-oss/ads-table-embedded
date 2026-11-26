@@ -163,6 +163,13 @@ function relationship(row) {
     destination: [row.destinationCampaignType, row.destinationCampaignId, row.destinationChannelType, row.destinationChannelId]};
 }
 
+function hasObservedSale(row) {
+  return (row.quantitySupport === "supported" && row.quantityObservation === "present" && row.salesQuantity !== null
+      && decimal(row.salesQuantity).coefficient > 0n)
+    || (row.valueSupport === "supported" && row.valueObservation === "present" && row.salesValue !== null
+      && decimal(row.salesValue).coefficient > 0n);
+}
+
 export function summarizeV1Reports(calendar, options, rowsByPeriod) {
   const {spans, byOffset} = dateBuckets(calendar, options.bucket);
   function summarize(period) {
@@ -176,7 +183,7 @@ export function summarizeV1Reports(calendar, options, rowsByPeriod) {
       const labels = [row.campaignName, row.channelName, row.campaignFormat];
       addTo(groups, [scope, groupIdentity(options.grain, row)], row, bucket,
         options.grain === "campaign" || options.grain === "channel" ? labels : []);
-      if (!row.advertisedProductId || !row.soldProductId) continue;
+      if (!row.advertisedProductId || !row.soldProductId || !hasObservedSale(row)) continue;
       addTo(productLinks, [scope, row.advertisedProductId, row.soldProductId], row, bucket);
       const link = relationship(row);
       if (link) addTo(channelLinks, [scope, row.platform, row.accountId, link.category, link.source, link.destination,

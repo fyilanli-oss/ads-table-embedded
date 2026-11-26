@@ -156,3 +156,27 @@ Test mağazası kimliği [kurulum kabul kaydından](evidence/EO_02C_LIVE_ACCEPTA
 ### Aynı düzeltmenin tekrar kontrolü
 
 [Tekrar betiği](evidence/eo06-shopify-analytics-probe/send-correction.mjs) düzeltmenin JSON gövdesini ve işlem anahtarını aynen kullanır. `ADSTABLE_ANALYTICS_EXPECT_REPLAY=1` ile açık tekrar çalışması ve düzeltmenin kabulünden itibaren 24 saat dolmadan sona eren bir pencere gerektirir. Prova güvenlik payıyla 27 Kasım 2026 16.34 UTC'de kapanır. Tekrarın teknik kabulü `202`, `success: true` ve `Idempotent-Replay: true` ile, rapor kabulü aynı tek satırın 1 adet ve 80 TL kalmasıyla doğrulanır. [Shopify tekrar makbuzu](https://shopify.dev/docs/api/app-events/latest#status-and-error-codes)
+
+### Kaydedilen rapor kanıtı
+
+[Tekrar build'i](https://vercel.com/firats-projects-d22284db/ads-table-embedded/HJ4VLpjbuU69QLg1PSYXCEwpT47U) aynı düzeltmeye `202` aldı. Önceki makbuzun yeniden kullanıldığı API yanıtından doğrulanamadı. Ek istek gönderilmedi. Ürün sahibi mobilde raporu yenilediğinde 1 satır, 1 adet, 80 TL gördü. Raporu **İlk rapor** adıyla kaydetti ve Shopify Analizler → Raporlar listesinden tekrar açarak 1 adet ve 80 TL'yi yeniden doğruladı. Kullanıcı sorgu veya sütun hazırlamadan bir kez kopyayı kaydetti. Kurulum sırasında raporun otomatik oluşturulması doğrulanmadı. [Shopify özel rapor yönetimi](https://help.shopify.com/en/manual/reports-and-analytics/shopify-reports/report-types/custom-reports/managing-custom-reports)
+
+### Katkı toplamı için ShopifyQL provası
+
+26 Kasım 2026. Ürün sahibi Contribution From ve Contribution To kontrolüne başlanmasını onayladı. Mevcut App Events şemasıyla, 19 Kasım'daki doğrulanmış A → B (1 adet, 80 TL) satırına ek olarak C → A (1 adet, 50 TL) sentetik olayı planlanır. Aynı prova kimliği ve gün kullanılır. C → A ayrı işlem anahtarına sahip olur. Bu kayıt olayın gönderildiği anlamına gelmez.
+
+ShopifyQL `WITH TOTALS`, iki yön de sonuçtaysa satış ölçüsünü 130 TL olarak toplar. `WHERE` ile yalnızca A'nın satıldığı satırları seçmek 50 TL'yi verir ve A → B satırını tablodan çıkarır. Shopify'ın genel toplamda tek yönü dışarıda bırakabilen bir ShopifyQL seçeneği belgelerde bulunmadı. Aynı raporda denenecek aday, genel toplamı kaldırıp satılan ürüne göre `WITH GROUP_TOTALS` kullanmaktır. [ShopifyQL toplamları](https://shopify.dev/docs/api/shopifyql/latest/syntax/with#total-columns) · [ShopifyQL filtreleri](https://shopify.dev/docs/api/shopifyql/latest/syntax/where) · [Shopify Analizler'de grup toplamları](https://help.shopify.com/en/manual/reports-and-analytics/shopify-reports/report-types/shopifyql-editor/shopifyql-syntax)
+
+```sql
+FROM app_events
+SHOW event."adstable-1".ecosystem_sale_probe.purchases,
+  event."adstable-1".ecosystem_sale_probe.sales
+WHERE event."adstable-1".ecosystem_sale_probe.probe_run = 'eo06e-development-analytics-first-sale'
+  AND (event."adstable-1".ecosystem_sale_probe.sold_product = 'A'
+    OR event."adstable-1".ecosystem_sale_probe.advertised_product = 'A')
+GROUP BY event."adstable-1".ecosystem_sale_probe.sold_product,
+  event."adstable-1".ecosystem_sale_probe.advertised_product WITH GROUP_TOTALS
+SINCE 2026-11-19 UNTIL 2026-11-19
+```
+
+Prova iki ayrıntı satırının ve aynı satış sütunundaki 50 TL ile 80 TL'nin göründüğünü, A'nın satışına ait grup toplamının 50 TL olduğunu ve 130 TL'nin A'nın satış toplamı olarak gösterilmediğini kontrol eder. Contribution From/To ayrımı mağaza sahibi için açık olmalı. Bu sorguda yön, reklamı yapılan ve satılan ürün sütunlarından anlaşılır. Shopify'ın arayüzünde ayrıca yön etiketleri veya tek ve ayrı bir A satış toplamı gerekirse o ihtiyaç açık kalır. Grafik bu provanın dışında kalır.

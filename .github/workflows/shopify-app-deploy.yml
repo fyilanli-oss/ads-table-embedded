@@ -17,8 +17,8 @@ concurrency:
 
 jobs:
   deploy:
-    name: Create unpublished AdsTable Analytics draft
-    if: ${{ github.ref == 'refs/heads/codex/eo06-shopify-analytics-draft-version' && github.run_attempt == 1 && inputs.confirmation == 'DRAFT-ONLY' }}
+    name: Deploy Shopify app configuration
+    if: ${{ (github.ref == 'refs/heads/main' && inputs.confirmation == 'DEPLOY') || (github.ref == 'refs/heads/codex/eo06-shopify-analytics-draft-version' && github.run_attempt == 1 && inputs.confirmation == 'DRAFT-ONLY') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -42,7 +42,14 @@ jobs:
       - name: Install pinned Shopify CLI
         run: npm install --global @shopify/cli@4.8.5
 
+      - name: Validate Shopify app configuration
+        if: ${{ github.ref == 'refs/heads/main' }}
+        env:
+          SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
+        run: shopify app config validate --no-color
+
       - name: Verify target and stage the reviewed extension
+        if: ${{ github.ref == 'refs/heads/codex/eo06-shopify-analytics-draft-version' }}
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -67,11 +74,17 @@ jobs:
           print('Local candidate adds only ecosystem-sales-probe to the checked-out AdsTable configuration.')
           PY
 
-      - name: List versions, create the unpublished draft and verify its status
+      - name: Create the authorized Shopify app version
         env:
           SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
           COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
         run: |
+          if [[ "$GITHUB_REF" == 'refs/heads/main' ]]; then
+            shopify app deploy --allow-updates --no-color --source-control-url "$COMMIT_URL"
+            exit 0
+          fi
+
+          test "$GITHUB_REF" = 'refs/heads/codex/eo06-shopify-analytics-draft-version'
           test -n "$SHOPIFY_APP_AUTOMATION_TOKEN"
           version=eo06e-analytics-product-probe-draft
           shopify app versions list --json > "$RUNNER_TEMP/shopify-versions-before.json"

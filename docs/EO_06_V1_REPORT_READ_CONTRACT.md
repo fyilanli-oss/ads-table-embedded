@@ -210,3 +210,19 @@ GROUP BY event."adstable-1".ecosystem_sale_probe.advertised_product,
   event."adstable-1".ecosystem_sale_probe.sold_product WITH TOTALS
 SINCE 2026-11-19 UNTIL 2026-11-19
 ```
+
+### Contribution Roles boyutuyla EcoSystem provası
+
+26 Kasım 2026. İki metrik provası, iki tutarın Shopify'a ulaşabildiğini gösterdi. A'nın satış toplamı ve ortak Sales sütunu bu provada doğrulanmadı. Ürün sahibi V52'yi görünüm referansı olarak belirledi. Shopify [yayındaki olayın metriklerini kaldırmayı reddetti](https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/45878751106/job/140112407892). Ürün sahibinin onayıyla ayrı `adstable-1.ecosystem_role_probe` olayı, Contribution Roles boyutu ve Purchase ile Sales metrikleriyle [Shopify sürümüne eklendi](https://dev.shopify.com/dashboard/239318688/apps/432251994113/versions/1268161347585). Ürün sahibi sürümü etkinleştirdi.
+
+Ürün sahibinin açık onayıyla [gönderim betiği](evidence/eo06-shopify-analytics-probe/send-ecosystem-roles.mjs) AdsTable Development'a 19 Kasım tarihli C → A 50 TL Contribution From ve A → B 80 TL Contribution To kayıtlarını gönderdi. [Build kaydı](https://vercel.com/firats-projects-d22284db/ads-table-embedded/ESZvedgtHScB3qvghRgLggpEu68g) iki kayıt için de `202` ve `success: true` sonucunu doğruladı. Etkin uygulama alan adı aynı dağıtıma bağlı kaldı. Shopify ekranında iki rolün tek Sales sütununda görünmesi ve satılan ürün A'nın ara toplamının 50 TL olması bekleniyor. `ORDER BY` grup ara toplamının tabloda görünmesini sağlar. [Shopify grup toplamı kuralı](https://help.shopify.com/en/manual/reports-and-analytics/shopify-reports/report-types/shopifyql-editor/shopifyql-syntax#group-totals)
+
+```sql
+FROM app_events
+SHOW event."adstable-1".ecosystem_role_probe.ecosystem_sales
+WHERE event."adstable-1".ecosystem_role_probe.probe_run = 'eo06e-development-ecosystem-roles-v1'
+  AND event."adstable-1".ecosystem_role_probe.focus_product = 'A'
+GROUP BY event."adstable-1".ecosystem_role_probe.sold_product, event."adstable-1".ecosystem_role_probe.contribution_role WITH GROUP_TOTALS
+SINCE 2026-11-19 UNTIL 2026-11-19
+ORDER BY event."adstable-1".ecosystem_role_probe.sold_product ASC
+```

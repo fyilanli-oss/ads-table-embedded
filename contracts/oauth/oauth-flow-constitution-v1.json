@@ -1278,7 +1278,7 @@
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json"
     ],
     "sha256": {
-      "tools/eo06e-compare-reread-proof.mjs": "5a0c4de62921a91e635cdd9af42cc63c0c2799b7b4e38b7ddfafa7b5ebfbc715",
+      "tools/eo06e-compare-reread-proof.mjs": "b3b51866f6e12516173900be2d11ac0b297d3301e03772d1395d28f475911c5b",
       "supabase/migrations/20261125201832_eo06d_klaviyo_verified_empty_reread.sql": "299770fd1f0413c197292a1dcf85ff5feb07323104e64b99409affb27b4c4a6f",
       "supabase/migrations/20261125185757_eo06d_klaviyo_multipart_revision.sql": "9fdff139710505b6de7d29a1854f8bad9258652eb9c44c6693cc406f94d91e7b",
       "supabase/migrations/20261125180106_eo06d_meta_packaged_report_reconciliation.sql": "a6c6d52d2a608285cdb36fd072ccf6eaef4e9b76142bd602bfaf2ec1013b8af2",

@@ -15,6 +15,8 @@ export async function readCompareRereadDay(client,owner,day) {
   });
   await client.query("savepoint eo06e_compare_read");
   try {
+    await client.query("set local role postgres");
+    await client.query("grant adstable_runtime to postgres with inherit false, set true, admin false");
     await client.query("set local role adstable_runtime");
     const request=new Request(url,{headers:{authorization:"Bearer synthetic-compare-session"}});
     const response=await handleCompareRequest(request,{authenticateAdmin,database:client});

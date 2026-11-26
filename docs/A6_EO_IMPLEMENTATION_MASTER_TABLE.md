@@ -193,7 +193,7 @@ Bu kanıt API işleyicisinden izole veritabanına kadar olan zinciri kapsar. Ger
 
 **V1 tekrar okuma kararı.** Kapanan gün ertesi sabah okunup doğrulama sonrası rapora açılır. Aynı gün, ilk başarılı okumadan **7 gün sonra** mevcut refresh kapsamıyla **bir kez** tam okunur. Başarısız tekrar okumada son doğrulanmış yayın korunur. Yeni yayın, doğrulamaları tamamlandığında görünür. Sağlayıcıya göre rapor tarihi ve EO-05-C’deki `unknown`, `provisional` ve `final` anlamları korunur. [Refresh sözleşmesi](EO_05A_REFRESH_CONTRACT.md#v1-geçmiş-günü-tekrar-okuma) · [Kesinleşme kaydı](EO_05C_MATURITY_FINALITY.md)
 
-- [ ] **EO-06-D · V1 geçmiş gün düzeltmesi.** Planlı okumayı kuyruğa bağla ve EO-05-C/D ile tarih temelini ve yetkili revizyonu doğrula. Aynı günün bir kez planlandığını, başarısız koşuda eski yayının korunduğunu ve doğrulanmış yeni yayının rapora yansıdığını test et. Uygulama ve kabul açık.
+- [ ] **EO-06-D · V1 geçmiş gün düzeltmesi.** Özel kuyruk ile Google, Meta ve Klaviyo yayın kodu `main`de. Aynı günün tekrar planlanması, eksik pakette eski raporun korunması ve ikinci yayının doğrulanması izole provalarda sınandı. Yeni yayının Compare API'de görünmesi EO-06-E bütünleşik provasında, canlı çalışma ise mağaza kabulünde izlenir. [Google #400](https://github.com/fyilanli-oss/ads-table-embedded/pull/400) · [Kuyruk #401](https://github.com/fyilanli-oss/ads-table-embedded/pull/401) · [Meta #402](https://github.com/fyilanli-oss/ads-table-embedded/pull/402) · [Klaviyo #403](https://github.com/fyilanli-oss/ads-table-embedded/pull/403) · [Klaviyo boş yayın #404](https://github.com/fyilanli-oss/ads-table-embedded/pull/404)
   - Meta için günlük ilk yayın ve aynı günün ikinci yayını, en fazla 200 satırlık beş paketi tek işlemde doğrular. Tam yayın bir makbuzla kapanır. Eksik paket önceki yayını korur. Gerçek Meta ürün satışı kanıtı ve canlı etkinleştirme ayrı açık kalemlerdir.
   - Klaviyo aynı günün ikinci yayınında mevcut paketli yazıcıyı kullanır. Tek tek kısmi saklanan ham parçalar ancak bütün günün paketi doğrulanınca düzeltmeye kaynak olur. Eksik rapor paketi önceki yayını korur. Canlı etkinleştirme ayrı bir açık kalemdir.
   - Klaviyo ikinci okumada Campaign, Flow ve Ordered Product için eksiksiz boş yanıt doğrulanırsa gün sıfır satır ve tek makbuzla yayımlanır. Eksik kaynak, eksik rapor paketi veya boş olmayan kaynak için boş yayın denemesi önceki raporu korur.
@@ -201,6 +201,23 @@ Bu kanıt API işleyicisinden izole veritabanına kadar olan zinciri kapsar. Ger
   - **Özel kuyruk hazırlığı.** İlk doğrulanmış makbuzla kapanan gün için sağlayıcının saat diliminde yedi takvim günü sonrası kaydedilir. İlk okuma işi önceliklidir. Bir hesap aynı gün için en çok bir tarihsel iş emri alır ve takvim günü başına en çok bir eski rapor günü seçilir. İş emri özgün rapor günü ve ilk yayın sürümüne bağlıdır. Canlı cron ve sağlayıcı kabulü ayrı aşamalardadır.
 
 [EO-06-D makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo06d_compare_data_states_2026_11_25). Bu kayıt mevcut davranışın ve açık kararların depo incelemesidir. Yeni API alanı veya canlı uygulama için teknik kapsam ayrı belirlenir.
+
+### EO-06-E izole rapor ve API kabulü
+
+**26 Kasım 2026.** `main` sürümü `f17e5c19cbbe05ff92eef205e6e8dde51f7f7121` üzerinde 33 mevcut test geçti. Takvim ve Compare API 12 test, satış rolü 21 test. Aynı Compare provası izole PostgreSQL 17.5 üzerinde refresh Dataset rolü mevcutken ve yokken geçti.
+
+- **Mağaza ayrımı ve rapor çıktısı.** Aynı ürün, hesap, kampanya ve tarih filtreleri iki mağazada ayrı veri döndürdü. İstekten başka mağazanın kapsamı gönderilince API 400 döndürdü. Eksik tutar `null`, doğrulanmış sıfır `"0"` ve satırı olmayan gün boş kaldı. [Takvim testleri](../tests/eo-06b-compare-calendar.test.js) · [API testleri](../tests/eo-06c-compare-api.test.js) · [PostgreSQL provası](../tools/eo06b-report-sales-compare-probe.mjs)
+- **Satış sayımı · 20. adım.** Farklı satış rolleri ek satış üretmedi. Farklı sayfalarda tekrarlanan aynı kaynak satışı bir kez alındı ve iki kaynak referansı korundu. Ürün adedi, Shopify sipariş adedi ve sağlayıcı satışı ayrı kaldı. [Satış rolü testleri](../tests/sales-role-prewrite.test.js)
+
+**Gerçek mağaza kabulü dışında açık işler**
+
+| İş | Kalan kontrol |
+|---|---|
+| **İlk sırada · 26. adım** | Aynı izole provada ilk gün raporunu Compare API'den oku. Eksik ikinci okumada eski raporun kaldığını ve doğrulanmış ikinci yayının API'ye geldiğini göster. Boş yayın durumunda API'nin sıfır satış satırı uydurmadığını kontrol et. |
+| **EO-06-B/C · V1 rapor kapsamı** | Mevcut kanıt ürün satışları Compare yoluna ait. Güncel V1 raporları için mevcut sorgu ve yanıtın ihtiyaçları ne ölçüde karşıladığını kontrol et. Eksik kalan sözleşme veya sorgu kapsamını kapat. Görsel uygulama EO-07'de izlenir. |
+| **EO-06-D · Güncellik** | Compare yanıtında ayrı güncellik alanı henüz yok. V1'de “son doğrulanan gün” bilgisinin API'de gerekip gerekmediğini belirle. Gösterilecekse geçerli rapor makbuzu ve tamamlanan iş emrine bağla. Gecikme eşiği için beklenen gün ve çalışma takvimi gerekir. |
+
+KPI, metrik formülleri ve maliyet dağıtımı V1 kapsam kararına göre ertelendi. Kesin Overlap 24. adımda ayrı açık kalır. [Revize plan](plans/EO_05_06_REVISED_PLAN_2026_10_27.md#eo-05-26-adımlık-çalışma-ve-açık-kabul-maddeleri) · [Makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo06e_isolated_compare_and_sales_role_acceptance_2026_11_26)
 
 ## EO-07 — Shopify'a özgü üç yüzeyli arayüz
 

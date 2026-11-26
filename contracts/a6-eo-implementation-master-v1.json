@@ -1,4 +1,17 @@
 {
+  "eo06e_reread_compare_integrated_2026_11_26": {
+    "package": "A6-EO-06-E",
+    "ordered_step": 26,
+    "document": "docs/A6_EO_IMPLEMENTATION_MASTER_TABLE.md#eo-06-e-izole-rapor-ve-api-kabulü",
+    "supersedes_next_isolated_check_in": "eo06e_isolated_compare_and_sales_role_acceptance_2026_11_26",
+    "scope": "Rollback-only synthetic daily Dataset publication and real Compare API handler and SQL with synthetic Shopify identity",
+    "google": {"dataset_rows": 1000, "compare_rows": 499, "before_sales_value": "12.5", "after_sales_value": "17.5", "missing_package_preserves_previous": true},
+    "klaviyo": {"initial_compare_rows": 1000, "corrected_rows": 5, "unchanged_rows": 995, "verified_empty_compare_rows": 0, "missing_package_preserves_previous": true},
+    "meta_product_sales_compare_proven": false,
+    "next": ["review V1 report query and API coverage", "decide and, if needed, specify receipt-backed freshness output"],
+    "native_acceptance_passed": false,
+    "runtime_or_live_change_authorized": false
+  },
   "eo06e_isolated_compare_and_sales_role_acceptance_2026_11_26": {
     "package": "A6-EO-06-E",
     "status": "isolated_compare_and_sales_role_checks_passed_package_acceptance_open",

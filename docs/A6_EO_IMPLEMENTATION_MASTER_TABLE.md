@@ -208,13 +208,13 @@ Bu kanıt API işleyicisinden izole veritabanına kadar olan zinciri kapsar. Ger
 
 - **Mağaza ayrımı ve rapor çıktısı.** Aynı ürün, hesap, kampanya ve tarih filtreleri iki mağazada ayrı veri döndürdü. İstekten başka mağazanın kapsamı gönderilince API 400 döndürdü. Eksik tutar `null`, doğrulanmış sıfır `"0"` ve satırı olmayan gün boş kaldı. [Takvim testleri](../tests/eo-06b-compare-calendar.test.js) · [API testleri](../tests/eo-06c-compare-api.test.js) · [PostgreSQL provası](../tools/eo06b-report-sales-compare-probe.mjs)
 - **Satış sayımı · 20. adım.** Farklı satış rolleri ek satış üretmedi. Farklı sayfalarda tekrarlanan aynı kaynak satışı bir kez alındı ve iki kaynak referansı korundu. Ürün adedi, Shopify sipariş adedi ve sağlayıcı satışı ayrı kaldı. [Satış rolü testleri](../tests/sales-role-prewrite.test.js)
+- **İkinci yayının Compare API'ye yansıması · 26. adım.** [Klaviyo provası](../tools/eo05-klaviyo-daily-timing-probe.mjs) ilk yayında 1.000 ürün satış satırını okur ve beşinci paket eksikken yanıtın aynen korunduğunu doğrular. Tam düzeltmede beş satırın adedi ve tutarı değişir, kalan 995 satır aynı kalır. İlk yayından başlayan ayrı boş okuma senaryosunda doğrulanmış ikinci yayından sonra API boş liste döndürür. [Google provası](../tools/eo05-google-daily-packages-probe.mjs) 1.000 Dataset satırından 499 satış satırı okur. Eksik paket yanıtı korur, kapanan ikinci yayında 499 satış tutarı `12.5` yerine `17.5` olur. Bu iki prova sentetik Shopify oturumu ve gerçek Compare sorgusu kullanır. Meta'nın mevcut performans provası ürün satış yanıtına kanıt sağlamaz.
 
 **Gerçek mağaza kabulü dışında açık işler**
 
 | İş | Kalan kontrol |
 |---|---|
-| **İlk sırada · 26. adım** | Aynı izole provada ilk gün raporunu Compare API'den oku. Eksik ikinci okumada eski raporun kaldığını ve doğrulanmış ikinci yayının API'ye geldiğini göster. Boş yayın durumunda API'nin sıfır satış satırı uydurmadığını kontrol et. |
-| **EO-06-B/C · V1 rapor kapsamı** | Mevcut kanıt ürün satışları Compare yoluna ait. Güncel V1 raporları için mevcut sorgu ve yanıtın ihtiyaçları ne ölçüde karşıladığını kontrol et. Eksik kalan sözleşme veya sorgu kapsamını kapat. Görsel uygulama EO-07'de izlenir. |
+| **İlk sırada · EO-06-B/C · V1 rapor kapsamı** | Mevcut kanıt ürün satışları Compare yoluna ait. Güncel V1 raporları için mevcut sorgu ve yanıtın ihtiyaçları ne ölçüde karşıladığını kontrol et. Eksik kalan sözleşme veya sorgu kapsamını kapat. Görsel uygulama EO-07'de izlenir. |
 | **EO-06-D · Güncellik** | Compare yanıtında ayrı güncellik alanı henüz yok. V1'de “son doğrulanan gün” bilgisinin API'de gerekip gerekmediğini belirle. Gösterilecekse geçerli rapor makbuzu ve tamamlanan iş emrine bağla. Gecikme eşiği için beklenen gün ve çalışma takvimi gerekir. |
 
 KPI, metrik formülleri ve maliyet dağıtımı V1 kapsam kararına göre ertelendi. Kesin Overlap 24. adımda ayrı açık kalır. [Revize plan](plans/EO_05_06_REVISED_PLAN_2026_10_27.md#eo-05-26-adımlık-çalışma-ve-açık-kabul-maddeleri) · [Makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo06e_isolated_compare_and_sales_role_acceptance_2026_11_26)

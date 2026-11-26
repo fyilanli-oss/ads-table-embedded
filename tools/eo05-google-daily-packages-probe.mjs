@@ -8,6 +8,7 @@ import {resolveReportRetentionPolicy} from "../app/lib/database/report-retention
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {dispatchRefreshPreflight} from "../app/lib/refresh/preflight-bridge.server.js";
 import {GOOGLE_DAILY_STAGE_SQL,GOOGLE_DAILY_PUBLISH_SQL,GOOGLE_DAILY_CORRECT_SQL,GOOGLE_DAILY_INSPECT_SQL,GOOGLE_DAILY_FINISH_SQL} from "../app/lib/database/dataset-rpc.server.js";
+import {readCompareRereadDay} from "./eo06e-compare-reread-proof.mjs";
 
 async function verifyGoogleDailyReplacement(client,{owner,first,rpc,reject,day}) {
  const ownerJson=JSON.stringify(owner),job="synthetic-reread-job";
@@ -41,6 +42,10 @@ async function verifyGoogleDailyReplacement(client,{owner,first,rpc,reject,day})
    where workspace_id=$1 and installation_id=$2 and business_date=$3 order by native_key_hash`,[owner.workspaceId,owner.installationId,day])).rows;
  const originalFacts=await facts();
  assert.equal(originalFacts.length,499);
+ const readCompare=()=>readCompareRereadDay(client,owner,day);
+ const originalCompare=await readCompare();
+ assert.equal(originalCompare.length,499);
+ assert.ok(originalCompare.every(row=>row.salesValue==="12.5"));
  await reject(()=>client.query("update analytics.cpd_product_sales_facts set sales_value=0 where id=$1",[originalFacts[0].id]),
   /DATASET_REVISION_PROTOCOL_REQUIRED/);
  const publish=()=>rpc(GOOGLE_DAILY_CORRECT_SQL,[ownerJson,contextJson,deadline,operationId,JSON.stringify(policy),JSON.stringify(digests)]);
@@ -52,6 +57,7 @@ async function verifyGoogleDailyReplacement(client,{owner,first,rpc,reject,day})
    await reject(publish,/GOOGLE_REPORT_PACKAGE_VERIFICATION_FAILED/);
    assert.deepEqual((await inspect(first.operationId)).rows[0].result,first);
    assert.deepEqual(await facts(),originalFacts);
+   assert.deepEqual(await readCompare(),originalCompare);
   }
  }
  const revised=(await publish()).rows[0].result;
@@ -69,7 +75,11 @@ async function verifyGoogleDailyReplacement(client,{owner,first,rpc,reject,day})
  assert.ok(sourceCheck.partial>0);
  assert.equal(sourceCheck.permits,0);
  assert.equal((await rpc(GOOGLE_DAILY_FINISH_SQL,[ownerJson,job,fence,operationId,revised.digest])).rows[0].result,true);
- return {revision:2,rows:1000,packages:5,incompletePreservedPrevious:true,receipt:true,closed:true};
+ const revisedCompare=await readCompare();
+ assert.equal(revisedCompare.length,499);
+ assert.ok(revisedCompare.every(row=>row.salesValue==="17.5"));
+ return {revision:2,rows:1000,packages:5,incompletePreservedPrevious:true,receipt:true,closed:true,
+  compareApi:{initialRows:499,rejectedRereadRows:499,revisedRows:499,initialSalesValue:"12.5",revisedSalesValue:"17.5"}};
 }
 
 async function verifyHistoricalQueue(client,{scope,day,reject}) {

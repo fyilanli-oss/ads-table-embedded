@@ -21,6 +21,7 @@ import {createFourPhaseDiagnostics} from "./eo05-four-phase-diagnostics.mjs";
 import {loadSingleReportCloseCandidate, verifySingleReportCloseRejections} from "./eo05-single-report-close-probe.mjs";
 import {installKlaviyoQuotaCandidate,loadKlaviyoRawHashCandidate} from "./eo05-final-synthetic-candidate.mjs";
 import {seedShopifyMappingTimingFixture} from "./eo05-shopify-mapping-timing-fixture.mjs";
+import {readCompareRereadDay} from "./eo06e-compare-reread-proof.mjs";
 
 const productEvents=1000;
 const pageSize=200;
@@ -1347,6 +1348,10 @@ export async function klaviyoHistoricalRereadProbe(client,{ownerFixture}) {
       [owner.installationId])).rows;
     const before=await readFacts();
     assert.equal(before.length,1000);
+    const readCompare=()=>readCompareRereadDay(client,owner,first.businessDate);
+    const firstCompare=await readCompare();
+    assert.equal(firstCompare.length,1000);
+    assert.equal(firstCompare.filter(row=>row.salesQuantity==="1"&&row.salesValue==="19.99").length,1000);
     const {rows:[schedule]}=await client.query(`select r.business_date::text as day,r.first_digest,r.admitted_at,
       r.due_at=w.finished_at+interval '7 days' as on_time
       from operations.refresh_historical_rereads r join operations.refresh_runs w
@@ -1361,6 +1366,7 @@ export async function klaviyoHistoricalRereadProbe(client,{ownerFixture}) {
     await client.query("savepoint klaviyo_nonempty_revision");
     const second=await runKlaviyoDailyTimingProbe(client,{...options,repeat:{
       day:first.businessDate,changedEvents:5,previous:first,
+      async afterMissingPackage(){assert.deepEqual(await readCompare(),firstCompare);},
     }});
     const after=await readFacts();
     assert.deepEqual(after.map(row=>row.id),before.map(row=>row.id));
@@ -1368,6 +1374,10 @@ export async function klaviyoHistoricalRereadProbe(client,{ownerFixture}) {
       && row.source_batch_id!==before[i].source_batch_id));
     const changed=after.filter((row,i)=>row.sales_quantity!==before[i].sales_quantity||row.sales_value!==before[i].sales_value);
     assert.deepEqual(changed.map(row=>row.provider_event_id),["e0","e1","e2","e3","e4"]);
+    const revisedCompare=await readCompare();
+    assert.equal(revisedCompare.length,1000);
+    assert.equal(revisedCompare.filter(row=>row.salesQuantity==="2"&&row.salesValue==="39.98").length,5);
+    assert.equal(revisedCompare.filter(row=>row.salesQuantity==="1"&&row.salesValue==="19.99").length,995);
     assert.equal((await client.query(KLAVIYO_DAILY_INSPECT_SQL,[owner,first.operationId])).rows[0].result.status,"superseded");
     const {rows:[admitted]}=await client.query(`select r.admitted_job_id,w.partition_id,
       (select count(*)::int from evidence.source_batches where authority=$2::jsonb and manifest ? 'datasetRevisionPermit') as permits
@@ -1379,15 +1389,18 @@ export async function klaviyoHistoricalRereadProbe(client,{ownerFixture}) {
     await client.query("rollback to savepoint klaviyo_nonempty_revision");
     await client.query("release savepoint klaviyo_nonempty_revision");
     assert.deepEqual(await readFacts(),before);
+    assert.deepEqual(await readCompare(),firstCompare);
     const empty=await runKlaviyoDailyTimingProbe(client,{...options,repeat:{
       day:first.businessDate,empty:true,previous:first,
     }});
     assert.deepEqual(await readFacts(),[]);
     assert.equal((await client.query(KLAVIYO_DAILY_INSPECT_SQL,[owner,first.operationId])).rows[0].result.status,"superseded");
     assert.deepEqual((await client.query(KLAVIYO_DAILY_INSPECT_SQL,[owner,empty.operationId])).rows[0].result,empty);
+    assert.deepEqual(await readCompare(),[]);
     return {rows:second.rowCount,packages:second.packages.length,revision:second.revision,
       missingPackagePreservedFirst:true,changedRows:changed.length,closed:true,
-      verifiedEmpty:{rows:empty.rowCount,revision:empty.revision,packages:empty.packages.length,closed:true}};
+      verifiedEmpty:{rows:empty.rowCount,revision:empty.revision,packages:empty.packages.length,closed:true},
+      compareApi:{initialRows:1000,rejectedRereadRows:1000,revisedRows:1000,changedRows:5,verifiedEmptyRows:0}};
   } finally {
     await client.query("rollback to savepoint klaviyo_historical_reread");
     await client.query("release savepoint klaviyo_historical_reread");
@@ -1684,6 +1697,7 @@ async function runKlaviyoDailyTimingProbe(client,{ownerFixture,mode="report",ret
         }
         assert.deepEqual((await client.query(KLAVIYO_DAILY_INSPECT_SQL,[owner,repeat.previous.operationId])).rows[0].result,
           repeat.previous);
+        await repeat.afterMissingPackage();
         await client.query("savepoint klaviyo_forged_empty_stage");
         try {
           const [ownerJson,context,deadline,operationId,policy]=args;

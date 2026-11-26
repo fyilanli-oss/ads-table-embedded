@@ -8,7 +8,7 @@ EO-06, EO-07 ve EO-08 kabulünde [ana paket tablosundaki referanslar](A6_EO_IMPL
 
 ## EO-06-E — İzole rapor ve API kabul kaydı, 26 Kasım 2026
 
-Güncel `main` içeriği üzerinde 33 mevcut test ve PostgreSQL 17.5 üzerinde iki Compare provası geçti. Mağaza ayrımı, satış rolü ve veri durumları sonuçları [EO-06-E kabul kaydında](A6_EO_IMPLEMENTATION_MASTER_TABLE.md#eo-06-e-izole-rapor-ve-api-kabulü) yer alır ve revize planın 20 ve 26. adımlarına bağlanır. İlk açık teknik kontrol, doğrulanmış yedi günlük düzeltmenin Compare API'de göründüğünü aynı prova içinde kanıtlamaktır. Canlı mağaza kabulünün kaydı ayrıdır. [Makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo06e_isolated_compare_and_sales_role_acceptance_2026_11_26)
+33 mevcut test ve PostgreSQL 17.5 üzerindeki iki Compare provasının sonuçları [EO-06-E kabul kaydında](A6_EO_IMPLEMENTATION_MASTER_TABLE.md#eo-06-e-izole-rapor-ve-api-kabulü) yer alır. Mağaza ayrımı, satış rolü ve veri durumları 20 ve 26. adımlara bağlıdır. 26. adımın Google ve Klaviyo tekrar okuma provası aynı kayıtta yer alır. Sıradaki teknik iş, mevcut API'nin V1 rapor kapsamını kontrol etmektir. Ardından makbuza dayalı güncellik bilgisinin kapsamı belirlenir. Canlı mağaza kabulünün kaydı ayrıdır. [Makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo06e_reread_compare_integrated_2026_11_26)
 
 ## EO-05 — Refresh kapanış güncellemesi ve EO-06 başlangıcı, 22 Kasım 2026
 

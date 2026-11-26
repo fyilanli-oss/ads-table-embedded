@@ -1,10 +1,10 @@
-name: Shopify app configuration deploy
+name: Shopify Analytics unpublished draft
 
 on:
   workflow_dispatch:
     inputs:
       confirmation:
-        description: Type DEPLOY to create and release a Shopify app version
+        description: Type DRAFT-ONLY to create one unpublished AdsTable version
         required: true
         type: string
 
@@ -17,8 +17,8 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy Shopify app configuration
-    if: ${{ inputs.confirmation == 'DEPLOY' }}
+    name: Create unpublished AdsTable Analytics draft
+    if: ${{ github.ref == 'refs/heads/codex/eo06-shopify-analytics-draft-version' && github.run_attempt == 1 && inputs.confirmation == 'DRAFT-ONLY' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -42,13 +42,45 @@ jobs:
       - name: Install pinned Shopify CLI
         run: npm install --global @shopify/cli@4.8.5
 
-      - name: Validate Shopify app configuration
-        env:
-          SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
-        run: shopify app config validate --no-color
+      - name: Verify target and stage the reviewed extension
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from tomllib import loads
 
-      - name: Create and release Shopify app version
+          config = loads(Path('shopify.app.toml').read_text())
+          assert config['name'] == 'AdsTable'
+          assert config['client_id'] == '58c91f39f69ca282a94ba06e9648be9e'
+          assert config['application_url'] == 'https://embedded.adstable.app/'
+          assert not Path('extensions').exists(), 'unexpected existing extensions in checkout'
+
+          fixture = Path('docs/evidence/eo06-shopify-analytics-probe/shopify.extension.toml.example')
+          definition, = loads(fixture.read_text())['extensions']
+          event, = definition['events']
+          assert definition['type'] == 'analytics_app_events'
+          assert definition['handle'] == 'ecosystem-sales-probe'
+          assert event['name'] == 'adstable-1.ecosystem_sale_probe'
+
+          target = Path('extensions/ecosystem-sales-probe/shopify.extension.toml')
+          target.parent.mkdir(parents=True)
+          target.write_bytes(fixture.read_bytes())
+          print('Local candidate adds only ecosystem-sales-probe to the checked-out AdsTable configuration.')
+          PY
+
+      - name: List versions, create the unpublished draft and verify its status
         env:
           SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
           COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
-        run: shopify app deploy --allow-updates --no-color --source-control-url "$COMMIT_URL"
+        run: |
+          test -n "$SHOPIFY_APP_AUTOMATION_TOKEN"
+          version=eo06e-analytics-product-probe-draft
+          shopify app versions list --json > "$RUNNER_TEMP/shopify-versions-before.json"
+          if grep -Fq "$version" "$RUNNER_TEMP/shopify-versions-before.json"; then
+            echo 'The named draft already exists. Stopping without creating another version.'
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/shopify-versions-before.json"
+          shopify app deploy --no-release --no-color --version "$version" --source-control-url "$COMMIT_URL"
+          shopify app versions list --json > "$RUNNER_TEMP/shopify-versions-after.json"
+          cat "$RUNNER_TEMP/shopify-versions-after.json"
+          grep -Fq "$version" "$RUNNER_TEMP/shopify-versions-after.json"

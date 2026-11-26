@@ -1286,7 +1286,7 @@
       "supabase/migrations/20261125153035_eo06d_google_daily_report_replacement.sql": "3b662a06f96f7045643b520756bab0a99e9e66782123a983b8e765174d8bb2ca",
       ".github/workflows/database-integrity.yml": "7b41c78eef7940aef01da4ff9ff858b1b046b1bbd647a7a98e76c203d7a8a2d5",
       ".github/workflows/repository-governance.yml": "d0c6feecc08f145588c72fac541040ca2e14949af7785961e5df27c01628b852",
-      ".github/workflows/shopify-app-deploy.yml": "ef078addb630fdb624189c0f12625524a7e3dcaf708f2059f95e7a2884cf5d24",
+      ".github/workflows/shopify-app-deploy.yml": "71c2390e6c108f097fca1e28426231e2c6c4d51f0ad7bea9fb6bd2143201491d",
       "AGENTS.md": "01ef3b2e4fd58cb77b30b030a87562b0436986e200bc342f77f929b34eb19d51",
       "app/components/order-access-removal.tsx": "2c2159052c700ef8c9722e159af64f929a573481662f3fe31fd1e05054d68d7b",
       "app/components/permission-explanation.tsx": "1ef63742562171225389b0958492f9daea51d9a062b1eefe24e008d27387ad66",
@@ -6031,6 +6031,43 @@
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "docs/EXECUTION_PLAN.md",
         "tests/a6-docs-01-turkish-standardization.test.js"
+      ]
+    },
+    {
+      "id": "eo06e-shopify-ecosystem-role-event-draft-2026-11-26",
+      "date": "2026-11-26",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat: Firat replied Onayliyorum Codex to preparing one unpublished Shopify draft with a separate EcoSystem event after Shopify rejected metric removal from the existing event."
+      },
+      "rationale": "Prepare branch-only Shopify draft definition. Preserve the released rehearsal event and all its metrics. Add a separate custom event with Contribution Roles and two metrics. The separately authorized draft execution does not release the version, send events, or change runtime and data access.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "Both constitution guards and existing repository governance",
+        "Exact comparison of the previous event and metric declarations, plus the separate new event schema",
+        "Single no-release draft execution and Shopify version readback"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-26",
+      "official_sources": [
+        "https://shopify.dev/docs/apps/build/app-events/analytics/toml-configuration",
+        "https://shopify.dev/docs/api/shopify-cli/app/app-deploy#no-release"
+      ],
+      "changed_paths": [
+        ".github/workflows/shopify-app-deploy.yml",
+        "contracts/oauth/oauth-flow-constitution-v1.json"
       ]
     }
   ],

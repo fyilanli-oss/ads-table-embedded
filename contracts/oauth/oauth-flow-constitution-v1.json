@@ -1278,6 +1278,7 @@
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json"
     ],
     "sha256": {
+      "tools/eo06e-compare-reread-proof.mjs": "b3b51866f6e12516173900be2d11ac0b297d3301e03772d1395d28f475911c5b",
       "supabase/migrations/20261125201832_eo06d_klaviyo_verified_empty_reread.sql": "299770fd1f0413c197292a1dcf85ff5feb07323104e64b99409affb27b4c4a6f",
       "supabase/migrations/20261125185757_eo06d_klaviyo_multipart_revision.sql": "9fdff139710505b6de7d29a1854f8bad9258652eb9c44c6693cc406f94d91e7b",
       "supabase/migrations/20261125180106_eo06d_meta_packaged_report_reconciliation.sql": "a6c6d52d2a608285cdb36fd072ccf6eaef4e9b76142bd602bfaf2ec1013b8af2",
@@ -1599,12 +1600,12 @@
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "0e33574e3cafb5309452214236344280171e2654414f2efab620d6fc6447c4e4",
+      "contracts/a6-eo-implementation-master-v1.json": "0279878fbb6474ca35ce1b90a849cb2ab2d83f438332958f0f239b21d340ddb7",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "3ab6769a481774d3e9c2b693d39cb86d42646182ea3e7f1badc4e4fa90612f2b",
+      "docs/EXECUTION_PLAN.md": "a75a08958b33273906dd79cc68a9ff778d302711ea276c35ae34fc43e0df909b",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
@@ -1778,7 +1779,7 @@
       "tools/eo05-final-synthetic-candidate.mjs": "f39563923c239b9d47f6ccba810ffddd544d434b8f416373cb94e92a7dd8343c",
       "tools/eo05-four-phase-diagnostics.mjs": "24acabcb3522760059189f769f33172ae598940d1a8dbc77aa46d951af3604d8",
       "tools/eo05-google-acceptance-probe.mjs": "6895c9f7f2180de717b27e2c86572cfcd79967bb7b84c0b0f1c450ffcf372797",
-      "tools/eo05-google-daily-packages-probe.mjs": "056f0ff764445590387556e6b2c60b6bad1463b53da1ff0c279ae0eff889cee7",
+      "tools/eo05-google-daily-packages-probe.mjs": "ce81c8bea0c04bc49f3f18274d509dca7c0b116037140427b841cdb2f71a8441",
       "tools/eo05-google-daily-timing-probe.mjs": "2d88d83e783665c4f9ca76bc4ada360e623fc5000c8566a4dacc167507b4add7",
       "tools/eo05-google-hosted-benchmark.mjs": "2724b75f248a74a447108afb0a35b804be8c13bee98f1da3ba43b8bd26fbd77e",
       "tools/eo05-google-identity-renewal-probe.mjs": "2f429c983600225ccdc9cadeede2611de9d48522dc575d5cb583b324b6f07fd1",
@@ -1790,7 +1791,7 @@
       "tools/eo05-google-source-role-probe.mjs": "fba96de648dd50a099dae4cdfd1e17807e5eb250cbc139d967a3f6e96b8ad19a",
       "tools/eo05-identity-authority-snapshot-probe.mjs": "0136e8dc5a5720b78d1cb4dca081f19e8b473812b6d66129b94f64fd5edf672c",
       "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
-      "tools/eo05-klaviyo-daily-timing-probe.mjs": "e9737135dbf9135e37509e349f43c49c610420c44ff573208cb93024649bffe0",
+      "tools/eo05-klaviyo-daily-timing-probe.mjs": "5c11bad4f5973bcb77d1fe450ef4c79aeb6ff2582dd34f6da27f32ebef5f2ad0",
       "tools/eo05-klaviyo-hosted-benchmark.mjs": "1a21a53113d2a87cebc4426d3d8ef5f99b9e746a399ab088dc48381766e77dd9",
       "tools/eo05-klaviyo-raw-datasets-probe.mjs": "e7d504cd848ad8380575fa8a9dd6755fc95354d9a208db4d7f1a40693cc50888",
       "tools/eo05-klaviyo-source-capture-probe.mjs": "c9b9f604a72611fb0f39a8e6a178dadd72fcc6ee2f340a4396d0d6058bbaf5ab",
@@ -5910,6 +5911,51 @@
         "contracts/a6-eo-implementation-master-v1.json",
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "docs/EXECUTION_PLAN.md"
+      ]
+    },
+    {
+      "id": "eo06e-isolated-reread-compare-proof-2026-11-26",
+      "date": "2026-11-26",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat: Firat replied 'Onaylıyorum devam edelim Codex' to the proposed isolated EO-06-E Compare proof for the first report, rejected reread, verified second publication and verified empty day, following the approved EO-06-E plan record."
+      },
+      "rationale": "Exercise the existing Compare handler and SQL after isolated Dataset publications and link the evidence at step 26. Only the synthetic probes and acceptance records change.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "tools/eo05-klaviyo-daily-timing-probe.mjs",
+        "tools/eo05-google-daily-packages-probe.mjs",
+        "tests/eo-06b-compare-calendar.test.js",
+        "tests/eo-06c-compare-api.test.js",
+        "tests/sales-role-prewrite.test.js",
+        "tests/google-daily-timing-probe.test.js"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-26",
+      "official_sources": [
+        "https://www.postgresql.org/docs/17/tutorial-transactions.html",
+        "https://supabase.com/docs/guides/database/functions",
+        "https://shopify.dev/docs/apps/build/authentication-authorization/id-tokens"
+      ],
+      "changed_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "tools/eo05-google-daily-packages-probe.mjs",
+        "tools/eo05-klaviyo-daily-timing-probe.mjs",
+        "tools/eo06e-compare-reread-proof.mjs"
       ]
     }
   ],

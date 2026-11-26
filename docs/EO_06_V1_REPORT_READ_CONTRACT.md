@@ -140,3 +140,9 @@ SINCE ORIGINAL_DAY UNTIL today
 ```
 
 Teknik belgeler 26 Kasım 2026'da kontrol edildi. [Olay şeması](https://shopify.dev/docs/apps/build/app-events/analytics/toml-configuration) · [Gönderim ve 24 saatlik tekrar koruması](https://shopify.dev/docs/api/app-events/latest) · [ShopifyQL rapor sorgusu](https://shopify.dev/docs/apps/build/app-events/analytics#step-4-query-the-activity) · [Yayımlanmamış sürüm](https://shopify.dev/docs/api/shopify-cli/app/app-deploy#no-release)
+
+### İlk olay için tek seferlik gönderim
+
+[İlk gönderim betiği](evidence/eo06-shopify-analytics-probe/send-initial.mjs) ürün sahibinin onayladığı bir adet ve 100 TL sentetik olayı içerir. Vercel'de mevcut AdsTable Production ortam değişkenleriyle, alan adı bağlanmadan oluşturulan tek seferlik build içinde çalışması hedeflenir. Betik uygulamanın build komutuna veya bir web rotasına bağlı değildir. [Vercel alan adı atlaması](https://vercel.com/docs/cli/deploy#skip-domain)
+
+Test mağazası kimliği [kurulum kabul kaydından](evidence/EO_02C_LIVE_ACCEPTANCE_2026-10-08.json) doğrulanır. Çalışma için aynı kimlik `ADSTABLE_ANALYTICS_TEST_SHOP_GID`, doğrulanmış mağaza saat dilimi `ADSTABLE_ANALYTICS_TEST_SHOP_TIME_ZONE` ve en çok bir saat sonraki bitiş anı `ADSTABLE_ANALYTICS_PROBE_EXPIRES_AT` adıyla verilir. Bunlar build'e özgü girdilerdir. Betik ilk hata veya belirsizlikte durur. İkinci olay ve tekrar provası bu çalışmaya bağlı değildir.

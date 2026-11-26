@@ -1,4 +1,20 @@
 {
+  "eo06bc_v1_report_read_contract_2026_11_26": {
+    "packages": ["A6-EO-06-B", "A6-EO-06-C"],
+    "status": "read_contract_prepared_api_implementation_open",
+    "reviewed_main": "a29dc42606c02d23599166431c075197c076550f",
+    "document": "docs/EO_06_V1_REPORT_READ_CONTRACT.md",
+    "extends": "eo06bc_v1_report_coverage_review_2026_11_26",
+    "measures": {"sales": "analytics.cpd_product_sales_facts.sales_value", "purchase": "analytics.cpd_product_sales_facts.sales_quantity", "arithmetic": "exact_decimal"},
+    "dimensions": ["product", "channel", "campaign", "platform"],
+    "time_groups": ["selected_range", "daily", "weekly_monday", "monthly", "quarterly"],
+    "compare": {"surface": "EcoSystem", "equal_inclusive_days": true, "custom_ranges_must_not_overlap": true},
+    "shared_totals": ["Dashboard", "EcoSystem"],
+    "metadata_policy": "Use trusted same-scope Dataset labels where observed. Product title and SKU stay null without a verified product-level source.",
+    "relationship_policy": {"product_pair": "two verified Shopify Product IDs in the same sale fact", "positive_placement": "verified same-platform account and report-day Product/channel observation", "missing_placement_does_not_prove_absence": true, "ambiguous_destination_does_not_duplicate_value": true},
+    "open": ["API implementation and acceptance", "Indirect display-role decision", "complete placement coverage for Non Advertised Products", "Meta native product sales", "EO-06-D freshness", "native shop acceptance"],
+    "runtime_or_live_change_authorized": false
+  },
   "eo06bc_v1_report_coverage_review_2026_11_26": {
     "packages": ["A6-EO-06-B", "A6-EO-06-C"],
     "main_reviewed": "0598808c89ceff7fd538371301afd95c0dc03a43",

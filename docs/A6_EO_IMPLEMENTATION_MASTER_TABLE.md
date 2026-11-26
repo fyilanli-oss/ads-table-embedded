@@ -214,7 +214,7 @@ Bu kanıt API işleyicisinden izole veritabanına kadar olan zinciri kapsar. Ger
 
 | İş | Kalan kontrol |
 |---|---|
-| **İlk sırada · EO-06-B/C · V1 rapor kapsamı** | Okuma incelemesi tamamlandı. Aşağıdaki tabloda doğrulanan boşluklar için V1 okuma sözleşmesini netleştir. Görsel uygulama EO-07'de izlenir. |
+| **İlk sırada · EO-06-B/C · V1 rapor kapsamı** | [V1 okuma sözleşmesi](EO_06_V1_REPORT_READ_CONTRACT.md) kaynak eşlemesini ve kabul örneklerini kaydeder. Sırada ortak okumanın mevcut Compare API'ye bağlanması ve örneklerle doğrulanması var. Meta satış kanıtı, eksiksiz yerleşim kanıtı ve V37 Indirect etiketinin rol karşılığı açık. Görsel uygulama EO-07'de izlenir. |
 | **EO-06-D · Güncellik** | Compare yanıtında ayrı güncellik alanı henüz yok. V1'de “son doğrulanan gün” bilgisinin API'de gerekip gerekmediğini belirle. Gösterilecekse geçerli rapor makbuzu ve tamamlanan iş emrine bağla. Gecikme eşiği için beklenen gün ve çalışma takvimi gerekir. |
 
 KPI, metrik formülleri ve maliyet dağıtımı V1 kapsam kararına göre ertelendi. Kesin Overlap 24. adımda ayrı açık kalır. [Revize plan](plans/EO_05_06_REVISED_PLAN_2026_10_27.md#eo-05-26-adımlık-çalışma-ve-açık-kabul-maddeleri) · [Makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo06e_isolated_compare_and_sales_role_acceptance_2026_11_26)

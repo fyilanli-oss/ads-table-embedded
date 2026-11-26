@@ -797,7 +797,7 @@
       "contracts/a6-eo-f5-product-route-map-v1.json": "cfae8b77fa44f27978db120865852ece9d3ea03cfc83600f7576e71f9d34067b",
       "contracts/a6-eo-f6-effort-risk-comparison-v1.json": "94ead4504333f50bd1379e3f13e4fa68c5f19bf256c5e4006033fa73dc3e9f3e",
       "contracts/a6-eo-f7-go-decision-v1.json": "c3ed10cfca08ebeab27ebd63c17be60e912b36904accce0e2e38ae174f0d4aa9",
-      "contracts/a6-eo-implementation-master-v1.json": "fd82b727d5763f6fedcf9240188a0a3629b0890c9ab7ab4ca5036d91c9cf1e02",
+      "contracts/a6-eo-implementation-master-v1.json": "05a5ed0601530382cc5608f33507338d775d1bd5bb450b32272c491fac042ba3",
       "contracts/a6-eo-secret-inventory-recovery-v1.json": "e8a3e0cc74b446507a3e8f79a9338eee28b3cea7e2ccfd5737d77be182ce7299",
       "contracts/a6-ops-local-01-safe-cleanup-v1.json": "30a77abdc5a4ed9bc92bfac8d4c14ac3e96ed2432eecf2110dc227747ea43e83",
       "contracts/a6-ops-shopify-01-isolated-preproduction-v1.json": "a6f76b340227c6bbce22e4c59959e8e8247e99204e8da773f2a55c3282f42e06",
@@ -876,14 +876,14 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "325da96ae5f4f320f06a0abd5545fd2032297cafc57c844d0cf5864cae661752",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "c0773345058fee13bd858fa2f7eeebb0cc710fd80046fc2dda801a2e4fe3db4c",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "214f83e3ffa25bc67bc6bc1a13f7d0ebc4d22644ba55e3e80e02b1f9ab3fb347",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
       "contracts/shopify/a6-eo-07-three-surface-ui-product-freeze-v1.json": "015e7946219fb40669514e965681358e1d32b53781447197f9493b47191ddcb1",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "contracts/shopify/shopify-progressive-permissions-release-candidate-v1.json": "204cc1deb525bc47cb14d769d30701cd716fe0db1a56b11be2d083314477adc7",
-      "docs/EXECUTION_PLAN.md": "868055f13d5a6d9bf077a13c5f30374b5b26d8c4df5be967c46f9f87227d5e5f",
+      "docs/EXECUTION_PLAN.md": "6fb55439e7fb4b0fed28d950da7897cae2df7a04a8613f43c27237170a7a72fa",
       "docs/RAW_SOURCE_CONSTITUTION.md": "8cb806f28d8b4c2ffa39c9d08ba9ff0b210af28fd726d28d3376966b79cf1422",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
       "patches/@react-router__fs-routes@7.18.2.patch": "8db744b341f8258e57f41105d65d493974e6ba6253608c0bba031d46751437f5",
@@ -999,7 +999,7 @@
       "supabase/migrations/20261122142447_eo05_klaviyo_daily_purchase_scope.sql": "d569d2797913113cf6d374c70e61e0bb3064adee1adc80ba06705418b019d28a",
       "supabase/migrations/20261125093522_eo06b_report_sales_compare.sql": "6e2a8ce0398b1926e5d324cf2771bf25f6aba43c979901f68a24731b24c4ea01",
       "tests/a6-docs-01-text-integrity.test.js": "7fc1daa89371488ea5c1a74ed9eae65b0de5d6b4bfa08887dc5a62ffc3357d24",
-      "tests/a6-docs-01-turkish-standardization.test.js": "94dfc2dc17b85bb8b90c2946f1bd31df0ed5eab5c75b357e6ff77eac4b656f51",
+      "tests/a6-docs-01-turkish-standardization.test.js": "004d8e93e79d0b0d9896c180e1fb4a7c34c7229fc6c88229ba16ded74f1f3a0a",
       "tests/a6-eo-07-funnel-visualization-reference.test.js": "9b049ced97ee895f82c44338b3c13389d4d4c99dbf998402a9963e009d496c0b",
       "tests/a6-eo-07-three-surface-ui-product-freeze.test.js": "07b4e29380c0d7dcc3e456e6b8b934d8f68778f93f2f4b53276381479c427945",
       "tests/a6-eo-cross-cutting-safety-capacity.test.js": "f2482db931736d2ab6aa1c15f06de4da79a2d23cb096cb41659caa16a89686b7",
@@ -4124,6 +4124,45 @@
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "contracts/raw-source/raw-source-constitution-v1.json",
         "docs/EXECUTION_PLAN.md"
+      ]
+    },
+    {
+      "id": "eo06bc-v1-report-read-contract-2026-11-26",
+      "date": "2026-11-26",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat: Firat replied 'Tamam bu konu çok öenmli onaylıyorum devam edelim' to the proposed common V1 report read contract grounded in existing Dataset sources, following the approval request for PR #407."
+      },
+      "rationale": "Document the shared Dashboard and EcoSystem V1 read semantics, evidence boundaries and acceptance cases and register the new document in the existing inventory test. No protected runtime behavior changes.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "node --test tests/eo-06b-compare-calendar.test.js tests/eo-06c-compare-api.test.js tests/sales-role-prewrite.test.js tests/a6-docs-01-turkish-standardization.test.js",
+        "Dataset schema review and seven documented acceptance cases for future implementation"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-26",
+      "official_sources": [
+        "https://www.postgresql.org/docs/17/datatype-numeric.html",
+        "https://www.postgresql.org/docs/17/functions-datetime.html"
+      ],
+      "changed_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "tests/a6-docs-01-turkish-standardization.test.js"
       ]
     }
   ],

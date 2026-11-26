@@ -180,3 +180,5 @@ SINCE 2026-11-19 UNTIL 2026-11-19
 ```
 
 Prova iki ayrıntı satırının ve aynı satış sütunundaki 50 TL ile 80 TL'nin göründüğünü, A'nın satışına ait grup toplamının 50 TL olduğunu ve 130 TL'nin A'nın satış toplamı olarak gösterilmediğini kontrol eder. Contribution From/To ayrımı mağaza sahibi için açık olmalı. Bu sorguda yön, reklamı yapılan ve satılan ürün sütunlarından anlaşılır. Shopify'ın arayüzünde ayrıca yön etiketleri veya tek ve ayrı bir A satış toplamı gerekirse o ihtiyaç açık kalır. Grafik bu provanın dışında kalır.
+
+26 Kasım 2026. Ürün sahibi AdsTable Development'a tek C → A olayı ve alan adı atanmayan tek Vercel build'i için onay verdi. [Gönderim betiği](evidence/eo06-shopify-analytics-probe/send-contribution.mjs) 19 Kasım için 1 adet ve 5.000 kuruş gönderdi. [Build kaydı](https://vercel.com/firats-projects-d22284db/ads-table-embedded/8P5vc9Ae4YdK7c7tZBVwKtWjfqin) Shopify'dan `202` ve `success: true` alındığını doğruladı. `embedded.adstable.app` aynı dağıtıma bağlı kaldı. Shopify Analizler'de satırların ve grup toplamının görsel kabulü bekleniyor.

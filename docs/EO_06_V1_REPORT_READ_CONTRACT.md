@@ -195,3 +195,18 @@ Prova iki ayrıntı satırının ve aynı satış sütunundaki 50 TL ile 80 TL'n
 | A → B | A | 0 TL | 80 TL |
 
 Kabul için iki metrik Shopify rapor düzenleyicisinde ayrı ayrı seçilebilmeli ve A için sırasıyla 50 TL ve 80 TL göstermeli. A'nın satış toplamı, kendi satışları ve Contribution From üzerinden ayrıca doğrulanır. Mevcut prova verisi yeni alanları taşımadığı için bu iki metriği kanıtlamak ancak yeni prova kayıtlarıyla mümkün olur. Bu kayıt tasarımdır. Shopify uygulama ayarları ve yayın için ayrı onay gerekir.
+
+### Yeni metriklerin Shopify provası
+
+26 Kasım 2026. Ürün sahibi [Shopify sürümünü](https://dev.shopify.com/dashboard/239318688/apps/432251994113/versions/1268126810113) etkinleştirdi ve iki metriği rapora ekleyerek ikisinin de sütun olarak seçilebildiğini doğruladı. Ardından AdsTable Development için iki sentetik kayıt gönderimini ve alan adı atanmayan tek Vercel build'ini onayladı. [Prova betiği](evidence/eo06-shopify-analytics-probe/send-directional-metrics.mjs) her iki yönü ayrı olay olarak gönderdi. [Build kaydı](https://vercel.com/firats-projects-d22284db/ads-table-embedded/94FBZdj21wLvQwcnYNFuBP7Ezxpt) her iki olay için `202` ve `success: true` sonucunu doğruladı. Aktif uygulama alan adı aynı dağıtıma bağlı kaldı. Değerlerin Shopify Analizler ekranında doğrulanması bekleniyor.
+
+```sql
+FROM app_events
+SHOW event."adstable-1".ecosystem_sale_probe.contribution_from,
+  event."adstable-1".ecosystem_sale_probe.contribution_to
+WHERE event."adstable-1".ecosystem_sale_probe.probe_run = 'eo06e-development-contribution-metrics-v1'
+  AND event."adstable-1".ecosystem_sale_probe.focus_product = 'A'
+GROUP BY event."adstable-1".ecosystem_sale_probe.advertised_product,
+  event."adstable-1".ecosystem_sale_probe.sold_product WITH TOTALS
+SINCE 2026-11-19 UNTIL 2026-11-19
+```

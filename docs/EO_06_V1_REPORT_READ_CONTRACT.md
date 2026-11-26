@@ -182,3 +182,16 @@ SINCE 2026-11-19 UNTIL 2026-11-19
 Prova iki ayrıntı satırının ve aynı satış sütunundaki 50 TL ile 80 TL'nin göründüğünü, A'nın satışına ait grup toplamının 50 TL olduğunu ve 130 TL'nin A'nın satış toplamı olarak gösterilmediğini kontrol eder. Contribution From/To ayrımı mağaza sahibi için açık olmalı. Bu sorguda yön, reklamı yapılan ve satılan ürün sütunlarından anlaşılır. Shopify'ın arayüzünde ayrıca yön etiketleri veya tek ve ayrı bir A satış toplamı gerekirse o ihtiyaç açık kalır. Grafik bu provanın dışında kalır.
 
 26 Kasım 2026. Ürün sahibi AdsTable Development'a tek C → A olayı ve alan adı atanmayan tek Vercel build'i için onay verdi. [Gönderim betiği](evidence/eo06-shopify-analytics-probe/send-contribution.mjs) 19 Kasım için 1 adet ve 5.000 kuruş gönderdi. [Build kaydı](https://vercel.com/firats-projects-d22284db/ads-table-embedded/8P5vc9Ae4YdK7c7tZBVwKtWjfqin) Shopify'dan `202` ve `success: true` alındığını doğruladı. `embedded.adstable.app` aynı dağıtıma bağlı kaldı. Shopify Analizler'de satırların ve grup toplamının görsel kabulü bekleniyor.
+
+### Önce Contribution From ve Contribution To metrikleri
+
+26 Kasım 2026. Ürün sahibinin ekranında A → B 80 TL ve C → A 50 TL aynı satış sütununda görünür. Shopify genel toplamı 130 TL gösterir. A için 50 TL'lik satış toplamı bu ekranda doğrulanmadı. Ürün sahibi bir sonraki iş olarak iki metriğin Shopify Analizler'e eklenmesini belirledi.
+
+İlk prova A ürününe odaklanır. `Contribution From` başka bir ürünün reklamından A'ya gelen satış tutarını, `Contribution To` A'nın reklamından başka bir ürüne giden satış tutarını gösterir. Shopify'ın belgelenen özel metrik tanımı, her `sum` metriğini tek bir sayısal olay alanına bağlar. Aynı satış alanını iki adla tanımlamak iki yönü ayırmaz. Taslak iki ayrı tutar alanını ve prova için odak ürün kimliğini kullanır. [Shopify özel metrik tanımı](https://shopify.dev/docs/apps/build/app-events/analytics/toml-configuration#custom-metrics)
+
+| Reklamı yapılan → Satılan | Odak | Contribution From | Contribution To |
+| --- | --- | ---: | ---: |
+| C → A | A | 50 TL | 0 TL |
+| A → B | A | 0 TL | 80 TL |
+
+Kabul için iki metrik Shopify rapor düzenleyicisinde ayrı ayrı seçilebilmeli ve A için sırasıyla 50 TL ve 80 TL göstermeli. A'nın satış toplamı, kendi satışları ve Contribution From üzerinden ayrıca doğrulanır. Mevcut prova verisi yeni alanları taşımadığı için bu iki metriği kanıtlamak ancak yeni prova kayıtlarıyla mümkün olur. Bu kayıt tasarımdır. Shopify uygulama ayarları ve yayın için ayrı onay gerekir.

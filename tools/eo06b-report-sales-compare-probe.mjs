@@ -108,9 +108,29 @@ try {
       (9, '${a}', 1, '2026-10-02', 'account-1','campaign-1','channel-1',10,20,1,99,'complete',102),
       (10,'${b}', 2, '2026-10-02', 'account-1','campaign-1','channel-1',10,10,1,99,'complete',100)
     ) v(id, workspace, installation, day, account, campaign, channel, advertised, sold, quantity, amount, completeness, batch);
+    alter table analytics.cpd_product_sales_facts add column provider_connection_id uuid,
+      add column campaign_type text, add column target_currency text, add column fx_state text,
+      add column fx_rate_id bigint, add column reporting_scope jsonb;
+    update analytics.cpd_product_sales_facts set provider_connection_id = '${a}', campaign_type = 'SHOPPING',
+      reporting_scope = '{"time_basis":"native_query_business_date","conversion_scope":"normal","units":"native_count_and_source_currency"}';
+    create table app.workspace_settings (workspace_id uuid, installation_id bigint, installation_generation bigint, reporting_currency text);
+    create table analytics.fx_rates (id bigint, source_currency text, target_currency text, fx_rate numeric);
+    create table analytics.pd_facts (workspace_id uuid, installation_id bigint, installation_generation bigint,
+      provider_connection_id uuid, platform text, platform_account_id text, business_date date, source_timezone text,
+      root_entity_type text, root_entity_id text, root_entity_name text, entity_type text, entity_id text, entity_name text,
+      source_batch_id bigint, retain_until timestamptz);
+    create table analytics.cpd_product_performance_facts (workspace_id uuid, installation_id bigint, installation_generation bigint,
+      provider_connection_id uuid, platform text, platform_account_id text, business_date date, source_timezone text,
+      root_entity_type text, root_entity_id text, channel_type text, channel_id text, channel_resolution text,
+      source_batch_id bigint, retain_until timestamptz, product_mapping_id bigint, reporting_scope jsonb);
+    insert into analytics.pd_facts values ('${a}',1,1,'${a}','google_ads','account-1','2026-10-02','Europe/Istanbul',
+      'campaign','campaign-1','Campaign','ad_group','channel-1','Verified channel',100,'2099-01-01');
+    insert into analytics.cpd_product_performance_facts values ('${a}',1,1,'${a}','google_ads','account-1','2026-10-02','Europe/Istanbul',
+      'campaign','campaign-1','ad_group','channel-1','verified',100,'2099-01-01',20,'{"time_basis":"native_query_business_date"}');
     reset role;
   `);
   await db.exec(await readFile(new URL("../supabase/migrations/20261125093522_eo06b_report_sales_compare.sql", import.meta.url), "utf8"));
+  await db.exec(await readFile(new URL("../supabase/migrations/20261126083358_eo06bc_v1_report_read.sql", import.meta.url), "utf8"));
   await db.exec("set role adstable_runtime");
   const {rows} = await db.query(call, args);
   assert.deepEqual(rows.map(row => [row.period, row.day_offset, row.advertised_product_id, row.sold_product_id,
@@ -150,6 +170,25 @@ try {
   assert.equal(suppliedScope.status, 400);
   assert.deepEqual(await suppliedScope.json(), {code: "COMPARE_REQUEST_INVALID"});
 
+  const reportArgs = {grain: "channel", bucket: "daily"};
+  const reportA = await compareFromFixture(shopA, reportArgs);
+  const reportDataA = await reportA.json();
+  assert.equal(reportA.status, 200, JSON.stringify(reportDataA));
+  assert.equal(reportDataA.primary.groups[0].channelName, "Verified channel");
+  assert.deepEqual(reportDataA.primary.channelLinks.map(link => [link.category, link.advertisedProductId, link.soldProductId]),
+    [["Same Channel", product1, product2]]);
+  assert.equal(reportDataA.primary.scopes[0].sales.value, "36.75");
+  const reportB = await compareFromFixture(shopB, reportArgs);
+  const reportDataB = await reportB.json();
+  assert.equal(reportB.status, 200, JSON.stringify(reportDataB));
+  assert.equal(reportDataB.primary.scopes[0].sales.value, "99");
+  assert.equal(reportDataB.primary.groups[0].channelName, null);
+  assert.deepEqual(reportDataB.primary.channelLinks, []);
+  const v1Call = "select * from analytics.read_v1_report_sales($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)";
+  const v1Args = Object.assign([...args], {8: ["google_ads"], 12: [product1, product2]});
+  assert.equal((await db.query(v1Call, v1Args)).rows.length, 4);
+  await assert.rejects(db.query(v1Call, Object.assign([...v1Args], {1: 2})), /REPORT_COMPARE_SCOPE_UNAVAILABLE/);
+
   const withChanges = (changes) => Object.assign([...args], changes);
   assert.equal((await db.query(call, withChanges({6: null, 7: null}))).rows.length, 2);
   const overlapping = await db.query(call, withChanges({6: "2026-10-01", 7: "2026-10-07"}));
@@ -169,9 +208,11 @@ try {
   for (const role of deniedRoles) {
     await db.exec(`reset role; set role ${role}`);
     await assert.rejects(db.query(call, args), /permission denied/);
+    await assert.rejects(db.query(v1Call, v1Args), /permission denied/);
   }
   await db.exec(`reset role; insert into privacy.deletion_runs values ('${a}', 1, 'pending'); set role adstable_runtime`);
   await assert.rejects(db.query(call, args), /REPORT_COMPARE_SCOPE_UNAVAILABLE/);
+  await assert.rejects(db.query(v1Call, v1Args), /REPORT_COMPARE_SCOPE_UNAVAILABLE/);
   const version = (await db.query("show server_version")).rows[0].server_version;
   console.log(`Compare API and SQL probe passed on PostgreSQL ${version} (${hasRefreshRunner ? "with" : "without"} refresh runner): two shops, equal periods, filters, absent days, real zero, partial values, and role isolation.`);
 } finally {

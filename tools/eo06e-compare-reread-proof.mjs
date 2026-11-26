@@ -3,12 +3,16 @@ import {handleCompareRequest} from "../app/lib/reporting/compare-request.server.
 
 // The caller keeps the fixture and both report publications inside its
 // rollback-only transaction. Exercise the real API handler with its SQL role.
-export async function readCompareRereadDay(client,owner,day) {
+export async function readCompareRereadDay(client,owner,day,{grouped = false} = {}) {
   assert.equal(client.connectionParameters.host,"127.0.0.1");
   assert.equal(Number(client.connectionParameters.port),54322);
   const url=new URL("https://compare.example/api/reports/compare");
   url.search=new URLSearchParams({view:"daily",startDate:day,endDate:day,
     platform:owner.provider,account:owner.accountId});
+  if (grouped) {
+    url.searchParams.set("grain","platform");
+    url.searchParams.set("bucket","daily");
+  }
   const authenticateAdmin=async()=>({
     sessionToken:{dest:`https://${owner.shopDomain}`},
     admin:{graphql:async()=>Response.json({data:{shop:{id:owner.shopId,myshopifyDomain:owner.shopDomain}}})},
@@ -23,10 +27,11 @@ export async function readCompareRereadDay(client,owner,day) {
     const body=await response.json();
     assert.equal(response.status,200,body.code);
     assert.equal(response.headers.get("cache-control"),"no-store");
-    assert.equal(body.version,"compare-v1");
+    assert.equal(body.version,grouped ? "report-v1" : "compare-v1");
     assert.equal(body.primary.startDate,day);
     assert.equal(body.primary.endDate,day);
     assert.equal(body.comparison,null);
+    if (grouped) return body.primary;
     assert.ok(body.primary.rows.every(row=>row.date===day&&row.platform===owner.provider&&row.accountId===owner.accountId));
     return body.primary.rows;
   } finally {

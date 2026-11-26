@@ -46,3 +46,11 @@ Mevcut okuma, mağaza ve kurulum neslini sunucuda belirler. Aktif kurulum, gizli
 | Ana aralık 1–7 Ekim, özel kıyas 4–10 Ekim. | İstek reddedilir. 24–30 Eylül aynı gün adediyle geçerli önceki dönemdir. |
 
 Son doğrulanan gün bilgisi EO-06-D'de makbuza dayalı ayrı karar olarak açık. KPI, ROAS, maliyet dağıtımı ve kesin sipariş Overlap'i bu rapor okumasının kapsamı dışındadır. Teknik referanslar 26 Kasım 2026'da kontrol edildi. [PostgreSQL ondalık türleri](https://www.postgresql.org/docs/17/datatype-numeric.html) · [PostgreSQL takvim işlemleri](https://www.postgresql.org/docs/17/functions-datetime.html)
+
+## API bağlantısı
+
+`GET /api/reports/compare?grain=product&bucket=daily&startDate=2026-10-01&endDate=2026-10-07` ortak okuma modunu seçer. `platform` ve `product` parametreleri çoklu seçim için tekrar edebilir. İsteğe bağlı `role` mevcut Dataset rol adlarından birini seçer. `mode` ve özel aralık parametreleri EcoSystem Compare için kullanılır.
+
+`report-v1` yanıtı her dönem için tarih sütunları (`buckets`), uyumlu raporlama kapsamları (`scopes`), görünüm grupları (`groups`), ürün bağlantıları (`productLinks`) ve kanıtlı kanal bağlantıları (`channelLinks`) döndürür. `salesByCurrency` native alt toplamları korur. `salesShare` ve `purchaseShare` tam bir toplam varsa 0–1 aralığında, en çok sekiz ondalık basamakla döner. Mutual bağı her iki yönü ayrı tuttuğu için iki yönün satış değeri birer kez toplanır. `grain` ve `bucket` olmadan çalışan mevcut `compare-v1` çağrıları aynı yanıt biçimini kullanır.
+
+Rapor okuması için ayrı hazırlık migration'ı gereklidir. Yeni sorgunun çalışması PR sonrası ayrı veritabanı uygulama ve yayın sırasına bağlıdır. [API](../app/lib/reporting/compare-request.server.js) · [Yeni sorgu](../supabase/migrations/20261126083358_eo06bc_v1_report_read.sql)

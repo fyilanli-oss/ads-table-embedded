@@ -78,8 +78,12 @@ async function verifyGoogleDailyReplacement(client,{owner,first,rpc,reject,day})
  const revisedCompare=await readCompare();
  assert.equal(revisedCompare.length,499);
  assert.ok(revisedCompare.every(row=>row.salesValue==="17.5"));
+ const v1Report = await readCompareRereadDay(client, owner, day, {grouped: true});
+ assert.equal(v1Report.groups.length, 1);
+ assert.deepEqual(v1Report.groups[0].salesByCurrency.map(metric => metric.value), ["8732.5"]);
  return {revision:2,rows:1000,packages:5,incompletePreservedPrevious:true,receipt:true,closed:true,
-  compareApi:{initialRows:499,rejectedRereadRows:499,revisedRows:499,initialSalesValue:"12.5",revisedSalesValue:"17.5"}};
+  compareApi:{initialRows:499,rejectedRereadRows:499,revisedRows:499,initialSalesValue:"12.5",revisedSalesValue:"17.5"},
+  v1Report:{groups:v1Report.groups.length,totalSales:v1Report.groups[0].salesByCurrency[0].value}};
 }
 
 async function verifyHistoricalQueue(client,{scope,day,reject}) {

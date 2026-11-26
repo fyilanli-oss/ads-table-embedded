@@ -796,7 +796,7 @@
       "contracts/a6-eo-f5-product-route-map-v1.json": "cfae8b77fa44f27978db120865852ece9d3ea03cfc83600f7576e71f9d34067b",
       "contracts/a6-eo-f6-effort-risk-comparison-v1.json": "94ead4504333f50bd1379e3f13e4fa68c5f19bf256c5e4006033fa73dc3e9f3e",
       "contracts/a6-eo-f7-go-decision-v1.json": "c3ed10cfca08ebeab27ebd63c17be60e912b36904accce0e2e38ae174f0d4aa9",
-      "contracts/a6-eo-implementation-master-v1.json": "26107c6f3840b8adab1e3920479b6eff3010fb4655698b0201c71aa33125dd7d",
+      "contracts/a6-eo-implementation-master-v1.json": "0e33574e3cafb5309452214236344280171e2654414f2efab620d6fc6447c4e4",
       "contracts/a6-eo-secret-inventory-recovery-v1.json": "e8a3e0cc74b446507a3e8f79a9338eee28b3cea7e2ccfd5737d77be182ce7299",
       "contracts/a6-ops-local-01-safe-cleanup-v1.json": "30a77abdc5a4ed9bc92bfac8d4c14ac3e96ed2432eecf2110dc227747ea43e83",
       "contracts/a6-ops-shopify-01-isolated-preproduction-v1.json": "a6f76b340227c6bbce22e4c59959e8e8247e99204e8da773f2a55c3282f42e06",
@@ -875,14 +875,14 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "325da96ae5f4f320f06a0abd5545fd2032297cafc57c844d0cf5864cae661752",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "4a0170db15f136387b3e5a926a5f4c678018e87fc6b898f0a6b0d8d0a8b7d383",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "004e05d41079f3e6a202c9feeb62e9e4d90973632c1f1009079c5cac4fd903ca",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
       "contracts/shopify/a6-eo-07-three-surface-ui-product-freeze-v1.json": "015e7946219fb40669514e965681358e1d32b53781447197f9493b47191ddcb1",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "contracts/shopify/shopify-progressive-permissions-release-candidate-v1.json": "204cc1deb525bc47cb14d769d30701cd716fe0db1a56b11be2d083314477adc7",
-      "docs/EXECUTION_PLAN.md": "b79da392eced0039a2e69d899c8b753ce96711d8a1769395a9be65f71a683364",
+      "docs/EXECUTION_PLAN.md": "3ab6769a481774d3e9c2b693d39cb86d42646182ea3e7f1badc4e4fa90612f2b",
       "docs/RAW_SOURCE_CONSTITUTION.md": "8cb806f28d8b4c2ffa39c9d08ba9ff0b210af28fd726d28d3376966b79cf1422",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
       "patches/@react-router__fs-routes@7.18.2.patch": "8db744b341f8258e57f41105d65d493974e6ba6253608c0bba031d46751437f5",
@@ -3998,6 +3998,47 @@
         "supabase/migrations/20261125201832_eo06d_klaviyo_verified_empty_reread.sql",
         "tests/dataset-reconciliation.test.js",
         "tools/eo05-klaviyo-daily-timing-probe.mjs"
+      ]
+    },
+    {
+      "id": "eo06e-isolated-acceptance-record-2026-11-26",
+      "date": "2026-11-26",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat: Firat approved running the two isolated EO-06-E checks, then asked 'Bu testlerin sonucunu plana işleyelim'."
+      },
+      "rationale": "Record the previously observed tenant isolation and sales counting test evidence and the remaining EO-06 acceptance scope in the existing plans.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "tests/eo-06b-compare-calendar.test.js",
+        "tests/eo-06c-compare-api.test.js",
+        "tests/sales-role-prewrite.test.js",
+        "tools/eo06b-report-sales-compare-probe.mjs passed with and without the refresh Dataset role"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-26",
+      "official_sources": [
+        "https://www.postgresql.org/docs/17/ddl-rowsecurity.html",
+        "https://supabase.com/docs/guides/database/postgres/row-level-security",
+        "https://shopify.dev/docs/apps/build/authentication-authorization/session-tokens"
+      ],
+      "changed_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md"
       ]
     }
   ],

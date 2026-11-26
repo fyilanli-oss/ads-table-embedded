@@ -1,4 +1,29 @@
 {
+  "eo06e_isolated_compare_and_sales_role_acceptance_2026_11_26": {
+    "package": "A6-EO-06-E",
+    "status": "isolated_compare_and_sales_role_checks_passed_package_acceptance_open",
+    "main_verified": "f17e5c19cbbe05ff92eef205e6e8dde51f7f7121",
+    "document": "docs/A6_EO_IMPLEMENTATION_MASTER_TABLE.md#eo-06-e-izole-rapor-ve-api-kabulü",
+    "ordered_steps": [20, 26],
+    "calendar_and_compare_api_tests_passed": 12,
+    "sales_role_tests_passed": 21,
+    "compare_database_probe": {
+      "path": "tools/eo06b-report-sales-compare-probe.mjs",
+      "postgres_version": "17.5",
+      "shopify_session_and_store": "synthetic",
+      "passed_configurations": ["with_refresh_dataset_runner", "without_refresh_dataset_runner"]
+    },
+    "verified": [
+      "two shops with identical request filters remain isolated",
+      "client-supplied workspace scope is rejected",
+      "duplicate native sales are not counted again and product quantity stays distinct from order count",
+      "missing, partial, absent and recorded zero observations stay distinct"
+    ],
+    "next_isolated_check": "Read the first publication, rejected reread and verified second publication through the Compare API in one rehearsal, including a verified empty revision.",
+    "other_open_v1_work": ["review V1 report query and API coverage", "decide and, if needed, specify receipt-backed freshness output"],
+    "native_acceptance_passed": false,
+    "runtime_or_live_change_authorized": false
+  },
   "eo06d_v1_historical_reread_2026_11_25": {
     "package": "A6-EO-06-D",
     "status": "owner_approved_policy_implementation_and_acceptance_pending",

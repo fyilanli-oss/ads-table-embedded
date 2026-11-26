@@ -6,6 +6,10 @@ EO-06, EO-07 ve EO-08 kabulünde [ana paket tablosundaki referanslar](A6_EO_IMPL
 
 [Sentetik prova ve mevcut kod kanıtı](plans/EO_05_06_REVISED_PLAN_2026_10_27.md#sentetik-prova-ve-mevcut-kod-kanıtı) aynı kayıtta yer alır. Shopify Orders okuma ve kaynak yazımı, Shopify Product ID eşlemesi ve günlük refresh ayrı kanıt satırlarıdır. İlgili işe dönerken mevcut kod ve sonuç önce bu kayıttan kontrol edilir.
 
+## EO-06-E — İzole rapor ve API kabul kaydı, 26 Kasım 2026
+
+Güncel `main` içeriği üzerinde 33 mevcut test ve PostgreSQL 17.5 üzerinde iki Compare provası geçti. Mağaza ayrımı, satış rolü ve veri durumları sonuçları [EO-06-E kabul kaydında](A6_EO_IMPLEMENTATION_MASTER_TABLE.md#eo-06-e-izole-rapor-ve-api-kabulü) yer alır ve revize planın 20 ve 26. adımlarına bağlanır. İlk açık teknik kontrol, doğrulanmış yedi günlük düzeltmenin Compare API'de göründüğünü aynı prova içinde kanıtlamaktır. Canlı mağaza kabulünün kaydı ayrıdır. [Makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo06e_isolated_compare_and_sales_role_acceptance_2026_11_26)
+
 ## EO-05 — Refresh kapanış güncellemesi ve EO-06 başlangıcı, 22 Kasım 2026
 
 Üç sağlayıcılı son sentetik prova ilk kuyruk taramasından üçüncü iş emrinin kapanışına **48,983 sn** sürdü. Google Ads 17, Klaviyo 11, Meta 12 istek yaptı. Sağlayıcı başına 1.000 Dataset satırı ve bir makbuz doğrulandı. Klaviyo'nun normal istek aralıkları açıktı. Canlı sağlayıcı yanıt süresi ve canlı kapasite bu provada ölçülmedi. [Prova kaydı](https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/45033065265/job/137248715698) · [Klaviyo PR #387](https://github.com/fyilanli-oss/ads-table-embedded/pull/387) · [Meta notu PR #386](https://github.com/fyilanli-oss/ads-table-embedded/pull/386)

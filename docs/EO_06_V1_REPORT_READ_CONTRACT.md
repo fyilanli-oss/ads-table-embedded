@@ -151,4 +151,8 @@ Test mağazası kimliği [kurulum kabul kaydından](evidence/EO_02C_LIVE_ACCEPTA
 
 İlk olay [tek seferlik build kaydına](https://vercel.com/firats-projects-d22284db/ads-table-embedded/GwqfPaymjXcpspvEdzD2h3hDTgxR) göre yalnız AdsTable Development'a gönderildi. Ürün sahibinin mobil kanıtında Shopify Analizler, 19 Kasım 2026 için `campaign-test-1` ve A → B satırını gösterdi. Satır ve genel toplam 1 adet ve 100 TL idi.
 
-[Düzeltme betiği](evidence/eo06-shopify-analytics-probe/send-correction.mjs) ilk olayın tam zaman damgasını, hedef mağazayı ve kırılımlarını kullanır. Tek istek 0 adet ve −2.000 kuruş farkını, ilk olayınkinden ayrı bir işlem anahtarıyla gönderir. Beklenen rapor sonucu aynı satırda 1 adet ve 80 TL. İlk hata, belirsiz yanıt veya mevcut işlem makbuzu durumunda betik durur. Bu betik tekrar provasını çalıştırmaz.
+[Düzeltme build'i](https://vercel.com/firats-projects-d22284db/ads-table-embedded/GD5phdHixueRDHY83ZY3SxKNc85t) ilk olayın tam zaman damgasını, hedef mağazayı ve kırılımlarını kullandı. Tek istek 0 adet ve −2.000 kuruş farkını, ilk olayınkinden ayrı bir işlem anahtarıyla gönderdi. Shopify `202` ve `success: true` döndü. Ürün sahibinin mobil ekranı 19–26 Kasım rapor aralığında tek satır, 1 adet ve 80 TL gösterdi. İlk gönderim ve düzeltme build'lerinde canlı alan adı aynı dağıtıma bağlı kaldı.
+
+### Aynı düzeltmenin tekrar kontrolü
+
+[Tekrar betiği](evidence/eo06-shopify-analytics-probe/send-correction.mjs) düzeltmenin JSON gövdesini ve işlem anahtarını aynen kullanır. `ADSTABLE_ANALYTICS_EXPECT_REPLAY=1` ile açık tekrar çalışması ve düzeltmenin kabulünden itibaren 24 saat dolmadan sona eren bir pencere gerektirir. Prova güvenlik payıyla 27 Kasım 2026 16.34 UTC'de kapanır. Tekrarın teknik kabulü `202`, `success: true` ve `Idempotent-Replay: true` ile, rapor kabulü aynı tek satırın 1 adet ve 80 TL kalmasıyla doğrulanır. [Shopify tekrar makbuzu](https://shopify.dev/docs/api/app-events/latest#status-and-error-codes)

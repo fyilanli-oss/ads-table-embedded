@@ -3,6 +3,7 @@ const appClientId = "58c91f39f69ca282a94ba06e9648be9e";
 const eventHandle = "adstable-1.ecosystem_sale_probe";
 const runId = "eo06e-development-analytics-first-sale";
 const timestamp = "2026-11-19T12:00:00.000Z";
+const replayDeadline = Date.parse("2026-11-27T16:34:00.000Z");
 
 class RehearsalError extends Error {}
 
@@ -18,13 +19,14 @@ async function post(path, payload, token) {
   });
 }
 
-async function sendCorrection(env, now) {
+async function replayCorrection(env, now) {
+  if (env.ADSTABLE_ANALYTICS_EXPECT_REPLAY !== "1") throw new RehearsalError("Explicit replay required");
   if (env.VERCEL !== "1" || env.VERCEL_ENV !== "production") throw new RehearsalError("Vercel production build required");
   if (env.SHOPIFY_API_KEY !== appClientId || !env.SHOPIFY_API_SECRET) throw new RehearsalError("AdsTable credentials unavailable");
   if (env.ADSTABLE_ANALYTICS_TEST_SHOP_GID !== testShop) throw new RehearsalError("Test shop identity mismatch");
   const expires = Date.parse(env.ADSTABLE_ANALYTICS_PROBE_EXPIRES_AT ?? "");
-  if (!Number.isFinite(expires) || expires <= now.getTime() || expires - now.getTime() > 3_600_000) {
-    throw new RehearsalError("One-hour rehearsal window required");
+  if (!Number.isFinite(expires) || expires <= now.getTime() || expires - now.getTime() > 3_600_000 || expires > replayDeadline) {
+    throw new RehearsalError("Replay window missing or expired");
   }
 
   const auth = await post("auth/access_token", {
@@ -38,6 +40,7 @@ async function sendCorrection(env, now) {
     throw new RehearsalError("Shopify did not return an App Events bearer token");
   }
 
+  if (Date.now() >= expires) throw new RehearsalError("Replay window expired before submission");
   const response = await post("app/2026-10/events", {
     shop_id: testShop,
     event_handle: eventHandle,
@@ -52,17 +55,17 @@ async function sendCorrection(env, now) {
       sales_delta: -2000,
     },
   }, credential.access_token);
-  if (response.status !== 202 || response.headers.get("Idempotent-Replay") === "true") {
-    throw new RehearsalError(`Shopify correction returned HTTP ${response.status} or an existing event receipt`);
+  if (response.status !== 202) throw new RehearsalError(`Shopify replay returned HTTP ${response.status}`);
+  if (response.headers.get("Idempotent-Replay") !== "true" || (await response.json()).success !== true) {
+    throw new RehearsalError("Shopify did not confirm reuse of the correction receipt");
   }
-  if ((await response.json()).success !== true) throw new RehearsalError("Shopify correction receipt could not be verified");
-  console.log(JSON.stringify({ runId, eventHandle, timestamp, status: 202, quantityDelta: 0, salesMinorUnitsDelta: -2000 }));
+  console.log(JSON.stringify({ runId, eventHandle, timestamp, status: 202, idempotentReplay: true }));
 }
 
 try {
-  await sendCorrection(process.env, new Date());
+  await replayCorrection(process.env, new Date());
 } catch (error) {
   const detail = error instanceof RehearsalError ? error.message : "Provider or local validation result could not be confirmed";
-  console.error(`Shopify Analytics correction stopped. ${detail}`);
+  console.error(`Shopify Analytics replay stopped. ${detail}`);
   process.exitCode = 1;
 }

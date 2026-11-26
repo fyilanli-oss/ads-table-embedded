@@ -146,3 +146,9 @@ Teknik belgeler 26 Kasım 2026'da kontrol edildi. [Olay şeması](https://shopif
 [İlk gönderim betiği](evidence/eo06-shopify-analytics-probe/send-initial.mjs) ürün sahibinin onayladığı bir adet ve 100 TL sentetik olayı içerir. Vercel'de mevcut AdsTable Production ortam değişkenleriyle, alan adı bağlanmadan oluşturulan tek seferlik build içinde çalışması hedeflenir. Betik uygulamanın build komutuna veya bir web rotasına bağlı değildir. [Vercel alan adı atlaması](https://vercel.com/docs/cli/deploy#skip-domain)
 
 Test mağazası kimliği [kurulum kabul kaydından](evidence/EO_02C_LIVE_ACCEPTANCE_2026-10-08.json) doğrulanır. Çalışma için aynı kimlik `ADSTABLE_ANALYTICS_TEST_SHOP_GID`, doğrulanmış mağaza saat dilimi `ADSTABLE_ANALYTICS_TEST_SHOP_TIME_ZONE` ve en çok bir saat sonraki bitiş anı `ADSTABLE_ANALYTICS_PROBE_EXPIRES_AT` adıyla verilir. Bunlar build'e özgü girdilerdir. Betik ilk hata veya belirsizlikte durur. İkinci olay ve tekrar provası bu çalışmaya bağlı değildir.
+
+### 19 Kasım düzeltmesi
+
+İlk olay [tek seferlik build kaydına](https://vercel.com/firats-projects-d22284db/ads-table-embedded/GwqfPaymjXcpspvEdzD2h3hDTgxR) göre yalnız AdsTable Development'a gönderildi. Ürün sahibinin mobil kanıtında Shopify Analizler, 19 Kasım 2026 için `campaign-test-1` ve A → B satırını gösterdi. Satır ve genel toplam 1 adet ve 100 TL idi.
+
+[Düzeltme betiği](evidence/eo06-shopify-analytics-probe/send-correction.mjs) ilk olayın tam zaman damgasını, hedef mağazayı ve kırılımlarını kullanır. Tek istek 0 adet ve −2.000 kuruş farkını, ilk olayınkinden ayrı bir işlem anahtarıyla gönderir. Beklenen rapor sonucu aynı satırda 1 adet ve 80 TL. İlk hata, belirsiz yanıt veya mevcut işlem makbuzu durumunda betik durur. Bu betik tekrar provasını çalıştırmaz.

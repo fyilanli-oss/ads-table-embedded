@@ -466,7 +466,7 @@
       "supabase/migrations/20261125153035_eo06d_google_daily_report_replacement.sql": "3b662a06f96f7045643b520756bab0a99e9e66782123a983b8e765174d8bb2ca",
       ".github/workflows/database-integrity.yml": "7b41c78eef7940aef01da4ff9ff858b1b046b1bbd647a7a98e76c203d7a8a2d5",
       ".github/workflows/repository-governance.yml": "d0c6feecc08f145588c72fac541040ca2e14949af7785961e5df27c01628b852",
-      ".github/workflows/shopify-app-deploy.yml": "ef078addb630fdb624189c0f12625524a7e3dcaf708f2059f95e7a2884cf5d24",
+      ".github/workflows/shopify-app-deploy.yml": "433d1e782c69fbe44c0c841e2e8061d23f63108d5e8135af543bf0efcd824a1b",
       "AGENTS.md": "01ef3b2e4fd58cb77b30b030a87562b0436986e200bc342f77f929b34eb19d51",
       "app/components/order-access-removal.tsx": "2c2159052c700ef8c9722e159af64f929a573481662f3fe31fd1e05054d68d7b",
       "app/components/permission-explanation.tsx": "1ef63742562171225389b0958492f9daea51d9a062b1eefe24e008d27387ad66",
@@ -876,7 +876,7 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "325da96ae5f4f320f06a0abd5545fd2032297cafc57c844d0cf5864cae661752",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "214f83e3ffa25bc67bc6bc1a13f7d0ebc4d22644ba55e3e80e02b1f9ab3fb347",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "1eb4dd3fe1d98cb4dd80e9177ab683e13876824e43ea51e9eb0684ba04ac7225",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -4163,6 +4163,44 @@
         "contracts/raw-source/raw-source-constitution-v1.json",
         "docs/EXECUTION_PLAN.md",
         "tests/a6-docs-01-turkish-standardization.test.js"
+      ]
+    },
+    {
+      "id": "eo06e-shopify-contribution-roles-draft-2026-11-26",
+      "date": "2026-11-26",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat: Firat approved one unpublished Shopify draft and explicitly requested removing the two contribution metrics and adding the contribution dimension."
+      },
+      "rationale": "Record the branch-only draft definition. Keep the original Sales and Purchase metrics. Remove only the two test metric declarations and add one optional Contribution Roles dimension. The separately authorized draft execution does not release the version, send events, or change runtime and data access.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "Both constitution guards and existing repository governance",
+        "Exact additive dimension and metric-only removals compared to the previous Shopify version fixture",
+        "Single no-release draft command and Shopify version readback"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-26",
+      "official_sources": [
+        "https://shopify.dev/docs/apps/build/app-events/analytics/toml-configuration",
+        "https://shopify.dev/docs/api/shopify-cli/app/app-deploy#no-release"
+      ],
+      "changed_paths": [
+        ".github/workflows/shopify-app-deploy.yml",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json"
       ]
     }
   ],

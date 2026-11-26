@@ -226,3 +226,21 @@ GROUP BY event."adstable-1".ecosystem_role_probe.sold_product, event."adstable-1
 SINCE 2026-11-19 UNTIL 2026-11-19
 ORDER BY event."adstable-1".ecosystem_role_probe.sold_product ASC
 ```
+
+### İki tutar sütunuyla EcoSystem provası
+
+26 Kasım 2026. Ürün sahibi `Sales` ve `Contribution To` olarak iki tutar sütununu onayladı. [Shopify sürümü](https://dev.shopify.com/dashboard/239318688/apps/432251994113/versions/1268212989953) mevcut olaya tek isteğe bağlı para alanı ve tek yeni metrik ekledi. Ürün sahibi sürümü etkinleştirdi ve AdsTable Development'a iki sentetik kayıt gönderilmesine açık onay verdi.
+
+[Gönderim betiği](evidence/eo06-shopify-analytics-probe/send-sales-columns.mjs) iki satırı da Advertised Product A altında gönderdi. Sold Product A olan Contribution From satırı 50 TL Sales ve 0 TL Contribution To taşır. Sold Product B olan Contribution To satırı 0 TL Sales ve 80 TL Contribution To taşır. Purchase bu provanın kapsamı dışındadır. [Build kaydı](https://vercel.com/firats-projects-d22284db/ads-table-embedded/4ZhohDmksWWLq3UVurcH67ApiFJq) her iki kayıt için `202` ve `success: true` sonucunu doğruladı. Etkin uygulama alan adı aynı dağıtıma bağlı kaldı. A için 50 TL Sales ve 80 TL Contribution To grup toplamlarının Shopify raporunda görsel kabulü bekleniyor.
+
+```sql
+FROM app_events
+SHOW event."adstable-1".ecosystem_role_probe.ecosystem_sales,
+  event."adstable-1".ecosystem_role_probe.ecosystem_contribution_to
+WHERE event."adstable-1".ecosystem_role_probe.probe_run = 'eo06e-development-ecosystem-sales-columns-v1'
+  AND event."adstable-1".ecosystem_role_probe.advertised_product = 'A'
+GROUP BY event."adstable-1".ecosystem_role_probe.advertised_product, event."adstable-1".ecosystem_role_probe.sold_product,
+  event."adstable-1".ecosystem_role_probe.contribution_role WITH GROUP_TOTALS
+SINCE 2026-11-19 UNTIL 2026-11-19
+ORDER BY event."adstable-1".ecosystem_role_probe.advertised_product ASC, event."adstable-1".ecosystem_role_probe.sold_product ASC
+```

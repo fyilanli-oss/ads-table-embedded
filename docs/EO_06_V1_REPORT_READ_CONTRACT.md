@@ -51,6 +51,8 @@ Son doğrulanan gün bilgisi EO-06-D'de makbuza dayalı ayrı karar olarak açı
 
 26 Kasım 2026. V52 mockup'ındaki ürün tablosu, AdsTable Development mağazasında kurulu mevcut AdsTable (herkese açık uygulama, `adstable-1`) üzerinden sınanır. İlk taslakta ayrı test uygulaması hedeflenmişti. O hedefin yerini mevcut uygulama aldı. Tek özel `analytics_app_events` olayının tanımı uygulama genelinde yayımlanır. Sentetik gönderim öncesinde uygulama ve test mağazasının kesin Shopify kimlikleri doğrulanır. Yalnız bu mağazaya sentetik kampanya, ürün ve satış alanları gönderilir. Zey&Rose verisi ve gerçek sağlayıcı bağlantısı kullanılmaz. Önce yayımlanmamış sürüm farkı incelenir. Uygulama geneline yayın ve gönderim ayrı yetki gerektirir. Bu kayıt prova planıdır ve Shopify kabulü açıktır.
 
+[Çevrimdışı olay ve sorgu taslağı](evidence/eo06-shopify-analytics-probe/README.md) sürüm farkında beklenen tek eklemeyi, iki sentetik olay örneğini ve ShopifyQL kontrolünü içerir.
+
 | Aşama | Girdi | Shopify Analizler'de beklenen |
 |---|---|---|
 | İlk yayın | A reklam ürünü, B satılan ürün, `campaign-test-1`, satış günü D, adet farkı `1`, tutar farkı `10000` kuruş | D gününde kampanya ve A → B aynı satırda, `1` adet ve `100,00 TRY`. Genel toplam aynı. |

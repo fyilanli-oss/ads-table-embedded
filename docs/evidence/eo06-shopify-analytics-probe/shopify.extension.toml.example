@@ -1,0 +1,83 @@
+# Offline review artifact for the AdsTable Development synthetic rehearsal.
+[[extensions]]
+type = "analytics_app_events"
+handle = "ecosystem-sales-probe"
+
+[[extensions.events]]
+name = "adstable-1.ecosystem_sale_probe"
+kind = "custom"
+label = "AdsTable product sales rehearsal"
+category = "Marketing"
+currency = "TRY"
+
+[extensions.events.dimensions.probe_run]
+label = "Rehearsal run"
+type = "string"
+optional = false
+
+[extensions.events.dimensions.advertised_product]
+label = "Advertised product"
+type = "string"
+optional = false
+
+[extensions.events.dimensions.sold_product]
+label = "Sold product"
+type = "string"
+optional = false
+
+[extensions.events.dimensions.campaign]
+label = "Campaign"
+type = "string"
+optional = false
+
+[extensions.events.dimensions.quantity_delta]
+label = "Quantity change"
+type = "int"
+optional = false
+
+[extensions.events.dimensions.sales_delta]
+label = "Sales change"
+type = "int"
+semantic_type = "money"
+optional = false
+
+[extensions.events.dimensions.focus_product]
+label = "Focus product"
+type = "string"
+optional = true
+
+[extensions.events.dimensions.contribution_from_amount]
+label = "Incoming contribution amount"
+type = "int"
+semantic_type = "money"
+optional = true
+
+[extensions.events.dimensions.contribution_to_amount]
+label = "Outgoing contribution amount"
+type = "int"
+semantic_type = "money"
+optional = true
+
+[[extensions.metrics]]
+handle = "purchases"
+label = "Rehearsal quantity"
+aggregation = "sum"
+source = { event = "adstable-1.ecosystem_sale_probe", field = "quantity_delta" }
+
+[[extensions.metrics]]
+handle = "sales"
+label = "Rehearsal sales"
+aggregation = "sum"
+source = { event = "adstable-1.ecosystem_sale_probe", field = "sales_delta" }
+
+[[extensions.metrics]]
+handle = "contribution_from"
+label = "Contribution From"
+aggregation = "sum"
+source = { event = "adstable-1.ecosystem_sale_probe", field = "contribution_from_amount" }
+
+[[extensions.metrics]]
+handle = "contribution_to"
+label = "Contribution To"
+aggregation = "sum"
+source = { event = "adstable-1.ecosystem_sale_probe", field = "contribution_to_amount" }

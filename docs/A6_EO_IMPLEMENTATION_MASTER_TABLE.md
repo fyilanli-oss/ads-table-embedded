@@ -214,10 +214,24 @@ Bu kanıt API işleyicisinden izole veritabanına kadar olan zinciri kapsar. Ger
 
 | İş | Kalan kontrol |
 |---|---|
-| **İlk sırada · EO-06-B/C · V1 rapor kapsamı** | Mevcut kanıt ürün satışları Compare yoluna ait. Güncel V1 raporları için mevcut sorgu ve yanıtın ihtiyaçları ne ölçüde karşıladığını kontrol et. Eksik kalan sözleşme veya sorgu kapsamını kapat. Görsel uygulama EO-07'de izlenir. |
+| **İlk sırada · EO-06-B/C · V1 rapor kapsamı** | Okuma incelemesi tamamlandı. Aşağıdaki tabloda doğrulanan boşluklar için V1 okuma sözleşmesini netleştir. Görsel uygulama EO-07'de izlenir. |
 | **EO-06-D · Güncellik** | Compare yanıtında ayrı güncellik alanı henüz yok. V1'de “son doğrulanan gün” bilgisinin API'de gerekip gerekmediğini belirle. Gösterilecekse geçerli rapor makbuzu ve tamamlanan iş emrine bağla. Gecikme eşiği için beklenen gün ve çalışma takvimi gerekir. |
 
 KPI, metrik formülleri ve maliyet dağıtımı V1 kapsam kararına göre ertelendi. Kesin Overlap 24. adımda ayrı açık kalır. [Revize plan](plans/EO_05_06_REVISED_PLAN_2026_10_27.md#eo-05-26-adımlık-çalışma-ve-açık-kabul-maddeleri) · [Makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo06e_isolated_compare_and_sales_role_acceptance_2026_11_26)
+
+### EO-06-B/C V1 rapor okuma kapsamı
+
+**26 Kasım 2026.** `AdsTable_Campaign_V37.html` ve ürün sahibinin sonraki kararları, `main` sürümü `0598808c89ceff7fd538371301afd95c0dc03a43` üzerindeki Compare API ve SQL ile karşılaştırıldı. V1 yüzeyleri bu incelemede Dashboard ve EcoSystem olarak ele alındı. Compare, EcoSystem içinde bir tarih karşılaştırmasıdır. V37'de Dashboard üzerinde de görünen Compare kontrolü ürün sahibinin sonraki kararıyla kapsam dışında kalır. [API işleyicisi](../app/lib/reporting/compare-request.server.js) · [Compare sorgusu](../supabase/migrations/20261125093522_eo06b_report_sales_compare.sql)
+
+| V1 ihtiyacı | Bugünkü API | Kalan iş |
+|---|---|---|
+| EcoSystem satış tutarı, ürün adedi ve satış rolü | Tarih, platform, hesap, kampanya ve kanal kimliği; doğrulanmış reklamı yapılan ve satılan Shopify Product ID'leri; `salesValue`, `salesQuantity`, para birimi, rol ve kaynak durumu döner. | `Purchase` satılan ürün adedi olarak kullanılır. Alanlar eksikse kayıtlı sıfır ile aynı gösterilmez. Sağlayıcı toplamı tekil Shopify siparişi olarak etiketlenmez. |
+| EcoSystem tablo ve Dashboard grafik verisi | Her iki dönem için günlük satış satırları döner. API'nin `daily`, `summary` ve `table` seçenekleri tarih sınırını değiştirir, aynı satır biçimini kullanır. | Product, Channel, Campaign ve Platform grupları için ortak okuma çıktısını belirle. Seçili aralık, gün, hafta, ay ve çeyrek toplamları, trend, pay ve dağılım aynı satış satırları üzerinden hesaplanır. Para değerleri yalnız aynı ya da doğrulanmış biçimde aynı para birimine çevrilmiş girdilerle toplanır. |
+| Ürün ve hiyerarşi etiketleri ile seçimler | Shopify Product ID ve kampanya adı mevcut. Ürün adı, SKU, kanal adı ve kampanya formatı yanıt alanı olarak gelmiyor. `campaignType` kök varlık tipini taşır. API bir ürün ve bir platform filtresi alır. | V37'deki ürün ve platform çoklu seçimi ile ürün ve kanal adlarının mevcut güvenilir veri kaynağını sözleşmede belirle. Varyant kırılımı açmadan SKU'nun güvenilir ürün karşılığı bulunmuyorsa boş kalacağını belirt. |
+| EcoSystem ürün Sankey'i | Aynı satış satırında doğrulanmış iki Product ID varsa kanıtlı reklamı yapılan ürün → satılan ürün çifti okunabilir. | Contribution From/To aynı bağlantının iki bakışıdır. A → B ve B → A ancak iki yön de gözlenmişse Mutual olur. Ürün çifti eksikse ürün bağı kurulmaz. |
+| EcoSystem kanal ve kampanya Sankey'i | Satış satırı yalnız o satışın kampanyasını ve kanalını taşır. Satılan ürünün reklam yerleşimleri ve yerleşim kapsamının eksiksizliği bu yanıtta yok. | Same Channel, Other Channels in Campaign, Other Channels in Other Campaigns ve Non Advertised Products için güvenilir yerleşim kaynağı ve kapsam kontrolü gerekir. Eksik yerleşim bilgisi Non Advertised Products sayılmaz. |
+
+Takvim okumasında önceki dönem, önceki yıl ve özel tarih aralığı var. Önceki EO-07 kararında özel aralıkların örtüşmemesi istenir. Mevcut API, 1–7 Ekim ile 4–10 Ekim gibi örtüşen iki eşit aralığı kabul ediyor. V1 sözleşmesinde önceki kuralı açıkça koru ve sonraki uygulamada bu örneği sınama girdisi olarak kullan. KPI ile harcama dağıtımı ertelenmiş kapsamda, kesin sipariş Overlap'i 24. adımda ve son doğrulanan gün bilgisi EO-06-D'de izlenir. [Takvim uygulaması](../app/lib/reporting/compare-calendar.server.js) · [Önceki tarih kararı](A6_EO_07_THREE_SURFACE_UI_PRODUCT_FREEZE.md#44-karşılaştırma) · [V1 okuma makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo06bc_v1_report_coverage_review_2026_11_26)
 
 ## EO-07 — Shopify'a özgü üç yüzeyli arayüz
 

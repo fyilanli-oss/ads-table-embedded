@@ -1,4 +1,18 @@
 {
+  "eo06bc_v1_report_coverage_review_2026_11_26": {
+    "packages": ["A6-EO-06-B", "A6-EO-06-C"],
+    "main_reviewed": "0598808c89ceff7fd538371301afd95c0dc03a43",
+    "status": "existing_api_coverage_reviewed_read_contract_open",
+    "mockup_reference": "AdsTable_Campaign_V37.html",
+    "surfaces": ["Dashboard", "EcoSystem"],
+    "compare_surface": "EcoSystem",
+    "existing": ["equal-length date ranges", "daily product sales facts", "source currency and metric states", "campaign name and account/campaign/channel IDs", "verified advertised and sold Shopify Product IDs when present", "provider-backed sales role"],
+    "open_read_contract": ["shared Product/Channel/Campaign/Platform grouping and date buckets", "trusted product and channel labels, supported product-level SKU and multi-selection", "currency-safe aggregates", "verified destination placements and coverage for channel and campaign relationship categories", "carry forward the existing non-overlap rule for custom comparison ranges"],
+    "purchase_measure": "sold_product_quantity",
+    "freshness_package": "A6-EO-06-D",
+    "native_acceptance_passed": false,
+    "runtime_or_live_change_authorized": false
+  },
   "eo06e_reread_compare_integrated_2026_11_26": {
     "package": "A6-EO-06-E",
     "ordered_step": 26,

@@ -1719,7 +1719,7 @@
       "supabase/migrations/20261122111445_eo05_google_register_report_product_link.sql": "bf38547d3109221720f29a281935e11cdc65e1e6372cdbc20083f63f425aded4",
       "supabase/migrations/20261122142447_eo05_klaviyo_daily_purchase_scope.sql": "d569d2797913113cf6d374c70e61e0bb3064adee1adc80ba06705418b019d28a",
       "supabase/migrations/20261125093522_eo06b_report_sales_compare.sql": "6e2a8ce0398b1926e5d324cf2771bf25f6aba43c979901f68a24731b24c4ea01",
-      "tests/a6-docs-01-turkish-standardization.test.js": "94dfc2dc17b85bb8b90c2946f1bd31df0ed5eab5c75b357e6ff77eac4b656f51",
+      "tests/a6-docs-01-turkish-standardization.test.js": "004d8e93e79d0b0d9896c180e1fb4a7c34c7229fc6c88229ba16ded74f1f3a0a",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
       "tests/eo-03a-oauth-transaction-boundary.test.js": "b364193460356370d1128000e6c0b61e975b2d79b896135d97ce648bc30a7747",
@@ -6002,7 +6002,7 @@
         "explicit": true,
         "source": "Owner chat: Firat replied 'Tamam bu konu çok öenmli onaylıyorum devam edelim' to the proposed common V1 report read contract grounded in existing Dataset sources, following the approval request for PR #407."
       },
-      "rationale": "Document the shared Dashboard and EcoSystem V1 read semantics, evidence boundaries and acceptance cases. This is a report design record for existing Dataset facts. No protected runtime behavior changes.",
+      "rationale": "Document the shared Dashboard and EcoSystem V1 read semantics, evidence boundaries and acceptance cases and register the new document in the existing inventory test. No protected runtime behavior changes.",
       "scope": {
         "runtime_code": false,
         "live_provider": false,
@@ -6012,7 +6012,7 @@
         "merge": false
       },
       "tests": [
-        "node --test tests/eo-06b-compare-calendar.test.js tests/eo-06c-compare-api.test.js tests/sales-role-prewrite.test.js (33 existing tests)",
+        "node --test tests/eo-06b-compare-calendar.test.js tests/eo-06c-compare-api.test.js tests/sales-role-prewrite.test.js tests/a6-docs-01-turkish-standardization.test.js",
         "Dataset schema review and seven documented acceptance cases for future implementation"
       ],
       "acceptance_required": [
@@ -6029,7 +6029,8 @@
       "changed_paths": [
         "contracts/a6-eo-implementation-master-v1.json",
         "contracts/oauth/oauth-flow-constitution-v1.json",
-        "docs/EXECUTION_PLAN.md"
+        "docs/EXECUTION_PLAN.md",
+        "tests/a6-docs-01-turkish-standardization.test.js"
       ]
     }
   ],

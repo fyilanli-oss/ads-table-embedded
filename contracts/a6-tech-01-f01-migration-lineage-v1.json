@@ -1196,6 +1196,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261126083358",
+      "name": "eo06bc_v1_report_read",
+      "file": "supabase/migrations/20261126083358_eo06bc_v1_report_read.sql",
+      "created_with": "supabase@3.4.0 migration new eo06bc_v1_report_read",
+      "repository_sql_sha256": "60e26a739460ad5dee3dd52ff58941dab9505d7777b0d11bcedee468fcb2810f",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ],
   "scoped_live_apply_approvals": [

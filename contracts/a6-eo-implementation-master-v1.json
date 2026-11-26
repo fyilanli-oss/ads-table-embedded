@@ -1,4 +1,15 @@
 {
+  "eo06bc_v1_report_read_implementation_2026_11_26": {
+    "packages": ["A6-EO-06-B", "A6-EO-06-C"],
+    "status": "read_mode_prepared_native_acceptance_open",
+    "base_main": "91ac14f3bd34ae0d029bc191abd5d7445fcef2c4",
+    "implements": "eo06bc_v1_report_read_contract_2026_11_26",
+    "mode": {"endpoint": "/api/reports/compare", "opt_in": ["grain", "bucket"], "response": "report-v1", "legacy_response": "compare-v1"},
+    "migration": "20261126083358_eo06bc_v1_report_read",
+    "evidence": ["tests/eo-06c-compare-api.test.js", "tools/eo06b-report-sales-compare-probe.mjs", "tools/eo05-google-daily-packages-probe.mjs"],
+    "open": ["EO-06-D freshness", "Indirect display-role decision", "product label and complete placement evidence", "Meta native product sales", "separate live SQL activation", "native shop acceptance"],
+    "live_apply_authorized": false
+  },
   "eo06bc_v1_report_read_contract_2026_11_26": {
     "packages": ["A6-EO-06-B", "A6-EO-06-C"],
     "status": "read_contract_prepared_api_implementation_open",

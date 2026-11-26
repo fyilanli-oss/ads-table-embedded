@@ -1,6 +1,7 @@
 import {createShopifyInstallationOwnerRepository} from "../database/shopify-installation-owner-repository.server.js";
 import {resolveReadOnlyShopifyRouteAuthority} from "../shopify/shopify-route-authority.server.js";
 import {resolveComparisonCalendar} from "./compare-calendar.server.js";
+import {readV1ReportOptions, summarizeV1Reports} from "./v1-report-read.server.js";
 
 const COMPARE_SQL = `select period, day_offset, to_char(business_date, 'YYYY-MM-DD') as business_date,
   source_timezone, platform, platform_account_id, root_entity_type, campaign_id, campaign_name,
@@ -9,6 +10,9 @@ const COMPARE_SQL = `select period, day_offset, to_char(business_date, 'YYYY-MM-
   quantity_support, quantity_observation, value_support, value_observation
   from analytics.read_report_sales_compare($1::uuid,$2::bigint,$3::bigint,$4::text,$5::date,$6::date,
     $7::date,$8::date,$9::text,$10::text,$11::text,$12::text,$13::text)`;
+const V1_REPORT_SQL = `select *, to_char(business_date, 'YYYY-MM-DD') as date_label
+  from analytics.read_v1_report_sales($1::uuid,$2::bigint,$3::bigint,$4::text,$5::date,$6::date,
+    $7::date,$8::date,$9::text[],$10::text,$11::text,$12::text,$13::text[])`;
 
 const INPUT_KEYS = new Set([
   "view", "startDate", "endDate", "mode", "compareStartDate", "compareEndDate",
@@ -32,12 +36,17 @@ function requestFilters(params) {
 }
 
 function readQuery(params) {
+  const report = params.has("grain") || params.has("bucket") || params.has("role");
   const seen = new Set();
   for (const key of params.keys()) {
-    if (!INPUT_KEYS.has(key) || seen.has(key)) throw new RangeError("COMPARE_REQUEST_INVALID");
+    const reportKey = report && ["grain", "bucket", "role"].includes(key);
+    const repeatable = report && ["platform", "product"].includes(key);
+    if ((!INPUT_KEYS.has(key) && !reportKey) || (seen.has(key) && !repeatable)) throw new RangeError("COMPARE_REQUEST_INVALID");
     seen.add(key);
   }
-  const view = params.get("view");
+  const options = report ? readV1ReportOptions(params) : null;
+  const view = options ? (options.bucket === "daily" ? "daily" : "table") : params.get("view");
+  if (options && params.has("view") && params.get("view") !== view) throw new RangeError("COMPARE_VIEW_INVALID");
   const mode = params.get("mode") ?? "none";
   const startDate = params.get("compareStartDate");
   const endDate = params.get("compareEndDate");
@@ -48,22 +57,25 @@ function readQuery(params) {
     view, startDate: params.get("startDate"), endDate: params.get("endDate"),
     comparison: {mode, startDate, endDate},
   });
-  return {view, calendar, filters: requestFilters(params)};
+  if (options && calendar.comparison && calendar.comparison.startDate <= calendar.primary.endDate
+      && calendar.comparison.endDate >= calendar.primary.startDate) throw new RangeError("COMPARE_RANGES_OVERLAP");
+  return {view, calendar, options, filters: options?.filters ?? requestFilters(params)};
 }
 
-function toResponse({calendar, view}, result) {
+function toResponse({calendar, view, options}, result) {
   if (!Array.isArray(result?.rows)) throw new Error("COMPARE_RESULT_INVALID");
   const primary = {...calendar.primary, rows: []};
   const comparison = calendar.comparison && {...calendar.comparison, rows: []};
   for (const row of result.rows) {
     const period = row.period === "primary" ? primary : row.period === "comparison" ? comparison : null;
-    if (!period || typeof row.business_date !== "string"
-        || row.business_date < period.startDate || row.business_date > period.endDate
+    const date = options ? row.date_label : row.business_date;
+    if (!period || typeof date !== "string"
+        || date < period.startDate || date > period.endDate
         || !Number.isInteger(row.day_offset) || row.day_offset < 0 || row.day_offset >= calendar.dayCount) {
       throw new Error("COMPARE_RESULT_INVALID");
     }
     period.rows.push({
-      date: row.business_date, dayOffset: row.day_offset, sourceTimezone: row.source_timezone,
+      date, dayOffset: row.day_offset, sourceTimezone: row.source_timezone,
       platform: row.platform, accountId: row.platform_account_id, campaignType: row.root_entity_type,
       campaignId: row.campaign_id, campaignName: row.campaign_name, channelType: row.channel_type,
       channelId: row.channel_id, channelResolution: row.channel_resolution,
@@ -71,8 +83,15 @@ function toResponse({calendar, view}, result) {
       salesQuantity: row.sales_quantity, salesValue: row.sales_value, currency: row.currency,
       sourceCompleteness: row.source_completeness, quantitySupport: row.quantity_support,
       quantityObservation: row.quantity_observation, valueSupport: row.value_support, valueObservation: row.value_observation,
+      ...(options && {campaignFormat: row.campaign_format, channelName: row.channel_name,
+        reportingCurrency: row.reporting_currency, reportingValue: row.reporting_value,
+        timeBasis: row.time_basis, conversionScope: row.conversion_scope, units: row.units,
+        destinationCount: row.destination_count, destinationCampaignType: row.destination_campaign_type,
+        destinationCampaignId: row.destination_campaign_id, destinationChannelType: row.destination_channel_type,
+        destinationChannelId: row.destination_channel_id}),
     });
   }
+  if (options) return summarizeV1Reports(calendar, options, {primary: primary.rows, comparison: comparison?.rows});
   return {version: "compare-v1", view, mode: calendar.mode, dayCount: calendar.dayCount, primary, comparison};
 }
 
@@ -106,7 +125,7 @@ export async function handleCompareRequest(request, {authenticateAdmin, database
     });
     if (!owner) return json({code: "COMPARE_SCOPE_UNAVAILABLE"}, 403);
     const {view, calendar: {primary, comparison}, filters} = input;
-    const result = await database.query(COMPARE_SQL, [owner.workspaceId, owner.installationId, owner.installGeneration,
+    const result = await database.query(input.options ? V1_REPORT_SQL : COMPARE_SQL, [owner.workspaceId, owner.installationId, owner.installGeneration,
       view, primary.startDate, primary.endDate, comparison?.startDate ?? null, comparison?.endDate ?? null, ...filters]);
     return json(toResponse(input, result));
   } catch (error) {

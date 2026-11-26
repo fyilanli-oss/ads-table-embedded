@@ -458,7 +458,9 @@
       "docs/RAW_SOURCE_CONSTITUTION.md"
     ],
     "sha256": {
-      "tools/eo06e-compare-reread-proof.mjs": "b3b51866f6e12516173900be2d11ac0b297d3301e03772d1395d28f475911c5b",
+      "app/lib/reporting/v1-report-read.server.js": "f64cb22313d48686fca679a2bf4b6f5cae69be6cbc0d85dad2c4c95ba3b3f5c3",
+      "supabase/migrations/20261126083358_eo06bc_v1_report_read.sql": "54668700749a41f61ab110c037d0390fed579c5c7a77b249f80e37886b977797",
+      "tools/eo06e-compare-reread-proof.mjs": "d4d8f2966ab3add110bc9c0a8e0a5b987dd7c5f7706eff06bfb0936ea81d71f5",
       "supabase/migrations/20261125201832_eo06d_klaviyo_verified_empty_reread.sql": "299770fd1f0413c197292a1dcf85ff5feb07323104e64b99409affb27b4c4a6f",
       "supabase/migrations/20261125185757_eo06d_klaviyo_multipart_revision.sql": "9fdff139710505b6de7d29a1854f8bad9258652eb9c44c6693cc406f94d91e7b",
       "supabase/migrations/20261125180106_eo06d_meta_packaged_report_reconciliation.sql": "a6c6d52d2a608285cdb36fd072ccf6eaef4e9b76142bd602bfaf2ec1013b8af2",
@@ -715,7 +717,7 @@
       "app/lib/refresh/work-stop-policy.server.js": "807206c9e6532d0f56d0495021ec2cd9647fcdf5b69ba81bc1602b36e2d1bea5",
       "app/lib/reporting/compare-calendar.server.js": "835612ae103397bcf9bffab07ab7204c1d60a128552d6693ca6fbb1ba435f180",
       "app/lib/reporting/compare-request.server.d.ts": "06ae937361e4bce00588a11112824a821cc7a9c38d2988cd0df4a37b8f03a52d",
-      "app/lib/reporting/compare-request.server.js": "01a07d2ec96ef777852670147be06488014a42da1deba87e086b5d59f42a7d04",
+      "app/lib/reporting/compare-request.server.js": "456439844e42604af7c050c7fa80037a41d5a14939e55824fd6bd4adda69ce99",
       "app/lib/server-error-log.server.d.ts": "88c8ecd0f839ab09c65ab0ec1095b696285f593335d4dd7ceba15b09747d2045",
       "app/lib/server-error-log.server.js": "62218cac33d6eb6a6b5e81460783aa390f3b3f4ff216fd855db75a11811ca71a",
       "app/lib/shopify/admin-identity.server.d.ts": "e389f358e688f0ed713c0249a624c049c942250e2f5916e209fb7f0de9195a60",
@@ -797,14 +799,14 @@
       "contracts/a6-eo-f5-product-route-map-v1.json": "cfae8b77fa44f27978db120865852ece9d3ea03cfc83600f7576e71f9d34067b",
       "contracts/a6-eo-f6-effort-risk-comparison-v1.json": "94ead4504333f50bd1379e3f13e4fa68c5f19bf256c5e4006033fa73dc3e9f3e",
       "contracts/a6-eo-f7-go-decision-v1.json": "c3ed10cfca08ebeab27ebd63c17be60e912b36904accce0e2e38ae174f0d4aa9",
-      "contracts/a6-eo-implementation-master-v1.json": "05a5ed0601530382cc5608f33507338d775d1bd5bb450b32272c491fac042ba3",
+      "contracts/a6-eo-implementation-master-v1.json": "708477281d5d382c9e7e309b87d37f9a6d18caaebcbea3271a31e14df5868e8c",
       "contracts/a6-eo-secret-inventory-recovery-v1.json": "e8a3e0cc74b446507a3e8f79a9338eee28b3cea7e2ccfd5737d77be182ce7299",
       "contracts/a6-ops-local-01-safe-cleanup-v1.json": "30a77abdc5a4ed9bc92bfac8d4c14ac3e96ed2432eecf2110dc227747ea43e83",
       "contracts/a6-ops-shopify-01-isolated-preproduction-v1.json": "a6f76b340227c6bbce22e4c59959e8e8247e99204e8da773f2a55c3282f42e06",
       "contracts/a6-parent-package-analysis-design-closure-v1.json": "54b606afd64eefc65edb7c322de7649e9e550737619426f1ce774ede997a1f60",
       "contracts/a6-quality-and-assurance-gates-v1.json": "707c38761519d4ac5e17b7b3cd32ae30dcfc306f406baa6c4676f74c152af81e",
       "contracts/a6-tech-01-engineering-integrity-audit-v1.json": "ab5fa0d88157a5710630560c11a97089dfc4cc047a19ab7cb32bf94a40072949",
-      "contracts/a6-tech-01-f01-migration-lineage-v1.json": "3fdc139d0b084d630a6c22fbd99a52c70a9f6140003c4bb95d789c54ec8da59a",
+      "contracts/a6-tech-01-f01-migration-lineage-v1.json": "0555566e453b8e1919550ce0df1045b61ec31c50b004858b83cae3fe75ad4453",
       "contracts/a6-tech-01-f01c-scoped-recovery-v1.json": "05173e82d2576d81fe5d93f0edb3193c5e053db28416d9b0d128e08d6dea941f",
       "contracts/demo/eo05b-v1/golden.json": "08b58ade3ed14843f25f9453710d8f1d15c01810c00556ae38718751f034befc",
       "contracts/demo/eo05b-v1/rolling-2026-11-10.json": "a482b2d1e9faebc4d768c437378b05a85ec9433312e904f9900158f7e65f8bc2",
@@ -876,14 +878,14 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "325da96ae5f4f320f06a0abd5545fd2032297cafc57c844d0cf5864cae661752",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "214f83e3ffa25bc67bc6bc1a13f7d0ebc4d22644ba55e3e80e02b1f9ab3fb347",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "b169b78aec2e484a40d14192c07a70a9ae0c6964486e01463bf1240db9e9478f",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
       "contracts/shopify/a6-eo-07-three-surface-ui-product-freeze-v1.json": "015e7946219fb40669514e965681358e1d32b53781447197f9493b47191ddcb1",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "contracts/shopify/shopify-progressive-permissions-release-candidate-v1.json": "204cc1deb525bc47cb14d769d30701cd716fe0db1a56b11be2d083314477adc7",
-      "docs/EXECUTION_PLAN.md": "6fb55439e7fb4b0fed28d950da7897cae2df7a04a8613f43c27237170a7a72fa",
+      "docs/EXECUTION_PLAN.md": "eb697b3d76aa6771bde0b5fd5030fb8a889a15893177fbec0445706bad14a051",
       "docs/RAW_SOURCE_CONSTITUTION.md": "8cb806f28d8b4c2ffa39c9d08ba9ff0b210af28fd726d28d3376966b79cf1422",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
       "patches/@react-router__fs-routes@7.18.2.patch": "8db744b341f8258e57f41105d65d493974e6ba6253608c0bba031d46751437f5",
@@ -1107,7 +1109,7 @@
       "tests/eo-05a-refresh-work-stops.test.js": "58a010e6fd6a1812f2f48492f78bfc38a6cfbc0312402dcd1974cad0d87e655f",
       "tests/eo-05a-shared-quota.test.js": "4f0dbc974dd882b3317fbc537bb6d8dc4309eb2bd9546a34b93ff223210ba03e",
       "tests/eo-06b-compare-calendar.test.js": "1e4470bd90af4a64b2a18b309ce0917853b95aba31fb2ab7354653ccb6d2bdfb",
-      "tests/eo-06c-compare-api.test.js": "d09166ade841f7caaea8d0974e5a64c917071b4f4e4f6b8d1d9461e0517b3177",
+      "tests/eo-06c-compare-api.test.js": "7a909c08f432b84ccd464b4f06396f7b53db11c0a8610cc2f78bd17f4fe38ef1",
       "tests/eo05b-demo-fixture.test.js": "d63b2bbb733d25c1f4585314f4094b010e4b6de2ca23032fc2b2d36f1aabde41",
       "tests/f01-live-readiness.test.js": "5225024e104f9087337452827f674961944f4dd1d53b808a0a0ac66bdef0a6eb",
       "tests/fixtures/customer-worker-fixture.js": "11b10dbd255ff34d6af9b11496866c3ad22145f21e60343ca0d50587eba21352",
@@ -1257,7 +1259,7 @@
       "tools/eo05-final-synthetic-candidate.mjs": "f39563923c239b9d47f6ccba810ffddd544d434b8f416373cb94e92a7dd8343c",
       "tools/eo05-four-phase-diagnostics.mjs": "24acabcb3522760059189f769f33172ae598940d1a8dbc77aa46d951af3604d8",
       "tools/eo05-google-acceptance-probe.mjs": "6895c9f7f2180de717b27e2c86572cfcd79967bb7b84c0b0f1c450ffcf372797",
-      "tools/eo05-google-daily-packages-probe.mjs": "ce81c8bea0c04bc49f3f18274d509dca7c0b116037140427b841cdb2f71a8441",
+      "tools/eo05-google-daily-packages-probe.mjs": "12ed99eb1c3439ad55633d89dd73cda40c53db24290d527d832de45b236bbd28",
       "tools/eo05-google-daily-timing-probe.mjs": "2d88d83e783665c4f9ca76bc4ada360e623fc5000c8566a4dacc167507b4add7",
       "tools/eo05-google-hosted-benchmark.mjs": "2724b75f248a74a447108afb0a35b804be8c13bee98f1da3ba43b8bd26fbd77e",
       "tools/eo05-google-identity-renewal-probe.mjs": "2f429c983600225ccdc9cadeede2611de9d48522dc575d5cb583b324b6f07fd1",
@@ -1321,7 +1323,7 @@
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
       "tools/eo05d-reconciliation-probe.mjs": "cfa524d612e31a13ec495f884c65110df1386cc068c9d5101e2ffcb8038d6476",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
-      "tools/eo06b-report-sales-compare-probe.mjs": "b2d9a9162bb383c6eddebc949bfb85e09f8e6af9fe585ac4d65b60b1f5e740d1",
+      "tools/eo06b-report-sales-compare-probe.mjs": "8c032b0e8a58310547433da86fcf68674d2e6d1e5f2f96c1ccceccf6cc6d4462",
       "tools/f01-database-replay.mjs": "b23e14a8236a2ea276b15b2a016996082a4078ef401d9ed92139f5055cd36a2a",
       "tools/f01-identity-oauth-rollout.mjs": "5894b9ae54363fcf31372ed0a1abf39d3c0e1dfea428190232a0420b0b11f787",
       "tools/f01-live-readiness-plan.mjs": "d4eb8e8ca9d80d6e99cea8c9cf475b388db46a756e2e7a631c5c245e8e7bb25b",
@@ -4163,6 +4165,57 @@
         "contracts/raw-source/raw-source-constitution-v1.json",
         "docs/EXECUTION_PLAN.md",
         "tests/a6-docs-01-turkish-standardization.test.js"
+      ]
+    },
+    {
+      "id": "eo06bc-v1-report-read-api-2026-11-26",
+      "date": "2026-11-26",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat: Firat replied 'Tamam devam edelim onaylıyorum Codex' to the proposed implementation of PR 408 shared V1 reporting rules in the existing Compare API and verification with the seven acceptance examples."
+      },
+      "rationale": "Add an opt-in private read of already-published Dataset sales and verified report metadata using the existing report authorization. Exercise the backward-compatible Compare API, role isolation and approved report semantics. Provider capture, OAuth, publication, persistence and activation are untouched.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "tests/eo-06b-compare-calendar.test.js",
+        "tests/eo-06c-compare-api.test.js",
+        "tests/sales-role-prewrite.test.js",
+        "tools/eo06b-report-sales-compare-probe.mjs",
+        "tools/eo05-google-daily-packages-probe.mjs",
+        "tools/check-migration-lineage.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-26",
+      "official_sources": [
+        "https://www.postgresql.org/docs/17/datatype-numeric.html",
+        "https://www.postgresql.org/docs/17/sql-select.html",
+        "https://supabase.com/docs/guides/database/functions"
+      ],
+      "changed_paths": [
+        "app/lib/reporting/compare-request.server.js",
+        "app/lib/reporting/v1-report-read.server.js",
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/a6-tech-01-f01-migration-lineage-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "supabase/migrations/20261126083358_eo06bc_v1_report_read.sql",
+        "tests/eo-06c-compare-api.test.js",
+        "tools/eo05-google-daily-packages-probe.mjs",
+        "tools/eo06b-report-sales-compare-probe.mjs",
+        "tools/eo06e-compare-reread-proof.mjs"
       ]
     }
   ],

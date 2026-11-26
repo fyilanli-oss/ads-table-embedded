@@ -8,7 +8,7 @@ EO-06, EO-07 ve EO-08 kabulünde [ana paket tablosundaki referanslar](A6_EO_IMPL
 
 ## EO-06-E — İzole rapor ve API kabul kaydı, 26 Kasım 2026
 
-33 mevcut test ve PostgreSQL 17.5 üzerindeki iki Compare provasının sonuçları [EO-06-E kabul kaydında](A6_EO_IMPLEMENTATION_MASTER_TABLE.md#eo-06-e-izole-rapor-ve-api-kabulü) yer alır. Mağaza ayrımı, satış rolü ve veri durumları 20 ve 26. adımlara bağlıdır. 26. adımın Google ve Klaviyo tekrar okuma provası aynı kayıtta yer alır. [V1 okuma sözleşmesi](EO_06_V1_REPORT_READ_CONTRACT.md) Dashboard ile EcoSystem için ortak satış kaynağını, toplama ve ilişki kurallarını tanımlar. Sonraki teknik iş ortak okumayı API'ye bağlayıp bu örneklerle doğrulamaktır. Makbuza dayalı güncellik ve canlı mağaza kabulü ayrı açık kalemlerdir. [Makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo06bc_v1_report_read_contract_2026_11_26)
+33 mevcut test ve PostgreSQL 17.5 üzerindeki iki Compare provasının sonuçları [EO-06-E kabul kaydında](A6_EO_IMPLEMENTATION_MASTER_TABLE.md#eo-06-e-izole-rapor-ve-api-kabulü) yer alır. Mağaza ayrımı, satış rolü ve veri durumları 20 ve 26. adımlara bağlıdır. 26. adımın Google ve Klaviyo tekrar okuma provası aynı kayıtta yer alır. [V1 okuma sözleşmesi](EO_06_V1_REPORT_READ_CONTRACT.md) Dashboard ile EcoSystem için ortak satış kaynağını, toplama ve ilişki kurallarını tanımlar. Ortak okumanın `report-v1` modu ve ayrı hazırlık migration'ı mevcut Compare API'ye bağlandı. Sonraki tasarım kararı makbuza dayalı güncellik bilgisidir. Canlı SQL ve mağaza kabulü ayrı açık kalemlerdir. [Makine kaydı](../contracts/a6-eo-implementation-master-v1.json#eo06bc_v1_report_read_implementation_2026_11_26)
 
 ## EO-05 — Refresh kapanış güncellemesi ve EO-06 başlangıcı, 22 Kasım 2026
 

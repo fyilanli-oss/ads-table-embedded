@@ -1,4 +1,29 @@
 {
+  "eo06e_shopify_analytics_existing_app_probe_plan_2026_11_26": {
+    "package": "A6-EO-06-E",
+    "supersedes": "eo06e_shopify_analytics_product_probe_plan_2026_11_26",
+    "status": "plan_updated_shopify_acceptance_pending",
+    "document": "docs/EO_06_V1_REPORT_READ_CONTRACT.md#shopify-analizler-ürün-raporu-provası",
+    "target": {"app": "AdsTable", "app_handle": "adstable-1", "shop": "AdsTable Development", "synthetic_events_only": true, "verify_exact_shop_and_app_identity_before_send": true},
+    "release": {"scope": "application", "review_unreleased_version_first": true, "live_release_authorized": false, "event_send_authorized": false},
+    "historical_correction_acceptance": {"original_day_offset_days": 7, "expected_rows": 1, "expected_quantity": 1, "expected_minor_units": 8000, "send_day_new_sales": false, "replay_preserves_total": true},
+    "ready_report_acceptance": {"native_ready_report_open_and_reopen": true, "shop_owner_can_filter_without_creating_report": true, "contribution_rows_share_sales_column": true, "total_includes_only_contribution_from": true, "fixture_minor_units": {"from": 5000, "to": 8000, "total": 5000}},
+    "placement": {"single_surface": true, "preferred": "Shopify Analytics", "fallback": "AdsTable", "chart_decision": "after_report_acceptance", "chart_required": false},
+    "native_proof_passed": false,
+    "runtime_or_live_change_authorized": false
+  },
+  "eo06e_shopify_analytics_product_probe_plan_2026_11_26": {
+    "package": "A6-EO-06-E",
+    "status": "isolated_probe_defined_native_execution_pending",
+    "document": "docs/EO_06_V1_REPORT_READ_CONTRACT.md#shopify-analizler-ürün-raporu-provası",
+    "design_reference": "AdsTable_Campaign_V52_Shopify_Preview.html",
+    "target": "separate Shopify test app and test shop; synthetic only",
+    "fixture": {"advertised_product": "A", "sold_product": "B", "campaign": "campaign-test-1", "currency": "TRY", "initial": {"quantity": 1, "minor_units": 10000}, "correction": {"quantity_delta": 0, "minor_units_delta": -2000}, "expected": {"quantity": 1, "minor_units": 8000}},
+    "pass_condition": "same original business day and one product pair in Shopify Analytics; repeat within the documented idempotency window keeps the corrected total",
+    "native_proof_passed": false,
+    "fallback_pr": 409,
+    "runtime_or_live_change_authorized": false
+  },
   "eo06bc_v1_report_read_contract_2026_11_26": {
     "packages": ["A6-EO-06-B", "A6-EO-06-C"],
     "status": "read_contract_prepared_api_implementation_open",

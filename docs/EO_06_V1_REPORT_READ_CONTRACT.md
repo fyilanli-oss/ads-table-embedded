@@ -46,3 +46,27 @@ Mevcut okuma, mağaza ve kurulum neslini sunucuda belirler. Aktif kurulum, gizli
 | Ana aralık 1–7 Ekim, özel kıyas 4–10 Ekim. | İstek reddedilir. 24–30 Eylül aynı gün adediyle geçerli önceki dönemdir. |
 
 Son doğrulanan gün bilgisi EO-06-D'de makbuza dayalı ayrı karar olarak açık. KPI, ROAS, maliyet dağıtımı ve kesin sipariş Overlap'i bu rapor okumasının kapsamı dışındadır. Teknik referanslar 26 Kasım 2026'da kontrol edildi. [PostgreSQL ondalık türleri](https://www.postgresql.org/docs/17/datatype-numeric.html) · [PostgreSQL takvim işlemleri](https://www.postgresql.org/docs/17/functions-datetime.html)
+
+## Shopify Analizler ürün raporu provası
+
+26 Kasım 2026. V52 mockup'ındaki ürün tablosu, AdsTable Development mağazasında kurulu mevcut AdsTable (herkese açık uygulama, `adstable-1`) üzerinden sınanır. İlk taslakta ayrı test uygulaması hedeflenmişti. O hedefin yerini mevcut uygulama aldı. Tek özel `analytics_app_events` olayının tanımı uygulama genelinde yayımlanır. Sentetik gönderim öncesinde uygulama ve test mağazasının kesin Shopify kimlikleri doğrulanır. Yalnız bu mağazaya sentetik kampanya, ürün ve satış alanları gönderilir. Zey&Rose verisi ve gerçek sağlayıcı bağlantısı kullanılmaz. Önce yayımlanmamış sürüm farkı incelenir. Uygulama geneline yayın ve gönderim ayrı yetki gerektirir. Bu kayıt prova planıdır ve Shopify kabulü açıktır.
+
+| Aşama | Girdi | Shopify Analizler'de beklenen |
+|---|---|---|
+| İlk yayın | A reklam ürünü, B satılan ürün, `campaign-test-1`, satış günü D, adet farkı `1`, tutar farkı `10000` kuruş | D gününde kampanya ve A → B aynı satırda, `1` adet ve `100,00 TRY`. Genel toplam aynı. |
+| Tarihsel düzeltme | İkinci olay, aynı ürün çifti ve kampanya, yine D günü, adet farkı `0`, tutar farkı `-2000` kuruş | Aynı D satırında `1` adet ve `80,00 TRY`. Gönderim gününe yeni satış yazılmaz. |
+| Yinelenen düzeltme kontrolü | İkinci olayın aynı içeriği ve aynı işlem kimliği, ilk iki aşama doğrulandıktan sonra | Belgelenen 24 saatlik aynı anahtar penceresinde toplam yine `1` adet ve `80,00 TRY`. Kuyruktan günler sonra tekrar üretilen gönderimler için platformun 24 saatlik koruması tek başına yeterli kabul edilmez. |
+
+Özel olayda `probe_run`, `advertised_product`, `sold_product`, `campaign` boyutları `string`, `quantity_delta` `int`, `sales_delta` `TRY` cinsinden `money` olarak tasarlanır. Ürün değerleri test kimlikleridir. Kullanılan iki ölçü `sum(quantity_delta)` ve `sum(sales_delta)` olarak tanımlanır. Olay sayısı ürün adedi olarak kullanılmaz. Rapor `FROM app_events` ile bu iki ölçüyü seçer, prova kimliğini filtreler, iki ürün ve kampanyaya göre gruplar. Günlük kırılım Shopify'ın olay zamanından okunur. D, test mağazasının saat diliminde provadan yedi takvim günü önceki kapalı gündür. Her iki olay için aynı D zaman etiketi kullanılır. Bu, gerçek yedi günü beklemeden geçmiş tarihe işleme davranışını sınar.
+
+Eksi tutar Analytics için bu provanın hipotezidir. Shopify'ın API kabulü rapor kabulü sayılmaz. Her aşamada gönderim zamanı, Shopify kabul sonucu, Analizler'de ilk görünme zamanı, D gününün satırı ve genel toplam kaydedilir. Düzeltme reddedilirse, yanlış güne düşerse veya toplam yanlışsa sonuç açık kalır. İlk sağlayıcı hatasında prova durur.
+
+### Hazır rapor ve katkı toplamı kabulü
+
+Geçmiş gün kabulünden sonra AdsTable'ın hazırladığı raporun Shopify Analizler ve Raporlar altında doğrudan açılabilmesi sınanır. Mağaza sahibi hazır raporu yeniden açabilir, tarih ve ürün filtrelerini kullanabilir. Sorgu yazması veya raporu baştan kurması gerekmez.
+
+Aynı test günü C → A için 1 adet ve 50 TL eklenir. A görünümünde Contribution From 50 TL, Contribution To 80 TL aynı satış sütununda görünür. A'nın satış toplamı 1 adet ve 50 TL kalır. Tarih ve ürün filtresi değiştiğinde aynı kural sürer. Contribution To aynı satışın diğer bakışını gösterir ve satış toplamına katılmaz.
+
+Shopify Analizler, hazır rapor ve katkı toplamı kabulü sağlandığında Dashboard ile EcoSystem'in tek adresi olarak tercih edilir. Kabul karşılanamazsa iki görünüm birlikte AdsTable içinde değerlendirilir. Grafik kararı en sondadır. Sankey ve gruplu yatay çubuk kabul koşulu değildir. Hazır tablo tek başına yeterli olabilir.
+
+Shopify olay başına bir istek alır. Canlı hacim hesabı, rapor ve düzeltme kabulünden sonra ele alınır. Teknik belgeler 26 Kasım 2026'da kontrol edildi. [Olay tanımı ve ölçüler](https://shopify.dev/docs/apps/build/app-events/analytics/toml-configuration) · [ShopifyQL analitik olayları](https://shopify.dev/docs/apps/build/app-events/analytics) · [App Events API](https://shopify.dev/docs/api/app-events/latest) · [Shopify sürüm yayını](https://shopify.dev/docs/api/shopify-cli/app/app-deploy)

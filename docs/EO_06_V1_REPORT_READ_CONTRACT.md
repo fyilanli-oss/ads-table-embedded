@@ -334,3 +334,9 @@ VISUALIZE event."adstable-1".ecosystem_role_probe.ecosystem_sales TYPE stacked_h
 ```
 
 28 Kasım 2026. Ürün sahibi, grafik için yapılan sütun ve satır sırası değişikliğini kabul etmedi. Özgün sıralamayla grafik denendiğinde Shopify, Gün ve Product ID boyutlarını kullanarak 27 Kasım için tek bir yığılmış çubuk çizdi. Bu görünüm kaydedilmedi. Product Level 1, Gün → Product ID → SKU → Product Name → Platform → Campaign → Channel → Contribution Roles → Sales Roles → Advertised Product → Sold Product düzeni ve Tablo görünümüyle yeniden kaydedildi. Kısa bağlantıdan tekrar açıldığında 15 satır ve 7.880 TL Sales / 200 TL Contribution To doğrulandı. Kolye için eklenen 80 TL Cross Sell satırı provada duruyor.
+
+### Product Title ve Channel Level ilk önizlemesi
+
+28 Kasım 2026. Ürün sahibinin Shopify terminolojisi kararıyla Product Level 1 sütun başlığı, ShopifyQL alias üzerinden Product Title oldu. Kısa rapor bağlantısından yeniden açıldığında özgün tablo sırası, 15 satır ve 7.880 TL Sales / 200 TL Contribution To doğrulandı. [Shopify ürün başlığı](https://help.shopify.com/tr/manual/reports-and-analytics/shopify-reports/report-types/analytics-fields) · [ShopifyQL alias](https://shopify.dev/docs/api/shopifyql/latest/syntax/from-and-show#as)
+
+Channel Level önizlemesinde mevcut sentetik provanın satış satırları Gün → Platform → Campaign → Channel → Sales Roles → Advertised Product → Sold Product olarak gruplandı. Shopify 13 satış satırı ve 7.880 TL Sales gösterdi. V52 Channel görünümündeki Interactivity ve Interacted Channel, doğrulanmış hedef yerleşim alanları gerektirir. Bu prova yalnız kaynak kanalın satışını doğrular. Ayrı Channel Level raporu henüz kaydedilmedi.

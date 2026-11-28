@@ -1,10 +1,10 @@
-name: Shopify app configuration deploy
+name: Shopify Analytics unpublished draft
 
 on:
   workflow_dispatch:
     inputs:
       confirmation:
-        description: Type DEPLOY to create and release a Shopify app version
+        description: Type DRAFT-ONLY to create one unpublished AdsTable version
         required: true
         type: string
 
@@ -18,7 +18,7 @@ concurrency:
 jobs:
   deploy:
     name: Deploy Shopify app configuration
-    if: ${{ inputs.confirmation == 'DEPLOY' }}
+    if: ${{ (github.ref == 'refs/heads/main' && inputs.confirmation == 'DEPLOY') || (github.ref == 'refs/heads/codex/eo06-shopify-channel-level-v52-draft' && github.run_attempt == 1 && inputs.confirmation == 'DRAFT-ONLY') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -43,12 +43,66 @@ jobs:
         run: npm install --global @shopify/cli@4.8.5
 
       - name: Validate Shopify app configuration
+        if: ${{ github.ref == 'refs/heads/main' }}
         env:
           SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
         run: shopify app config validate --no-color
 
-      - name: Create and release Shopify app version
+      - name: Verify target and stage the reviewed extension
+        if: ${{ github.ref == 'refs/heads/codex/eo06-shopify-channel-level-v52-draft' }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from tomllib import loads
+
+          config = loads(Path('shopify.app.toml').read_text())
+          assert config['name'] == 'AdsTable'
+          assert config['client_id'] == '58c91f39f69ca282a94ba06e9648be9e'
+          assert config['application_url'] == 'https://embedded.adstable.app/'
+          assert not Path('extensions').exists(), 'unexpected existing extensions in checkout'
+
+          fixture = Path('docs/evidence/eo06-shopify-analytics-probe/shopify.extension.toml.example')
+          from hashlib import sha256
+
+          definition, = loads(fixture.read_text())['extensions']
+          assert sha256(fixture.read_bytes()).hexdigest() == '797968fa19f3be010a0681eeb4400f9637d94b4b6eab7573a24cb18abe63eee0'
+          assert definition['type'] == 'analytics_app_events'
+          assert definition['handle'] == 'ecosystem-sales-probe'
+          assert [event['name'] for event in definition['events']] == [
+              'adstable-1.ecosystem_sale_probe',
+              'adstable-1.ecosystem_role_probe',
+              'adstable-1.ecosystem_channel_level_probe',
+              'adstable-1.ecosystem_channel_level_full_probe',
+          ]
+          assert len(definition['metrics']) == 11
+          assert len(definition['events'][-1]['dimensions']) == 14
+
+          target = Path('extensions/ecosystem-sales-probe/shopify.extension.toml')
+          target.parent.mkdir(parents=True)
+          target.write_bytes(fixture.read_bytes())
+          print('Verified the separate Channel Level event and the existing Analytics definitions.')
+          PY
+
+      - name: Create the authorized Shopify app version
         env:
           SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
           COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
-        run: shopify app deploy --allow-updates --no-color --source-control-url "$COMMIT_URL"
+        run: |
+          if [[ "$GITHUB_REF" == 'refs/heads/main' ]]; then
+            shopify app deploy --allow-updates --no-color --source-control-url "$COMMIT_URL"
+            exit 0
+          fi
+
+          test "$GITHUB_REF" = 'refs/heads/codex/eo06-shopify-channel-level-v52-draft'
+          test -n "$SHOPIFY_APP_AUTOMATION_TOKEN"
+          version=eo06e-analytics-channel-level-v52-draft
+          shopify app versions list --json > "$RUNNER_TEMP/shopify-versions-before.json"
+          if grep -Fq "$version" "$RUNNER_TEMP/shopify-versions-before.json"; then
+            echo 'The named draft already exists. Stopping without creating another version.'
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/shopify-versions-before.json"
+          shopify app deploy --no-release --no-color --version "$version" --source-control-url "$COMMIT_URL"
+          shopify app versions list --json > "$RUNNER_TEMP/shopify-versions-after.json"
+          cat "$RUNNER_TEMP/shopify-versions-after.json"
+          grep -Fq "$version" "$RUNNER_TEMP/shopify-versions-after.json"

@@ -49,6 +49,14 @@ Son doğrulanan gün bilgisi EO-06-D'de makbuza dayalı ayrı karar olarak açı
 
 ## Shopify Analizler ürün raporu provası
 
+### Product Level 1 · Satış günü boyutu
+
+28 Kasım 2026. Kayıtlı rapor `day` ile açıldı. Tarih aralığı 26–28 Kasım'dan yalnız 28 Kasım'a daraltılınca Shopify yerleşik `GROUP BY day` ve `ORDER BY day` alanlarını `hour` olarak yeniden yazdı. `TIMESERIES day` ile yapılan önizlemede aynı tarih adımı `TIMESERIES hour` üretti. İki deneme kaydedilmedi.
+
+Development provasında `ecosystem_role_probe.sale_day`, mağaza takvimindeki satış gününü `YYYY-MM-DD` metni olarak taşır. Alan isteğe bağlıdır. Önceki olayların şema geçerliliği korunur. Yeni örneklerin `timestamp` değeri aynı mağaza gününde kalır. Yerleşik tarih seçici olay zamanını filtreler, rapor tablosu ve grafik ise `sale_day` ile gruplanır. [Shopify olay boyutları, 28 Kasım 2026](https://shopify.dev/docs/apps/build/app-events/analytics/toml-configuration#custom-attributes)
+
+Mevcut Product Level tablosunun sütunları, sırası ve iki satış metriği korunur. ShopifyQL'de yerleşik `day` alanının kullanıldığı `SHOW`, `GROUP BY` ve `ORDER BY` konumlarına `event."adstable-1".ecosystem_role_probe.sale_day` gelir. Satış tutarı Basit yatay grafikte kalır. Prova yeni bir `probe_run` kullanır. 27 ve 28 Kasım örnekleri ayrı günlerde görünmeli. Tarih aralığını 28 Kasım'a daraltınca yalnız 28 Kasım kalmalı. Ardından test raporu kaydedilip kısa bağlantıdan yeniden açılır. Her üç ekranda da gün boyutu ve satış tutarları doğrulanır. Shopify ekran kabulü bekliyor.
+
 26 Kasım 2026. V52 mockup'ındaki ürün tablosu, AdsTable Development mağazasında kurulu mevcut AdsTable (herkese açık uygulama, `adstable-1`) üzerinden sınanır. İlk taslakta ayrı test uygulaması hedeflenmişti. O hedefin yerini mevcut uygulama aldı. Tek özel `analytics_app_events` olayının tanımı uygulama genelinde yayımlanır. Sentetik gönderim öncesinde uygulama ve test mağazasının kesin Shopify kimlikleri doğrulanır. Yalnız bu mağazaya sentetik kampanya, ürün ve satış alanları gönderilir. Zey&Rose verisi ve gerçek sağlayıcı bağlantısı kullanılmaz. Önce yayımlanmamış sürüm farkı incelenir. Uygulama geneline yayın ve gönderim ayrı yetki gerektirir. Bu kayıt prova planıdır ve Shopify kabulü açıktır.
 
 [Çevrimdışı olay ve sorgu taslağı](#çevrimdışı-shopify-analizler-olay-taslağı) sürüm farkında beklenen tek eklemeyi, iki sentetik olay örneğini ve ShopifyQL kontrolünü içerir.

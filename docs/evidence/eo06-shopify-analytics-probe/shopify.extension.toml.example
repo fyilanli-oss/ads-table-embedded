@@ -166,6 +166,11 @@ label = "Sales Roles"
 type = "string"
 optional = true
 
+[extensions.events.dimensions.sale_day]
+label = "Gün"
+type = "string"
+optional = true
+
 [[extensions.metrics]]
 handle = "ecosystem_purchases"
 label = "Purchase"

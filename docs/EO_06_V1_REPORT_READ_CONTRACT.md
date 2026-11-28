@@ -361,3 +361,38 @@ GROUP BY day, event."adstable-1".ecosystem_channel_level_full_probe.platform, ev
 SINCE 2026-11-27 UNTIL 2026-11-27
 ORDER BY day ASC, event."adstable-1".ecosystem_channel_level_full_probe.platform ASC, event."adstable-1".ecosystem_channel_level_full_probe.campaign ASC, event."adstable-1".ecosystem_channel_level_full_probe.channel ASC
 ```
+
+
+### Sales % · Product Level ve Channel Level özet provası
+
+28 Kasım 2026. Ürün sahibi [Shopify özet sürümünü](https://dev.shopify.com/dashboard/239318688/apps/432251994113/versions/1270415884289) etkinleştirdi ve AdsTable Development'a 28 sentetik özet olayı gönderimini onayladı. [Gönderim betiği](evidence/eo06-shopify-analytics-probe/send-sales-share.mjs) 27 Kasım için 12 ürün ve 12 kanal, 28 Kasım için 2 ürün ve 2 kanal özeti gönderdi. [Alan adı atanmayan Vercel build'i](https://vercel.com/firats-projects-d22284db/ads-table-embedded/2nUzEkWozjx1zHaJPJvgK19Zn58N) 28 olay için 202 ve success yanıtını kaydetti. Özet olayları ayrı Shopify olay adları kullanır ve V52 detay verisini değiştirmez.
+
+Google Örgü Bileklik Cross Sell payı 27 Kasım için 120 ÷ 920 = %13,0, 27–28 Kasım için 120 ÷ 1.000 = %12,0. Google Yılbaşı Bileklikler kanalında başka kampanyada reklamı yapılan ürüne giden satışın payı 27 Kasım için 120 ÷ 720 = %16,7, 27–28 Kasım için 120 ÷ 1.000 = %12,0. Gün gruplaması kullanılmaz ve pay ile payda seçili tarih aralığında toplanır. Shopify Analytics ekran kabulü bekliyor. [28 Kasım'da kontrol edilen ShopifyQL ifadeleri](https://shopify.dev/docs/api/shopifyql/latest/syntax/from-and-show#expressions)
+
+#### Product Level özet sorgusu
+
+```sql
+FROM app_events
+SHOW event."adstable-1".ecosystem_product_sales_share_probe.product_share_sales,
+  100 * event."adstable-1".ecosystem_product_sales_share_probe.product_share_direct_sales / event."adstable-1".ecosystem_product_sales_share_probe.product_share_sales AS "Direct %",
+  100 * event."adstable-1".ecosystem_product_sales_share_probe.product_share_cross_sell_sales / event."adstable-1".ecosystem_product_sales_share_probe.product_share_sales AS "Cross Sell %",
+  100 * event."adstable-1".ecosystem_product_sales_share_probe.product_share_indirect_sales / event."adstable-1".ecosystem_product_sales_share_probe.product_share_sales AS "Indirect %"
+GROUP BY event."adstable-1".ecosystem_product_sales_share_probe.product_id, event."adstable-1".ecosystem_product_sales_share_probe.product_title, event."adstable-1".ecosystem_product_sales_share_probe.platform
+SINCE 2026-11-27 UNTIL 2026-11-28
+ORDER BY event."adstable-1".ecosystem_product_sales_share_probe.product_id ASC, event."adstable-1".ecosystem_product_sales_share_probe.product_title ASC, event."adstable-1".ecosystem_product_sales_share_probe.platform ASC
+```
+
+#### Channel Level özet sorgusu
+
+```sql
+FROM app_events
+SHOW event."adstable-1".ecosystem_channel_sales_share_probe.channel_share_sales,
+  100 * event."adstable-1".ecosystem_channel_sales_share_probe.channel_share_same_channel_sales / event."adstable-1".ecosystem_channel_sales_share_probe.channel_share_sales AS "Same Channel %",
+  100 * event."adstable-1".ecosystem_channel_sales_share_probe.channel_share_same_campaign_other_channel_sales / event."adstable-1".ecosystem_channel_sales_share_probe.channel_share_sales AS "Other Channels in Campaign %",
+  100 * event."adstable-1".ecosystem_channel_sales_share_probe.channel_share_other_campaign_sales / event."adstable-1".ecosystem_channel_sales_share_probe.channel_share_sales AS "Other Channels in Other Campaigns %",
+  100 * event."adstable-1".ecosystem_channel_sales_share_probe.channel_share_non_advertised_sales / event."adstable-1".ecosystem_channel_sales_share_probe.channel_share_sales AS "Non Advertised Products %",
+  100 * event."adstable-1".ecosystem_channel_sales_share_probe.channel_share_unknown_relationship_sales / event."adstable-1".ecosystem_channel_sales_share_probe.channel_share_sales AS "Unknown %"
+GROUP BY event."adstable-1".ecosystem_channel_sales_share_probe.platform, event."adstable-1".ecosystem_channel_sales_share_probe.campaign, event."adstable-1".ecosystem_channel_sales_share_probe.channel
+SINCE 2026-11-27 UNTIL 2026-11-28
+ORDER BY event."adstable-1".ecosystem_channel_sales_share_probe.platform ASC, event."adstable-1".ecosystem_channel_sales_share_probe.campaign ASC, event."adstable-1".ecosystem_channel_sales_share_probe.channel ASC
+```

@@ -324,6 +324,11 @@ type = "int"
 semantic_type = "money"
 optional = false
 
+[extensions.events.dimensions.sale_day]
+label = "Gün"
+type = "string"
+optional = true
+
 [[extensions.metrics]]
 handle = "channel_level_full_sales"
 label = "Sales"

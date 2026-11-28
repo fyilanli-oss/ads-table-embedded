@@ -257,7 +257,7 @@ ORDER BY event."adstable-1".ecosystem_role_probe.advertised_product ASC, event."
 | Platform 1 | 180 TL | 80 TL |
 | Özet | 220 TL | 80 TL |
 
-B'nin 80 TL satışı Sales toplamında bir kez sayılır. A'nın 80 TL katkısı ayrı sütunda kalır. Purchase bu provanın kapsamı dışındadır. Yukarıdaki değerler yerel gönderim kontrolünün beklenen sonucudur. Shopify raporunda görsel kabul beklenir. [28 Kasım'da kontrol edilen Shopify grup toplamı belgesi](https://help.shopify.com/en/manual/reports-and-analytics/shopify-reports/report-types/shopifyql-editor/shopifyql-syntax#group-totals)
+B'nin 80 TL satışı Sales toplamında bir kez sayılır. A'nın 80 TL katkısı ayrı sütunda kalır. Purchase bu provanın kapsamı dışındadır. Ürün sahibi 28 Kasım'da Shopify Analizler ekranında hiyerarşi ve toplamların doğru göründüğünü doğruladı. [28 Kasım'da kontrol edilen Shopify grup toplamı belgesi](https://help.shopify.com/en/manual/reports-and-analytics/shopify-reports/report-types/shopifyql-editor/shopifyql-syntax#group-totals)
 
 ```sql
 FROM app_events
@@ -266,4 +266,19 @@ WHERE event."adstable-1".ecosystem_role_probe.probe_run = 'eo06e-development-eco
 GROUP BY event."adstable-1".ecosystem_role_probe.platform, event."adstable-1".ecosystem_role_probe.campaign, event."adstable-1".ecosystem_role_probe.channel, event."adstable-1".ecosystem_role_probe.advertised_product, event."adstable-1".ecosystem_role_probe.sold_product WITH GROUP_TOTALS, TOTALS
 SINCE 2026-11-27 UNTIL 2026-11-27
 ORDER BY event."adstable-1".ecosystem_role_probe.platform ASC, event."adstable-1".ecosystem_role_probe.campaign ASC, event."adstable-1".ecosystem_role_probe.channel ASC, event."adstable-1".ecosystem_role_probe.advertised_product ASC
+```
+
+### EcoSystem grafik önizlemesi
+
+28 Kasım 2026. İlk grafik provası, kabul edilen hiyerarşi verisiyle A'nın katkı sağladığı satılan ürünleri yatay çubuklarla gösterir. Beklenen tek çubuk B · 80 TL'dir. Bu sorgu mevcut Shopify raporunu kaydetmeden önizlemeye açılır. Grafik türünün EcoSystem için görsel kabulü beklenir. [ShopifyQL yatay çubuk grafiği](https://shopify.dev/docs/api/shopifyql/latest/syntax/visualize#bar-charts)
+
+```sql
+FROM app_events
+SHOW event."adstable-1".ecosystem_role_probe.ecosystem_contribution_to
+WHERE event."adstable-1".ecosystem_role_probe.probe_run = 'eo06e-development-ecosystem-hierarchy-v1'
+  AND event."adstable-1".ecosystem_role_probe.advertised_product = 'A'
+  AND event."adstable-1".ecosystem_role_probe.contribution_role = 'Contribution To'
+GROUP BY event."adstable-1".ecosystem_role_probe.sold_product
+SINCE 2026-11-27 UNTIL 2026-11-27
+VISUALIZE event."adstable-1".ecosystem_role_probe.ecosystem_contribution_to TYPE horizontal_bar
 ```

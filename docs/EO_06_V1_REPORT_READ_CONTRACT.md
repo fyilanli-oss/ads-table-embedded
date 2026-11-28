@@ -282,3 +282,20 @@ GROUP BY event."adstable-1".ecosystem_role_probe.sold_product
 SINCE 2026-11-27 UNTIL 2026-11-27
 VISUALIZE event."adstable-1".ecosystem_role_probe.ecosystem_contribution_to TYPE horizontal_bar
 ```
+
+### Product Level rapor provası
+
+28 Kasım 2026. Ürün sahibi V52'nin Product görünümüne öncelik verdi ve Interactivity'yi bu rapordan çıkardı. Ürünün üstte yer aldığı sıra Product → Platform → Campaign → Channel → Contribution Roles olarak sınanır. Ürün kimliği, SKU ve ad üst ürünün bağlamını gösterir. Sales Roles ile Advertised Product ve Sold Product ayrıntıyı taşır. Sales ve Contribution To ayrı tutar sütunlarıdır. Grafik ve Dashboard ayrı kalır.
+
+[Shopify sürümü](https://dev.shopify.com/dashboard/239318688/apps/432251994113/versions/1270227927041) dört isteğe bağlı Product Level boyutunu ekledi. Ürün sahibi sürümü etkinleştirdi ve AdsTable Development'a [14 kayıt gönderimini](evidence/eo06-shopify-analytics-probe/send-product-level.mjs) açıkça onayladı. 27 Kasım için 12 ayrı Platform/Campaign/Channel grubundan bir ürün örneği ve iki Contribution To ayrıntısı gönderildi. Örnekler altı farklı ürün kimliği içerir. Tek örnek SKU sentetiktir. Kaynağı belirlenemeyen dört örnekte Sales Roles gönderilmedi. Advertised Product ve Contribution Roles için zorunlu olay alanlarında boş görünümü temsil eden tire kullanıldı. Satış tutarları sentetiktir.
+
+[Gönderim kaydı](https://vercel.com/firats-projects-d22284db/ads-table-embedded/8B2tYU8ieEqd5KkQ99XD6jX3PXH8) 14 kayıt için de `202` ve `success: true` sonucunu doğruladı. Etkin uygulama alan adı aynı dağıtımda kaldı. Beklenen genel toplam 7.800 TL Sales ve 200 TL Contribution To'dur. Shopify ekranında bütün kırılımların görünmesi, eksik alanların sunumu ve toplamların görsel kabulü bekleniyor. [28 Kasım'da kontrol edilen ShopifyQL gruplama belgesi](https://shopify.dev/docs/api/shopifyql/latest/syntax/group-by)
+
+```sql
+FROM app_events
+SHOW event."adstable-1".ecosystem_role_probe.ecosystem_sales, event."adstable-1".ecosystem_role_probe.ecosystem_contribution_to
+WHERE event."adstable-1".ecosystem_role_probe.probe_run = 'eo06e-development-product-level-v1'
+GROUP BY event."adstable-1".ecosystem_role_probe.product_id, event."adstable-1".ecosystem_role_probe.sku, event."adstable-1".ecosystem_role_probe.product_name, event."adstable-1".ecosystem_role_probe.platform, event."adstable-1".ecosystem_role_probe.campaign, event."adstable-1".ecosystem_role_probe.channel, event."adstable-1".ecosystem_role_probe.contribution_role, event."adstable-1".ecosystem_role_probe.sales_role, event."adstable-1".ecosystem_role_probe.advertised_product, event."adstable-1".ecosystem_role_probe.sold_product WITH GROUP_TOTALS, TOTALS
+SINCE 2026-11-27 UNTIL 2026-11-27
+ORDER BY event."adstable-1".ecosystem_role_probe.product_id ASC, event."adstable-1".ecosystem_role_probe.sku ASC, event."adstable-1".ecosystem_role_probe.product_name ASC, event."adstable-1".ecosystem_role_probe.platform ASC, event."adstable-1".ecosystem_role_probe.campaign ASC, event."adstable-1".ecosystem_role_probe.channel ASC, event."adstable-1".ecosystem_role_probe.contribution_role ASC, event."adstable-1".ecosystem_role_probe.sales_role ASC, event."adstable-1".ecosystem_role_probe.advertised_product ASC
+```

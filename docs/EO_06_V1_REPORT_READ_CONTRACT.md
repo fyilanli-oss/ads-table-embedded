@@ -346,3 +346,18 @@ Channel Level önizlemesinde mevcut sentetik provanın satış satırları Gün 
 28 Kasım 2026. Ürün sahibi [Channel Level olay sürümünü](https://dev.shopify.com/dashboard/239318688/apps/432251994113/versions/1270366896129) yayımladı. Ayrı onayla [gönderim betiği](evidence/eo06-shopify-analytics-probe/send-channel-level.mjs) AdsTable Development'a aynı kanala ait iki sentetik olay gönderdi. Vercel [gönderim kaydı](https://vercel.com/firats-projects-d22284db/ads-table-embedded/CRNMpSQtpZ6pAQTKz388vGxJXVwS) iki 202 ve success yanıtını gösterdi. Uygulama alan adı önceki dağıtıma bağlı kaldı.
 
 [Channel Level](https://admin.shopify.com/store/adstable-development/analytics/reports/506265689) 27 Kasım 2026 için kaydedildi ve kısa bağlantıdan yeniden açıldı. Küpeler → Same Channel → This Channel → Gümüş Küpe altında Contribution From ve Contribution To iki ayrı satırdır. Özet 500 TL Sales ve 80 TL Contribution To gösterir. Filtreler paneli boştur. Bu sentetik kanıt Same Channel dalının sunumuna aittir.
+
+
+### V52 Channel Level · Product Level ile eşleşen gönderim
+
+28 Kasım 2026. Ürün sahibi [tam Channel Level Shopify sürümünü](https://dev.shopify.com/dashboard/239318688/apps/432251994113/versions/1270389407745) etkinleştirdi ve AdsTable Development'a 25 sentetik olay gönderimini onayladı. [Prova betiği](evidence/eo06-shopify-analytics-probe/send-channel-level-v52.mjs), Product Level için 5 ek olay ve Channel Level için ayrı tam veri setinde 20 olay gönderdi. [Alan adı atanmayan Vercel build'i](https://vercel.com/firats-projects-d22284db/ads-table-embedded/FbZRcos6nC4LGxfAzFciP2tics1i) her iki grup için tüm olaylarda 202 ve success yanıtlarını kaydetti. Product Level'a 220 TL Sales ve 100 TL Contribution To eklendi. Channel Level gönderimi 8.100 TL Sales ve 300 TL Contribution To içerir. Uygulama alan adının önceki dağıtımı doğrulandı.
+
+[Product Level 1](https://admin.shopify.com/store/adstable-development/analytics/reports/506167385) ile aşağıdaki V52 Channel Level önizlemesinde 27 Kasım için 20 detay satırı, 8.100 TL Sales ve 300 TL Contribution To beklenir. Channel Level önizlemesinde `WHERE` filtresi yoktur. Shopify Analytics ekran kabulü bekliyor. [28 Kasım'da kontrol edilen App Events sorgu belgesi](https://shopify.dev/docs/apps/build/app-events/analytics#step-4-query-the-activity) · [ShopifyQL toplamları](https://shopify.dev/docs/api/shopifyql/latest/syntax/with#total-columns)
+
+```sql
+FROM app_events
+SHOW event."adstable-1".ecosystem_channel_level_full_probe.channel_level_full_sales, event."adstable-1".ecosystem_channel_level_full_probe.channel_level_full_contribution_to
+GROUP BY day, event."adstable-1".ecosystem_channel_level_full_probe.platform, event."adstable-1".ecosystem_channel_level_full_probe.campaign, event."adstable-1".ecosystem_channel_level_full_probe.channel, event."adstable-1".ecosystem_channel_level_full_probe.interactivity, event."adstable-1".ecosystem_channel_level_full_probe.interacted_channel, event."adstable-1".ecosystem_channel_level_full_probe.product_title, event."adstable-1".ecosystem_channel_level_full_probe.contribution_role, event."adstable-1".ecosystem_channel_level_full_probe.product_id, event."adstable-1".ecosystem_channel_level_full_probe.sku, event."adstable-1".ecosystem_channel_level_full_probe.sales_role, event."adstable-1".ecosystem_channel_level_full_probe.advertised_product, event."adstable-1".ecosystem_channel_level_full_probe.sold_product WITH GROUP_TOTALS, TOTALS
+SINCE 2026-11-27 UNTIL 2026-11-27
+ORDER BY day ASC, event."adstable-1".ecosystem_channel_level_full_probe.platform ASC, event."adstable-1".ecosystem_channel_level_full_probe.campaign ASC, event."adstable-1".ecosystem_channel_level_full_probe.channel ASC
+```

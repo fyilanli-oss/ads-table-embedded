@@ -299,3 +299,20 @@ GROUP BY event."adstable-1".ecosystem_role_probe.product_id, event."adstable-1".
 SINCE 2026-11-27 UNTIL 2026-11-27
 ORDER BY event."adstable-1".ecosystem_role_probe.product_id ASC, event."adstable-1".ecosystem_role_probe.sku ASC, event."adstable-1".ecosystem_role_probe.product_name ASC, event."adstable-1".ecosystem_role_probe.platform ASC, event."adstable-1".ecosystem_role_probe.campaign ASC, event."adstable-1".ecosystem_role_probe.channel ASC, event."adstable-1".ecosystem_role_probe.contribution_role ASC, event."adstable-1".ecosystem_role_probe.sales_role ASC, event."adstable-1".ecosystem_role_probe.advertised_product ASC
 ```
+
+### Product Level rapor provası · Gün, SKU ve satış rolleri
+
+28 Kasım 2026. Ürün sahibi, aynı 14 sentetik kaydın yalnızca AdsTable Development'a ayrı bir prova olarak gönderilmesini onayladı. [Prova betiği](evidence/eo06-shopify-analytics-probe/send-product-level-v2.mjs) bütün SKU değerlerini `Yok` olarak gönderir. Reklamı yapılan ürünün bilinmediği dört kayıtta `Contribution From`, `Unknown` ve `Indirect` kullanılır. Satılan ürün adı, kampanya bağı, olay tarihi ve tutarlar önceki provayla aynıdır.
+
+[Gönderim kaydı](https://vercel.com/firats-projects-d22284db/ads-table-embedded/AVryyGri5GYvnN8qMHq36HDoY6zQ), 14 ayrı kayıt için `202` ve `success: true` yanıtını doğruladı. Canlı alan adının bağlı olduğu dağıtım gönderimden önce ve sonra aynıydı. Raporun beklenen toplamları 7.800 TL Sales ve 200 TL Contribution To. Shopify tablo görünümü için ürün sahibi kabulü beklenir.
+
+Önizleme sorgusu `day` boyutunu ilk sıraya alır ve `WITH GROUP_TOTALS, TOTALS` ile ara toplamları ve Özet satırını korur. Shopify'ın `Toplam` etiketini tek başına gizlemeye veya uygulama verisini yerleşik rapor hücresinde rozet olarak göstermeye yönelik bir seçeneği belgelerde bulunmadı. [28 Kasım'da kontrol edilen ShopifyQL toplam ayarları](https://shopify.dev/docs/api/shopifyql/latest/syntax/with) · [Shopify rapor editörü](https://help.shopify.com/en/manual/reports-and-analytics/shopify-reports/report-types/reports-overview) · [App Events API](https://shopify.dev/docs/api/app-events/latest)
+
+```sql
+FROM app_events
+SHOW event."adstable-1".ecosystem_role_probe.ecosystem_sales, event."adstable-1".ecosystem_role_probe.ecosystem_contribution_to
+WHERE event."adstable-1".ecosystem_role_probe.probe_run = 'eo06e-development-product-level-v2'
+GROUP BY day, event."adstable-1".ecosystem_role_probe.product_id, event."adstable-1".ecosystem_role_probe.sku, event."adstable-1".ecosystem_role_probe.product_name, event."adstable-1".ecosystem_role_probe.platform, event."adstable-1".ecosystem_role_probe.campaign, event."adstable-1".ecosystem_role_probe.channel, event."adstable-1".ecosystem_role_probe.contribution_role, event."adstable-1".ecosystem_role_probe.sales_role, event."adstable-1".ecosystem_role_probe.advertised_product, event."adstable-1".ecosystem_role_probe.sold_product WITH GROUP_TOTALS, TOTALS
+SINCE 2026-11-27 UNTIL 2026-11-27
+ORDER BY day ASC, event."adstable-1".ecosystem_role_probe.product_id ASC, event."adstable-1".ecosystem_role_probe.sku ASC, event."adstable-1".ecosystem_role_probe.product_name ASC, event."adstable-1".ecosystem_role_probe.platform ASC, event."adstable-1".ecosystem_role_probe.campaign ASC, event."adstable-1".ecosystem_role_probe.channel ASC, event."adstable-1".ecosystem_role_probe.contribution_role ASC, event."adstable-1".ecosystem_role_probe.sales_role ASC, event."adstable-1".ecosystem_role_probe.advertised_product ASC
+```

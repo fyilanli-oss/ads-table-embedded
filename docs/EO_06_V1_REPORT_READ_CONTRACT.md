@@ -316,3 +316,19 @@ GROUP BY day, event."adstable-1".ecosystem_role_probe.product_id, event."adstabl
 SINCE 2026-11-27 UNTIL 2026-11-27
 ORDER BY day ASC, event."adstable-1".ecosystem_role_probe.product_id ASC, event."adstable-1".ecosystem_role_probe.sku ASC, event."adstable-1".ecosystem_role_probe.product_name ASC, event."adstable-1".ecosystem_role_probe.platform ASC, event."adstable-1".ecosystem_role_probe.campaign ASC, event."adstable-1".ecosystem_role_probe.channel ASC, event."adstable-1".ecosystem_role_probe.contribution_role ASC, event."adstable-1".ecosystem_role_probe.sales_role ASC, event."adstable-1".ecosystem_role_probe.advertised_product ASC
 ```
+
+### Product Level 1 · Yatay yığılmış satış grafiği
+
+28 Kasım 2026. Ürün sahibi, aynı test mağazasında satılan ürün tarafına tek Cross Sell örneği eklenmesini ve mevcut rapora yatay yığılmış grafik konmasını onayladı. [Gönderim betiği](evidence/eo06-shopify-analytics-probe/send-product-level-cross-sell.mjs), önceki Bileklik → Kolye ilişkisinin 80 TL tutarını Kolye'nin `Contribution From` / `Cross Sell` satış satırı olarak aynı prova günü ve kampanya altında bir kez gönderir. Bilekliğin `Contribution To` kaydı değişmez. [Gönderim makbuzu](https://vercel.com/firats-projects-d22284db/ads-table-embedded/BcNFdmj2KJCUSfoYmxr5J8z7ovTP) ve çevrimdışı yük kontrolü doğrulandı.
+
+[Product Level 1](https://admin.shopify.com/store/adstable-development/analytics/reports/506167385) yerinde kaydedildi. Kısa bağlantıdan yeniden açıldığında Yığılmış yatay grafik, 15 detay satırı ve 7.880 TL Sales / 200 TL Contribution To görüldü. Grafik yalnız Sales metriğini Product Name ve Sales Roles boyutlarına göre böler. Direct 4.400 TL, Cross Sell 80 TL ve Indirect 3.400 TL, 7.880 TL satış toplamını oluşturur. Altı prova ürününün tamamı grafiğe sığar. Mevcut ayrıntı sütunları korunur. Shopify grafik gruplaması için Product Name ve Sales Roles başa, Gün sona alındı. [28 Kasım'da kontrol edilen ShopifyQL grafik belgesi](https://shopify.dev/docs/api/shopifyql/latest/syntax/visualize#bar-charts)
+
+```sql
+FROM app_events
+SHOW event."adstable-1".ecosystem_role_probe.ecosystem_sales, event."adstable-1".ecosystem_role_probe.ecosystem_contribution_to
+WHERE event."adstable-1".ecosystem_role_probe.probe_run = 'eo06e-development-product-level-v2'
+GROUP BY event."adstable-1".ecosystem_role_probe.product_name, event."adstable-1".ecosystem_role_probe.sales_role, event."adstable-1".ecosystem_role_probe.product_id, event."adstable-1".ecosystem_role_probe.sku, event."adstable-1".ecosystem_role_probe.platform, event."adstable-1".ecosystem_role_probe.campaign, event."adstable-1".ecosystem_role_probe.channel, event."adstable-1".ecosystem_role_probe.contribution_role, event."adstable-1".ecosystem_role_probe.advertised_product, event."adstable-1".ecosystem_role_probe.sold_product, day WITH GROUP_TOTALS, TOTALS
+SINCE 2026-11-27 UNTIL 2026-11-27
+ORDER BY event."adstable-1".ecosystem_role_probe.product_name ASC, event."adstable-1".ecosystem_role_probe.sales_role ASC, event."adstable-1".ecosystem_role_probe.product_id ASC, event."adstable-1".ecosystem_role_probe.sku ASC, event."adstable-1".ecosystem_role_probe.platform ASC, event."adstable-1".ecosystem_role_probe.campaign ASC, event."adstable-1".ecosystem_role_probe.channel ASC, event."adstable-1".ecosystem_role_probe.contribution_role ASC, event."adstable-1".ecosystem_role_probe.advertised_product ASC, event."adstable-1".ecosystem_role_probe.sold_product ASC
+VISUALIZE event."adstable-1".ecosystem_role_probe.ecosystem_sales TYPE stacked_horizontal_bar MAX 6
+```

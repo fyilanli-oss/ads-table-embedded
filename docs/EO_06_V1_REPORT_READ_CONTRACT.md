@@ -244,3 +244,26 @@ GROUP BY event."adstable-1".ecosystem_role_probe.advertised_product, event."adst
 SINCE 2026-11-19 UNTIL 2026-11-19
 ORDER BY event."adstable-1".ecosystem_role_probe.advertised_product ASC, event."adstable-1".ecosystem_role_probe.sold_product ASC
 ```
+
+### EcoSystem hiyerarşi provası
+
+28 Kasım 2026. Ürün sahibi Platform ve Channel boyutlarını ekleyen [Shopify sürümünü](https://dev.shopify.com/dashboard/239318688/apps/432251994113/versions/1270198468609) yayımladı. Açık onayla [prova betiği](evidence/eo06-shopify-analytics-probe/send-hierarchy.mjs) AdsTable Development'a 27 Kasım tarihli altı sentetik kayıt gönderdi. [Gönderim kaydı](https://vercel.com/firats-projects-d22284db/ads-table-embedded/G1EQFLvrJZiqL8BgjWbGWAFzcRCX) altı kayıt için de `202` ve `success: true` sonucunu doğruladı. Etkin uygulama alan adı aynı dağıtımda kaldı.
+
+| Kontrol noktası | Sales | Contribution To |
+| --- | ---: | ---: |
+| Advertised Product A | 50 TL | 80 TL |
+| Channel 1 | 130 TL | 80 TL |
+| Campaign 1 | 150 TL | 80 TL |
+| Platform 1 | 180 TL | 80 TL |
+| Özet | 220 TL | 80 TL |
+
+B'nin 80 TL satışı Sales toplamında bir kez sayılır. A'nın 80 TL katkısı ayrı sütunda kalır. Purchase bu provanın kapsamı dışındadır. Yukarıdaki değerler yerel gönderim kontrolünün beklenen sonucudur. Shopify raporunda görsel kabul beklenir. [28 Kasım'da kontrol edilen Shopify grup toplamı belgesi](https://help.shopify.com/en/manual/reports-and-analytics/shopify-reports/report-types/shopifyql-editor/shopifyql-syntax#group-totals)
+
+```sql
+FROM app_events
+SHOW event."adstable-1".ecosystem_role_probe.ecosystem_sales, event."adstable-1".ecosystem_role_probe.ecosystem_contribution_to
+WHERE event."adstable-1".ecosystem_role_probe.probe_run = 'eo06e-development-ecosystem-hierarchy-v1'
+GROUP BY event."adstable-1".ecosystem_role_probe.platform, event."adstable-1".ecosystem_role_probe.campaign, event."adstable-1".ecosystem_role_probe.channel, event."adstable-1".ecosystem_role_probe.advertised_product, event."adstable-1".ecosystem_role_probe.sold_product WITH GROUP_TOTALS, TOTALS
+SINCE 2026-11-27 UNTIL 2026-11-27
+ORDER BY event."adstable-1".ecosystem_role_probe.platform ASC, event."adstable-1".ecosystem_role_probe.campaign ASC, event."adstable-1".ecosystem_role_probe.channel ASC, event."adstable-1".ecosystem_role_probe.advertised_product ASC
+```

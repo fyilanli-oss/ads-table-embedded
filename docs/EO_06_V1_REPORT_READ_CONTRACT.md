@@ -57,6 +57,86 @@ V52 Channel Level da 27 Kasım'dan 27–28 Kasım'a genişletildiğinde yerleşi
 
 Her iki tablonun sütun sırası ve iki satış metriği korunur. ShopifyQL'de yerleşik `day` alanının kullanıldığı `SHOW`, `GROUP BY` ve `ORDER BY` konumlarına ilgili olayın `sale_day` alanı gelir. Product Level satış tutarı Basit yatay grafikte kalır. Önce iki tarih birlikte görünmeli. Tarih aralığı bir güne daraltılınca yalnız o günün verisi kalmalı. İki rapor Development mağazasında kaydedilip kendi kısa bağlantılarından yeniden açılır. Her adımda Gün sütunu, Sales ve Contribution To toplamları doğrulanır. Shopify ekran kabulü bekliyor.
 
+Aşağıdaki sorgular 27–28 Kasım Development önizlemeleridir. Shopify'da `sale_day` tanımı yayımlandıktan ve bu alanı içeren örnekler geldikten sonra çalıştırılır. Önceki olaylar bu alanı taşımadığından önizlemeye alınmaz. Kısa bağlantılar ancak Development raporları kaydedildikten sonra yeni sorguları açar.
+
+#### Product Level 1
+
+[Product Level 1 · ShopifyQL önizlemesi](https://admin.shopify.com/store/adstable-development/analytics/reports/506167385?ql=FROM%20app_events%0ASHOW%20event.%22adstable-1%22.ecosystem_role_probe.sale_day%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.product_id%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.sku%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.product_name%20AS%20%22Product%20Title%22%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.platform%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.campaign%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.channel%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.contribution_role%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.sales_role%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.advertised_product%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.sold_product%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.ecosystem_sales%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.ecosystem_contribution_to%0AWHERE%20event.%22adstable-1%22.ecosystem_role_probe.probe_run%20%3D%20'eo06e-development-product-level-v2'%0A%20%20AND%20event.%22adstable-1%22.ecosystem_role_probe.sale_day%20IS%20NOT%20NULL%0AGROUP%20BY%20event.%22adstable-1%22.ecosystem_role_probe.sale_day%2C%0A%20%20%22Product%20Title%22%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.product_id%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.sku%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.platform%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.campaign%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.channel%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.contribution_role%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.sales_role%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.advertised_product%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.sold_product%20WITH%20GROUP_TOTALS%2C%20TOTALS%0ASINCE%202026-11-27%20UNTIL%202026-11-28%0AORDER%20BY%20event.%22adstable-1%22.ecosystem_role_probe.sale_day%20ASC%2C%0A%20%20%22Product%20Title%22%20ASC%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.product_id%20ASC%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.sku%20ASC%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.platform%20ASC%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.campaign%20ASC%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.channel%20ASC%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.contribution_role%20ASC%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.sales_role%20ASC%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.advertised_product%20ASC%2C%0A%20%20event.%22adstable-1%22.ecosystem_role_probe.sold_product%20ASC%0AVISUALIZE%20event.%22adstable-1%22.ecosystem_role_probe.ecosystem_sales%20TYPE%20horizontal_bar)
+
+```sql
+FROM app_events
+SHOW event."adstable-1".ecosystem_role_probe.sale_day,
+  event."adstable-1".ecosystem_role_probe.product_id,
+  event."adstable-1".ecosystem_role_probe.sku,
+  event."adstable-1".ecosystem_role_probe.product_name AS "Product Title",
+  event."adstable-1".ecosystem_role_probe.platform,
+  event."adstable-1".ecosystem_role_probe.campaign,
+  event."adstable-1".ecosystem_role_probe.channel,
+  event."adstable-1".ecosystem_role_probe.contribution_role,
+  event."adstable-1".ecosystem_role_probe.sales_role,
+  event."adstable-1".ecosystem_role_probe.advertised_product,
+  event."adstable-1".ecosystem_role_probe.sold_product,
+  event."adstable-1".ecosystem_role_probe.ecosystem_sales,
+  event."adstable-1".ecosystem_role_probe.ecosystem_contribution_to
+WHERE event."adstable-1".ecosystem_role_probe.probe_run = 'eo06e-development-product-level-v2'
+  AND event."adstable-1".ecosystem_role_probe.sale_day IS NOT NULL
+GROUP BY event."adstable-1".ecosystem_role_probe.sale_day,
+  "Product Title",
+  event."adstable-1".ecosystem_role_probe.product_id,
+  event."adstable-1".ecosystem_role_probe.sku,
+  event."adstable-1".ecosystem_role_probe.platform,
+  event."adstable-1".ecosystem_role_probe.campaign,
+  event."adstable-1".ecosystem_role_probe.channel,
+  event."adstable-1".ecosystem_role_probe.contribution_role,
+  event."adstable-1".ecosystem_role_probe.sales_role,
+  event."adstable-1".ecosystem_role_probe.advertised_product,
+  event."adstable-1".ecosystem_role_probe.sold_product WITH GROUP_TOTALS, TOTALS
+SINCE 2026-11-27 UNTIL 2026-11-28
+ORDER BY event."adstable-1".ecosystem_role_probe.sale_day ASC,
+  "Product Title" ASC,
+  event."adstable-1".ecosystem_role_probe.product_id ASC,
+  event."adstable-1".ecosystem_role_probe.sku ASC,
+  event."adstable-1".ecosystem_role_probe.platform ASC,
+  event."adstable-1".ecosystem_role_probe.campaign ASC,
+  event."adstable-1".ecosystem_role_probe.channel ASC,
+  event."adstable-1".ecosystem_role_probe.contribution_role ASC,
+  event."adstable-1".ecosystem_role_probe.sales_role ASC,
+  event."adstable-1".ecosystem_role_probe.advertised_product ASC,
+  event."adstable-1".ecosystem_role_probe.sold_product ASC
+VISUALIZE event."adstable-1".ecosystem_role_probe.ecosystem_sales TYPE horizontal_bar
+```
+
+#### V52 Channel Level
+
+[V52 Channel Level · ShopifyQL önizlemesi](https://admin.shopify.com/store/adstable-development/analytics/reports/506265689?ql=FROM%20app_events%0ASHOW%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.sale_day%2C%0A%20%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.channel_level_full_sales%2C%0A%20%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.channel_level_full_contribution_to%0AWHERE%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.sale_day%20IS%20NOT%20NULL%0AGROUP%20BY%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.sale_day%2C%0A%20%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.platform%2C%0A%20%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.campaign%2C%0A%20%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.channel%2C%0A%20%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.interactivity%2C%0A%20%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.interacted_channel%2C%0A%20%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.product_title%2C%0A%20%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.contribution_role%2C%0A%20%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.product_id%2C%0A%20%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.sku%2C%0A%20%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.sales_role%2C%0A%20%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.advertised_product%2C%0A%20%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.sold_product%20WITH%20GROUP_TOTALS%2C%20TOTALS%0ASINCE%202026-11-27%20UNTIL%202026-11-28%0AORDER%20BY%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.sale_day%20ASC%2C%0A%20%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.platform%20ASC%2C%0A%20%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.campaign%20ASC%2C%0A%20%20event.%22adstable-1%22.ecosystem_channel_level_full_probe.channel%20ASC)
+
+```sql
+FROM app_events
+SHOW event."adstable-1".ecosystem_channel_level_full_probe.sale_day,
+  event."adstable-1".ecosystem_channel_level_full_probe.channel_level_full_sales,
+  event."adstable-1".ecosystem_channel_level_full_probe.channel_level_full_contribution_to
+WHERE event."adstable-1".ecosystem_channel_level_full_probe.sale_day IS NOT NULL
+GROUP BY event."adstable-1".ecosystem_channel_level_full_probe.sale_day,
+  event."adstable-1".ecosystem_channel_level_full_probe.platform,
+  event."adstable-1".ecosystem_channel_level_full_probe.campaign,
+  event."adstable-1".ecosystem_channel_level_full_probe.channel,
+  event."adstable-1".ecosystem_channel_level_full_probe.interactivity,
+  event."adstable-1".ecosystem_channel_level_full_probe.interacted_channel,
+  event."adstable-1".ecosystem_channel_level_full_probe.product_title,
+  event."adstable-1".ecosystem_channel_level_full_probe.contribution_role,
+  event."adstable-1".ecosystem_channel_level_full_probe.product_id,
+  event."adstable-1".ecosystem_channel_level_full_probe.sku,
+  event."adstable-1".ecosystem_channel_level_full_probe.sales_role,
+  event."adstable-1".ecosystem_channel_level_full_probe.advertised_product,
+  event."adstable-1".ecosystem_channel_level_full_probe.sold_product WITH GROUP_TOTALS, TOTALS
+SINCE 2026-11-27 UNTIL 2026-11-28
+ORDER BY event."adstable-1".ecosystem_channel_level_full_probe.sale_day ASC,
+  event."adstable-1".ecosystem_channel_level_full_probe.platform ASC,
+  event."adstable-1".ecosystem_channel_level_full_probe.campaign ASC,
+  event."adstable-1".ecosystem_channel_level_full_probe.channel ASC
+```
+
+
 26 Kasım 2026. V52 mockup'ındaki ürün tablosu, AdsTable Development mağazasında kurulu mevcut AdsTable (herkese açık uygulama, `adstable-1`) üzerinden sınanır. İlk taslakta ayrı test uygulaması hedeflenmişti. O hedefin yerini mevcut uygulama aldı. Tek özel `analytics_app_events` olayının tanımı uygulama genelinde yayımlanır. Sentetik gönderim öncesinde uygulama ve test mağazasının kesin Shopify kimlikleri doğrulanır. Yalnız bu mağazaya sentetik kampanya, ürün ve satış alanları gönderilir. Zey&Rose verisi ve gerçek sağlayıcı bağlantısı kullanılmaz. Önce yayımlanmamış sürüm farkı incelenir. Uygulama geneline yayın ve gönderim ayrı yetki gerektirir. Bu kayıt prova planıdır ve Shopify kabulü açıktır.
 
 [Çevrimdışı olay ve sorgu taslağı](#çevrimdışı-shopify-analizler-olay-taslağı) sürüm farkında beklenen tek eklemeyi, iki sentetik olay örneğini ve ShopifyQL kontrolünü içerir.

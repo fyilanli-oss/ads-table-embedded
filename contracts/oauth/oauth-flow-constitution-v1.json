@@ -1286,7 +1286,7 @@
       "supabase/migrations/20261125153035_eo06d_google_daily_report_replacement.sql": "3b662a06f96f7045643b520756bab0a99e9e66782123a983b8e765174d8bb2ca",
       ".github/workflows/database-integrity.yml": "7b41c78eef7940aef01da4ff9ff858b1b046b1bbd647a7a98e76c203d7a8a2d5",
       ".github/workflows/repository-governance.yml": "d0c6feecc08f145588c72fac541040ca2e14949af7785961e5df27c01628b852",
-      ".github/workflows/shopify-app-deploy.yml": "ad2660785411493d88c6adadf8c607fbafdcc200524672e2c93be7016e006bbf",
+      ".github/workflows/shopify-app-deploy.yml": "8735dc6dd5012db02113163db4afc7f83f7476b29b959e943bf77561ee9af941",
       "AGENTS.md": "01ef3b2e4fd58cb77b30b030a87562b0436986e200bc342f77f929b34eb19d51",
       "app/components/order-access-removal.tsx": "2c2159052c700ef8c9722e159af64f929a573481662f3fe31fd1e05054d68d7b",
       "app/components/permission-explanation.tsx": "1ef63742562171225389b0958492f9daea51d9a062b1eefe24e008d27387ad66",

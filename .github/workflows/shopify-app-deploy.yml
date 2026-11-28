@@ -102,7 +102,7 @@ jobs:
             exit 1
           fi
           cat "$RUNNER_TEMP/shopify-versions-before.json"
-          shopify app deploy --no-release --no-input --no-color --version "$version" --source-control-url "$COMMIT_URL"
+          shopify app deploy --no-release --no-color --version "$version" --source-control-url "$COMMIT_URL"
           shopify app versions list --json > "$RUNNER_TEMP/shopify-versions-after.json"
           cat "$RUNNER_TEMP/shopify-versions-after.json"
           grep -Fq "$version" "$RUNNER_TEMP/shopify-versions-after.json"

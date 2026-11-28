@@ -1286,7 +1286,7 @@
       "supabase/migrations/20261125153035_eo06d_google_daily_report_replacement.sql": "3b662a06f96f7045643b520756bab0a99e9e66782123a983b8e765174d8bb2ca",
       ".github/workflows/database-integrity.yml": "7b41c78eef7940aef01da4ff9ff858b1b046b1bbd647a7a98e76c203d7a8a2d5",
       ".github/workflows/repository-governance.yml": "d0c6feecc08f145588c72fac541040ca2e14949af7785961e5df27c01628b852",
-      ".github/workflows/shopify-app-deploy.yml": "ef078addb630fdb624189c0f12625524a7e3dcaf708f2059f95e7a2884cf5d24",
+      ".github/workflows/shopify-app-deploy.yml": "d518274aff2726022b00bfe712a26047d80b1515f2772576919884e092cddaed",
       "AGENTS.md": "01ef3b2e4fd58cb77b30b030a87562b0436986e200bc342f77f929b34eb19d51",
       "app/components/order-access-removal.tsx": "2c2159052c700ef8c9722e159af64f929a573481662f3fe31fd1e05054d68d7b",
       "app/components/permission-explanation.tsx": "1ef63742562171225389b0958492f9daea51d9a062b1eefe24e008d27387ad66",
@@ -6031,6 +6031,44 @@
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "docs/EXECUTION_PLAN.md",
         "tests/a6-docs-01-turkish-standardization.test.js"
+      ]
+    },
+    {
+      "id": "eo06e-shopify-sales-share-draft-2026-11-28",
+      "date": "2026-11-28",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner chat on 28 November 2026: Firat approved one unpublished Shopify version defining sales amount fields for the Product Level and Channel Level summaries, with the existing GitHub draft route and no workstation sign-in."
+      },
+      "rationale": "Register additive total and component sales amounts for date-weighted share at the summary grain. Preserve all four previous Analytics events and app settings. This task does not publish the version or ingest events.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "deploy": false,
+        "merge": false
+      },
+      "tests": [
+        "Both constitution guards and repository governance",
+        "Checksummed TOML and event/metric counts",
+        "Shopify no-release version readback plus active V52 check"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "official_checked_at": "2026-11-28",
+      "official_sources": [
+        "https://shopify.dev/docs/apps/build/app-events/analytics/toml-configuration#limits",
+        "https://shopify.dev/docs/api/shopify-cli/app/app-deploy#no-release",
+        "https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow"
+      ],
+      "changed_paths": [
+        ".github/workflows/shopify-app-deploy.yml",
+        "contracts/oauth/oauth-flow-constitution-v1.json"
       ]
     }
   ],
